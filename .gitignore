@@ -1,0 +1,8 @@
+.vscode/
+build/
+**/components/Espressif/
+*.zip
+*.exe
+*.dll
+*.pdf
+# Si quieres subir el PDF de avances, quita la línea de arriba.
