@@ -24,12 +24,83 @@ static const char *TAG_PRINTER = "uart_events";
 #define RD_BUF_SIZE (BUF_SIZE)
 static QueueHandle_t uart0_queue;
 
+void interpretar_estado(uint8_t sts1, uint8_t sts2) 
+{
+    //Procesar STS1 (Estado)
+    switch(sts1) {
+        case 0x40: 
+            ESP_LOGI(TAG_PRINTER, "Modo Entrenamiento y en Espera");
+            break;
+        case 0x41:
+            ESP_LOGI(TAG_PRINTER, "Modo Entrenamiento y en medio de una Transacción Fiscal");
+            break;
+        case 0x42:
+            ESP_LOGI(TAG_PRINTER, "Modo Entrenamiento y en medio de una Transacción No Fiscal");
+            break;
+        case 0x60: 
+            ESP_LOGI(TAG_PRINTER, "Modo Fiscal y en Espera");
+            break;
+        case 0x68:
+            ESP_LOGI(TAG_PRINTER, "Modo Fiscal con la MF llena y en Espera");
+            break;
+        case 0x61:
+            ESP_LOGI(TAG_PRINTER, "Modo Fiscal y en medio de una Transacción Fiscal");
+            break;
+        case 0x69:
+            ESP_LOGI(TAG_PRINTER, "Modo Fiscal con la MF llena y en medio de una Transacción Fiscal");
+            break;
+        case 0x62:
+            ESP_LOGI(TAG_PRINTER, "Modo Fiscal y en medio de una Transacción No Fiscal");
+            break;
+        case 0x6A:
+            ESP_LOGI(TAG_PRINTER, "Modo Fiscal con la MF llena y en Transacción No Fiscal");
+            break;
+        default:
+            ESP_LOGI(TAG_PRINTER, "Estado desconocido: 0x%02X", sts1);
+            break;
+    }
+
+    //Procesar STS2 (Error)
+    switch(sts2) {
+        case 0x40: 
+            ESP_LOGI(TAG_PRINTER, "Ningún error");
+            break;
+        case 0x48:
+            ESP_LOGI(TAG_PRINTER, "Error gaveta");
+            break;
+        case 0x41:
+            ESP_LOGI(TAG_PRINTER, "Error sin papel");
+            break;
+        case 0x42:
+            ESP_LOGI(TAG_PRINTER, "Error mecánico de la impresora / papel");
+            break;
+        case 0x43:
+            ESP_LOGI(TAG_PRINTER, "Error mecanico de la impresora y fin de papel");
+            break;
+        case 0x60:
+            ESP_LOGI(TAG_PRINTER, "Error fiscal");
+            break;
+        case 0x64:
+            ESP_LOGI(TAG_PRINTER, "Error en la memoria fiscal");
+            break;
+        case 0x6C:
+            ESP_LOGI(TAG_PRINTER, "Error memoria fiscal llena");
+            break;
+        default:
+            ESP_LOGI(TAG_PRINTER, "Estado desconocido: 0x%02X", sts2);
+            break;
+    }
+}
+
 static void printer_task(void *pvParameters)
 {
     uart_event_t event;
     uint8_t* dtmp = (uint8_t*) malloc(RD_BUF_SIZE);
     uint8_t enq_cmd = 0x05; // Carácter ENQ según el manual
+    uint8_t status1 = 0x4C; // Carácter STATUS S1
     int reconnect_attempts = 0;
+
+
 
     for (;;) {
         // Enviar el comando por UART
@@ -54,6 +125,101 @@ static void printer_task(void *pvParameters)
                     if (dtmp[0] == 0x02 && dtmp[3] == 0x03) {
                         ESP_LOGI(TAG_PRINTER, "Respuesta válida recibida de la impresora.");
                         interpretar_estado(dtmp[1], dtmp[2]);
+
+                        if (dtmp[1] == 0x60) {
+
+                            char atm_number_status[4];
+                            char ventas[17];
+                            char last_bill_number[8];
+                            char bill_issue[5];
+                            char number_last_debit[8];
+                            char amount_debit[5];
+                            char number_last_credit[8];
+                            char amount_credit[5];
+                            char number_last_notfiscal[8];
+                            char amount_notfiscal[5];
+                            char counter_daily_z[4];
+                            char counter_report_fiscal[4];
+                            char rif_cliente[11];
+                            char register_number[10];
+                            char hour_machine[6];
+                            char date_machine[6];
+
+                            // Impresora lista para recibir STATUS S1
+                            uart_write_bytes(EX_UART_NUM, (const char*) &status1, 1);
+                            ESP_LOGI(TAG_PRINTER, "Enviado carácter STATUS S1 a la impresora.");
+
+                            // Limpia el buffer poniendo todos sus bytes en 0x00
+                            bzero(dtmp, RD_BUF_SIZE); 
+                            
+                            // Ejecutamos lectura de la respuesta al STATUS S1
+                            int len_status = uart_read_bytes(EX_UART_NUM, dtmp, RD_BUF_SIZE, pdMS_TO_TICKS(10000));
+                            
+                            if (len_status == 129 && dtmp[0] == 0x02) {
+                                // Extraer los datos relevantes de la respuesta
+                                memcpy(atm_number_status, &dtmp[1], 4);
+                                atm_number_status[4] = '\0';
+
+                                memcpy(ventas, &dtmp[5], 17);
+                                ventas[17] = '\0';
+
+                                memcpy(last_bill_number, &dtmp[22], 8);
+                                last_bill_number[8] = '\0';
+
+                                memcpy(bill_issue, &dtmp[30], 5);
+                                bill_issue[5] = '\0';
+
+                                memcpy(number_last_debit, &dtmp[35], 8);
+                                number_last_debit[8] = '\0';
+
+                                memcpy(amount_debit, &dtmp[43], 5);
+                                amount_debit[5] = '\0';
+
+                                memcpy(number_last_credit, &dtmp[48], 8);
+                                number_last_credit[8] = '\0';
+
+                                memcpy(amount_credit, &dtmp[56], 5);
+                                amount_credit[5] = '\0';
+
+                                memcpy(number_last_notfiscal, &dtmp[61], 8);
+                                number_last_notfiscal[8] = '\0';
+
+                                memcpy(amount_notfiscal, &dtmp[69], 5);
+                                amount_notfiscal[5] = '\0';
+
+                                memcpy(counter_daily_z, &dtmp[74], 4);
+                                counter_daily_z[4] = '\0';
+
+                                memcpy(counter_report_fiscal, &dtmp[79], 4);
+                                counter_report_fiscal[4] = '\0';
+
+                                memcpy(rif_cliente, &dtmp[82], 11);
+                                rif_cliente[11] = '\0';
+
+                                memcpy(register_number, &dtmp[93], 10);
+                                register_number[10] = '\0';
+
+                                memcpy(hour_machine, &dtmp[103], 6);
+                                hour_machine[6] = '\0';
+
+                                memcpy(date_machine, &dtmp[109], 6);
+                                date_machine[6] = '\0';
+
+                                // Mostrar los datos extraídos
+                                ESP_LOGI(TAG_PRINTER, "Número de Cajero: %s", atm_number_status);
+                                ESP_LOGI(TAG_PRINTER, "Ventas: %s", ventas);
+                                ESP_LOGI(TAG_PRINTER, "Número de última factura: %s", last_bill_number);
+                                ESP_LOGI(TAG_PRINTER, "Emisión de factura: %s", bill_issue);
+                                ESP_LOGI(TAG_PRINTER, "RIF del cliente: %s", rif_cliente);
+                                ESP_LOGI(TAG_PRINTER, "Número de registro: %s", register_number);
+                                ESP_LOGI(TAG_PRINTER, "Hora de la máquina: %s", hour_machine);
+                                ESP_LOGI(TAG_PRINTER, "Fecha de la máquina: %s", date_machine);
+                            }
+                            else {
+                                ESP_LOGW(TAG_PRINTER, "Respuesta inválida al solicitar STATUS S1.");
+                            }
+
+                        }
                         reconnect_attempts = 0; // Resetear intentos de reconexión tras una respuesta exitosa
                     } else {
                         ESP_LOGW(TAG_PRINTER, "Respuesta inválida recibida de la impresora.");
@@ -87,68 +253,6 @@ static void printer_task(void *pvParameters)
     }
     free(dtmp);
     vTaskDelete(NULL);
-}
-
-void interpretar_estado(uint8_t sts1, uint8_t sts2) 
-{
-    //Procesar STS1 (Estado)
-    switch(sts1) {
-        case 0x40: 
-            ESP_LOGI(TAG_PRINTER, "Modo Entrenamiento y en Espera");
-            break;
-        case 0x41:
-            ESP_LOGI(TAG_PRINTER, "Modo Entrenamiento y en medio de una Transacción Fiscal");
-            break;
-        case 0x42:
-            ESP_LOGI(TAG_PRINTER, "Modo Entrenamiento y en medio de una Transacción No Fiscal");
-            break;
-        case 0x60: 
-            ESP_LOGI(TAG_PRINTER, "Modo Fiscal y en Espera");
-            break;
-        case 0x68:
-            ESP_LOGI(TAG_PRINTER, "Modo Fiscal con la MF llena y en Espera");
-            break;
-        case 0x61:
-            ESP_LOGI(TAG_PRINTER, "Modo Fiscal y en medio de una Transacción Fiscal");
-            break;
-        case 0x69:
-            ESP_LOGI(TAG_PRINTER, "Modo Fiscal con la MF llena y en medio de una Transacción Fiscal");
-            break;
-        case 0x62:
-            ESP_LOGI(TAG_PRINTER, "Modo Fiscal y en medio de una Transacción No Fiscal");
-            break;
-        case 0x6A:
-            ESP_LOGI(TAG_PRINTER, "Modo Fiscal con la MF llena y en Transacción No Fiscal");
-            break;
-    }
-
-    //Procesar STS2 (Error)
-    switch(sts1) {
-        case 0x40: 
-            ESP_LOGI(TAG_PRINTER, "Ningún error");
-            break;
-        case 0x48:
-            ESP_LOGI(TAG_PRINTER, "Error gaveta");
-            break;
-        case 0x41:
-            ESP_LOGI(TAG_PRINTER, "Error sin papel");
-            break;
-        case 0x42:
-            ESP_LOGI(TAG_PRINTER, "Error mecánico de la impresora / papel");
-            break;
-        case 0x43:
-            ESP_LOGI(TAG_PRINTER, "Error mecanico de la impresora y fin de papel");
-            break;
-        case 0x60:
-            ESP_LOGI(TAG_PRINTER, "Error fiscal");
-            break;
-        case 0x64:
-            ESP_LOGI(TAG_PRINTER, "Error en la memoria fiscal");
-            break;
-        case 0x6C:
-            ESP_LOGI(TAG_PRINTER, "Error memoria fiscal llena");
-            break;
-    }
 }
 
 void app_main(void)
