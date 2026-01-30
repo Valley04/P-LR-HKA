@@ -22,6 +22,15 @@ static const char *TAG_PRINTER = "uart_events";
 
 #define BUF_SIZE (1024)
 #define RD_BUF_SIZE (BUF_SIZE)
+#define STS1
+#define STS2
+#define TOPIC
+#define RIF_CLIENTE
+#define LAST_BILL_NUMBER
+#define COUNTER_DAILY_Z
+#define HOUR_MACHINE
+#define DATE_MACHINE
+
 static QueueHandle_t uart0_queue;
 
 void interpretar_estado(uint8_t sts1, uint8_t sts2) 
@@ -92,62 +101,9 @@ void interpretar_estado(uint8_t sts1, uint8_t sts2)
     }
 }
 
-void debug_status_s1(uint8_t *data, size_t len)
-{
-    ESP_LOGI(TAG_PRINTER, "=== DEBUG STATUS S1 ===");
-    ESP_LOGI(TAG_PRINTER, "Longitud total recibida: %d bytes", len);
-    
-    // Mostrar primeros y últimos bytes
-    ESP_LOGI(TAG_PRINTER, "STX (byte 0): 0x%02X", data[0]);
-    ESP_LOGI(TAG_PRINTER, "Último byte: 0x%02X", data[len-1]);
-    
-    // Contar caracteres ASCII válidos (32-126)
-    int ascii_count = 0;
-    for (int i = 0; i < len; i++) {
-        if (data[i] >= 32 && data[i] <= 126) {
-            ascii_count++;
-        }
-    }
-    ESP_LOGI(TAG_PRINTER, "Caracteres ASCII (32-126): %d", ascii_count);
-    
-    // Mostrar todos los bytes en formato ASCII y HEX
-    char ascii_line[65] = {0};
-    char hex_line[256] = {0};
-    
-    for (int i = 0; i < len; i++) {
-        // HEX
-        char hex_byte[4];
-        snprintf(hex_byte, sizeof(hex_byte), "%02X ", data[i]);
-        strcat(hex_line, hex_byte);
-        
-        // ASCII
-        if (data[i] >= 32 && data[i] <= 126) {
-            ascii_line[i % 64] = data[i];
-        } else {
-            ascii_line[i % 64] = '.';
-        }
-        
-        // Mostrar cada 64 bytes
-        if ((i + 1) % 64 == 0 || i == len - 1) {
-            ascii_line[(i % 64) + 1] = '\0';
-            ESP_LOGI(TAG_PRINTER, "HEX: %s", hex_line);
-            ESP_LOGI(TAG_PRINTER, "ASC: %s", ascii_line);
-            
-            // Reset lines
-            memset(ascii_line, 0, sizeof(ascii_line));
-            memset(hex_line, 0, sizeof(hex_line));
-        }
-    }
-    
-    ESP_LOGI(TAG_PRINTER, "=== FIN DEBUG ===");
-}
-
 void procesar_status_s1(uint8_t *data, size_t len)
 {
     ESP_LOGI(TAG_PRINTER, "Procesando STATUS S1, len=%d", len);
-
-    // DEBUG: Ver qué estamos recibiendo exactamente
-    debug_status_s1(data, len);
     
     // Buscar el STX (0x02) en la respuesta
     int stx_pos = -1;
@@ -201,43 +157,43 @@ void procesar_status_s1(uint8_t *data, size_t len)
     bill_issue[5] = '\0';
     
     // Número de la última nota de débito (posición 34-41)
-    char number_last_debit[8];
+    char number_last_debit[9];
     memcpy(number_last_debit, &trama[35], 8);
     number_last_debit[8] = '\0';
 
     // Cantidad de notas de débito del día (posición 42-46)
-    char amount_debit[5];
+    char amount_debit[6];
     memcpy(amount_debit, &trama[43], 5);
     amount_debit[5] = '\0';
 
     // Número de la última nota de crédito (posición 47-54)
-    char number_last_credit[8];
+    char number_last_credit[9];
     memcpy(number_last_credit, &trama[48], 8);
     number_last_credit[8] = '\0';
 
     // Cantidad de notas de crédito (posición 55-59)
-    char amount_credit[5];
+    char amount_credit[6];
     memcpy(amount_credit, &trama[56], 5);
     amount_credit[5] = '\0';
 
     // Número del último documento no fiscal (posición 60-67)
-    char number_last_notfiscal[8];
+    char number_last_notfiscal[9];
     memcpy(number_last_notfiscal, &trama[61], 8);
     number_last_notfiscal[8] = '\0';
 
     // Cantidad de documentos no fiscales (posición 68-72)
-    char amount_notfiscal[5];
+    char amount_notfiscal[6];
     memcpy(amount_notfiscal, &trama[69], 5);
     amount_notfiscal[5] = '\0';
 
     // Contador de cierres diarios (Z) (posición 73-76)
-    char counter_daily_z[4];
+    char counter_daily_z[5];
     memcpy(counter_daily_z, &trama[74], 4);
     counter_daily_z[4] = '\0';
 
     // Contador de reportes de memoria fiscal (posición 77-80)
-    char counter_report_fiscal[4];
-    memcpy(counter_report_fiscal, &trama[79], 4);
+    char counter_report_fiscal[5];
+    memcpy(counter_report_fiscal, &trama[78], 4);
     counter_report_fiscal[4] = '\0';
     
     // RIF (posición 81-91)
