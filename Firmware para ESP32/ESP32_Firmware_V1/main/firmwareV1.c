@@ -92,6 +92,194 @@ void interpretar_estado(uint8_t sts1, uint8_t sts2)
     }
 }
 
+void debug_status_s1(uint8_t *data, size_t len)
+{
+    ESP_LOGI(TAG_PRINTER, "=== DEBUG STATUS S1 ===");
+    ESP_LOGI(TAG_PRINTER, "Longitud total recibida: %d bytes", len);
+    
+    // Mostrar primeros y últimos bytes
+    ESP_LOGI(TAG_PRINTER, "STX (byte 0): 0x%02X", data[0]);
+    ESP_LOGI(TAG_PRINTER, "Último byte: 0x%02X", data[len-1]);
+    
+    // Contar caracteres ASCII válidos (32-126)
+    int ascii_count = 0;
+    for (int i = 0; i < len; i++) {
+        if (data[i] >= 32 && data[i] <= 126) {
+            ascii_count++;
+        }
+    }
+    ESP_LOGI(TAG_PRINTER, "Caracteres ASCII (32-126): %d", ascii_count);
+    
+    // Mostrar todos los bytes en formato ASCII y HEX
+    char ascii_line[65] = {0};
+    char hex_line[256] = {0};
+    
+    for (int i = 0; i < len; i++) {
+        // HEX
+        char hex_byte[4];
+        snprintf(hex_byte, sizeof(hex_byte), "%02X ", data[i]);
+        strcat(hex_line, hex_byte);
+        
+        // ASCII
+        if (data[i] >= 32 && data[i] <= 126) {
+            ascii_line[i % 64] = data[i];
+        } else {
+            ascii_line[i % 64] = '.';
+        }
+        
+        // Mostrar cada 64 bytes
+        if ((i + 1) % 64 == 0 || i == len - 1) {
+            ascii_line[(i % 64) + 1] = '\0';
+            ESP_LOGI(TAG_PRINTER, "HEX: %s", hex_line);
+            ESP_LOGI(TAG_PRINTER, "ASC: %s", ascii_line);
+            
+            // Reset lines
+            memset(ascii_line, 0, sizeof(ascii_line));
+            memset(hex_line, 0, sizeof(hex_line));
+        }
+    }
+    
+    ESP_LOGI(TAG_PRINTER, "=== FIN DEBUG ===");
+}
+
+void procesar_status_s1(uint8_t *data, size_t len)
+{
+    ESP_LOGI(TAG_PRINTER, "Procesando STATUS S1, len=%d", len);
+
+    // DEBUG: Ver qué estamos recibiendo exactamente
+    debug_status_s1(data, len);
+    
+    // Buscar el STX (0x02) en la respuesta
+    int stx_pos = -1;
+    for (int i = 0; i < len; i++) {
+        if (data[i] == 0x02) {
+            stx_pos = i;
+            break;
+        }
+    }
+    
+    if (stx_pos == -1) {
+        ESP_LOGE(TAG_PRINTER, "No se encontró STX (0x02) en la respuesta");
+        return;
+    }
+    
+    ESP_LOGI(TAG_PRINTER, "STX encontrado en posición: %d", stx_pos);
+    
+    // La trama comienza en stx_pos
+    uint8_t *trama = &data[stx_pos];
+    size_t trama_len = len - stx_pos;
+    
+    // Verificar que tenemos al menos STX + datos mínimos
+    if (trama_len < 113) { // Longitud mínima según tabla
+        ESP_LOGE(TAG_PRINTER, "Trama muy corta: %d (se esperaba al menos 113)", trama_len);
+        return;
+    }
+    
+    // Verificar ETX (debería estar al final)
+    if (trama[trama_len-1] != 0x03) {
+        ESP_LOGW(TAG_PRINTER, "ETX (0x03) no encontrado al final, encontrado: 0x%02X", trama[trama_len-1]);
+    }
+    
+    // Número de Cajero (posición 0-3 después de STX)
+    char atm_number_status[5];
+    memcpy(atm_number_status, &trama[1], 4); // STX está en trama[0]
+    atm_number_status[4] = '\0';
+    
+    // Subtotal de Ventas (posición 4-20)
+    char ventas[18];
+    memcpy(ventas, &trama[5], 17);
+    ventas[17] = '\0';
+    
+    // Número de última factura (posición 21-28)
+    char last_bill_number[9];
+    memcpy(last_bill_number, &trama[22], 8);
+    last_bill_number[8] = '\0';
+    
+    // Cantidad de facturas emitidas (posición 29-33)
+    char bill_issue[6];
+    memcpy(bill_issue, &trama[30], 5);
+    bill_issue[5] = '\0';
+    
+    // Número de la última nota de débito (posición 34-41)
+    char number_last_debit[8];
+    memcpy(number_last_debit, &trama[35], 8);
+    number_last_debit[8] = '\0';
+
+    // Cantidad de notas de débito del día (posición 42-46)
+    char amount_debit[5];
+    memcpy(amount_debit, &trama[43], 5);
+    amount_debit[5] = '\0';
+
+    // Número de la última nota de crédito (posición 47-54)
+    char number_last_credit[8];
+    memcpy(number_last_credit, &trama[48], 8);
+    number_last_credit[8] = '\0';
+
+    // Cantidad de notas de crédito (posición 55-59)
+    char amount_credit[5];
+    memcpy(amount_credit, &trama[56], 5);
+    amount_credit[5] = '\0';
+
+    // Número del último documento no fiscal (posición 60-67)
+    char number_last_notfiscal[8];
+    memcpy(number_last_notfiscal, &trama[61], 8);
+    number_last_notfiscal[8] = '\0';
+
+    // Cantidad de documentos no fiscales (posición 68-72)
+    char amount_notfiscal[5];
+    memcpy(amount_notfiscal, &trama[69], 5);
+    amount_notfiscal[5] = '\0';
+
+    // Contador de cierres diarios (Z) (posición 73-76)
+    char counter_daily_z[4];
+    memcpy(counter_daily_z, &trama[74], 4);
+    counter_daily_z[4] = '\0';
+
+    // Contador de reportes de memoria fiscal (posición 77-80)
+    char counter_report_fiscal[4];
+    memcpy(counter_report_fiscal, &trama[79], 4);
+    counter_report_fiscal[4] = '\0';
+    
+    // RIF (posición 81-91)
+    char rif_cliente[12];
+    memcpy(rif_cliente, &trama[82], 11);
+    rif_cliente[11] = '\0';
+    
+    // Número de registro (posición 92-101)
+    char register_number[11];
+    memcpy(register_number, &trama[93], 10);
+    register_number[10] = '\0';
+    
+    // Hora actual (posición 102-107)
+    char hour_machine[7];
+    memcpy(hour_machine, &trama[103], 6);
+    hour_machine[6] = '\0';
+    
+    // Fecha actual (posición 108-113)
+    char date_machine[7];
+    memcpy(date_machine, &trama[109], 6);
+    date_machine[6] = '\0';
+    
+    // Mostrar datos
+    ESP_LOGI(TAG_PRINTER, "=== STATUS S1 ===");
+    ESP_LOGI(TAG_PRINTER, "Número de Cajero: [%s]", atm_number_status);
+    ESP_LOGI(TAG_PRINTER, "Subtotal Ventas: [%s]", ventas);
+    ESP_LOGI(TAG_PRINTER, "Número de Última Factura: [%s]", last_bill_number);
+    ESP_LOGI(TAG_PRINTER, "Cantidad de Facturas Emitidas: [%s]", bill_issue);
+    ESP_LOGI(TAG_PRINTER, "Número de Última Nota de Débito: [%s]", number_last_debit);
+    ESP_LOGI(TAG_PRINTER, "Cantidad de Notas de Débito del Día: [%s]", amount_debit);
+    ESP_LOGI(TAG_PRINTER, "Número de Última Nota de Crédito: [%s]", number_last_credit);
+    ESP_LOGI(TAG_PRINTER, "Cantidad de Notas de Crédito: [%s]", amount_credit);
+    ESP_LOGI(TAG_PRINTER, "Número del Último Documento No Fiscal: [%s]", number_last_notfiscal);
+    ESP_LOGI(TAG_PRINTER, "Cantidad de Documentos No Fiscales: [%s]", amount_notfiscal);
+    ESP_LOGI(TAG_PRINTER, "Contador de Cierres Diarios (Z): [%s]", counter_daily_z);
+    ESP_LOGI(TAG_PRINTER, "Contador de Reportes de Memoria Fiscal: [%s]", counter_report_fiscal);
+    ESP_LOGI(TAG_PRINTER, "RIF: [%s]", rif_cliente);
+    ESP_LOGI(TAG_PRINTER, "Número Registro de la Máquina: [%s]", register_number);
+    ESP_LOGI(TAG_PRINTER, "Hora Actual de la Impresora: [%s]", hour_machine);
+    ESP_LOGI(TAG_PRINTER, "Fecha Actual de la Impresora: [%s]", date_machine);
+}
+
 static void printer_task(void *pvParameters)
 {
     uart_event_t event;
@@ -99,8 +287,6 @@ static void printer_task(void *pvParameters)
     uint8_t enq_cmd = 0x05; // Carácter ENQ según el manual
     uint8_t status1 = 0x4C; // Carácter STATUS S1
     int reconnect_attempts = 0;
-
-
 
     for (;;) {
         // Enviar el comando por UART
@@ -115,110 +301,40 @@ static void printer_task(void *pvParameters)
                     int len = uart_read_bytes(EX_UART_NUM, dtmp, event.size, portMAX_DELAY);
                     uart_flush_input(EX_UART_NUM);
 
-                    // Se muestra la respuesta recibida
-                    ESP_LOGI(TAG_PRINTER, "Respuesta recibida de la impresora:");
-                    for (int i = 0; i < len; i++) {
-                        ESP_LOGI(TAG_PRINTER, "Byte %d: 0x%02X", i, dtmp[i]);
-                    }
-
                     // Verificar si la respuesta es válida según el protocolo
                     if (dtmp[0] == 0x02 && dtmp[3] == 0x03) {
                         ESP_LOGI(TAG_PRINTER, "Respuesta válida recibida de la impresora.");
                         interpretar_estado(dtmp[1], dtmp[2]);
 
                         if (dtmp[1] == 0x60) {
-
-                            char atm_number_status[4];
-                            char ventas[17];
-                            char last_bill_number[8];
-                            char bill_issue[5];
-                            char number_last_debit[8];
-                            char amount_debit[5];
-                            char number_last_credit[8];
-                            char amount_credit[5];
-                            char number_last_notfiscal[8];
-                            char amount_notfiscal[5];
-                            char counter_daily_z[4];
-                            char counter_report_fiscal[4];
-                            char rif_cliente[11];
-                            char register_number[10];
-                            char hour_machine[6];
-                            char date_machine[6];
+                            // Si el estado es 0x60 (Modo Fiscal y en Espera), solicitar STATUS S1
+                            vTaskDelay(pdMS_TO_TICKS(100));                             
 
                             // Impresora lista para recibir STATUS S1
                             uart_write_bytes(EX_UART_NUM, (const char*) &status1, 1);
-                            ESP_LOGI(TAG_PRINTER, "Enviado carácter STATUS S1 a la impresora.");
+                            ESP_LOGI(TAG_PRINTER, "Enviado carácter STATUS S1 (0x%02X) a la impresora.", status1);
 
-                            // Limpia el buffer poniendo todos sus bytes en 0x00
-                            bzero(dtmp, RD_BUF_SIZE); 
+                            vTaskDelay(pdMS_TO_TICKS(500)); // Dar tiempo para respuesta
                             
-                            // Ejecutamos lectura de la respuesta al STATUS S1
-                            int len_status = uart_read_bytes(EX_UART_NUM, dtmp, RD_BUF_SIZE, pdMS_TO_TICKS(10000));
-                            
-                            if (len_status == 129 && dtmp[0] == 0x02) {
-                                // Extraer los datos relevantes de la respuesta
-                                memcpy(atm_number_status, &dtmp[1], 4);
-                                atm_number_status[4] = '\0';
+                            if (xQueueReceive(uart0_queue, (void *)&event, pdMS_TO_TICKS(2000))) {
+                                // Leer la respuesta al STATUS S1
+                                bzero(dtmp, RD_BUF_SIZE);
 
-                                memcpy(ventas, &dtmp[5], 17);
-                                ventas[17] = '\0';
+                                // Ejecutamos lectura de la respuesta al STATUS S1
+                                int len_status = uart_read_bytes(EX_UART_NUM, dtmp, RD_BUF_SIZE, pdMS_TO_TICKS(5000));
 
-                                memcpy(last_bill_number, &dtmp[22], 8);
-                                last_bill_number[8] = '\0';
-
-                                memcpy(bill_issue, &dtmp[30], 5);
-                                bill_issue[5] = '\0';
-
-                                memcpy(number_last_debit, &dtmp[35], 8);
-                                number_last_debit[8] = '\0';
-
-                                memcpy(amount_debit, &dtmp[43], 5);
-                                amount_debit[5] = '\0';
-
-                                memcpy(number_last_credit, &dtmp[48], 8);
-                                number_last_credit[8] = '\0';
-
-                                memcpy(amount_credit, &dtmp[56], 5);
-                                amount_credit[5] = '\0';
-
-                                memcpy(number_last_notfiscal, &dtmp[61], 8);
-                                number_last_notfiscal[8] = '\0';
-
-                                memcpy(amount_notfiscal, &dtmp[69], 5);
-                                amount_notfiscal[5] = '\0';
-
-                                memcpy(counter_daily_z, &dtmp[74], 4);
-                                counter_daily_z[4] = '\0';
-
-                                memcpy(counter_report_fiscal, &dtmp[79], 4);
-                                counter_report_fiscal[4] = '\0';
-
-                                memcpy(rif_cliente, &dtmp[82], 11);
-                                rif_cliente[11] = '\0';
-
-                                memcpy(register_number, &dtmp[93], 10);
-                                register_number[10] = '\0';
-
-                                memcpy(hour_machine, &dtmp[103], 6);
-                                hour_machine[6] = '\0';
-
-                                memcpy(date_machine, &dtmp[109], 6);
-                                date_machine[6] = '\0';
-
-                                // Mostrar los datos extraídos
-                                ESP_LOGI(TAG_PRINTER, "Número de Cajero: %s", atm_number_status);
-                                ESP_LOGI(TAG_PRINTER, "Ventas: %s", ventas);
-                                ESP_LOGI(TAG_PRINTER, "Número de última factura: %s", last_bill_number);
-                                ESP_LOGI(TAG_PRINTER, "Emisión de factura: %s", bill_issue);
-                                ESP_LOGI(TAG_PRINTER, "RIF del cliente: %s", rif_cliente);
-                                ESP_LOGI(TAG_PRINTER, "Número de registro: %s", register_number);
-                                ESP_LOGI(TAG_PRINTER, "Hora de la máquina: %s", hour_machine);
-                                ESP_LOGI(TAG_PRINTER, "Fecha de la máquina: %s", date_machine);
+                                // LIMPIAR BUFFER después de leer STATUS S1
+                                uart_flush_input(EX_UART_NUM);
+                                
+                                if (len_status > 0) {
+                                    procesar_status_s1(dtmp, len_status);
+                                }
+                                else {
+                                    ESP_LOGW(TAG_PRINTER, "No se recibió respuesta al STATUS S1.");
+                                }
+                            } else {
+                                ESP_LOGW(TAG_PRINTER, "No se recibió evento tras enviar STATUS S1.");
                             }
-                            else {
-                                ESP_LOGW(TAG_PRINTER, "Respuesta inválida al solicitar STATUS S1.");
-                            }
-
                         }
                         reconnect_attempts = 0; // Resetear intentos de reconexión tras una respuesta exitosa
                     } else {
@@ -248,7 +364,7 @@ static void printer_task(void *pvParameters)
 
         // Esperar un tiempo antes de volver a comenzar
         // IMPORTANTE: Es vital usar vTaskDelay para no bloquear el procesador
-        vTaskDelay(pdMS_TO_TICKS(5000)); // Pregunta cada 10 segundos
+        vTaskDelay(pdMS_TO_TICKS(10000)); // Pregunta cada 5 segundos
 
     }
     free(dtmp);
