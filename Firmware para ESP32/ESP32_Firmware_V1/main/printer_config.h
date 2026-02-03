@@ -8,7 +8,15 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#include "freertos/event_groups.h"
+#include "esp_event.h"
+#include "esp_wifi.h"
+#include "mqtt_client.h"
 #include "esp_log.h"
+#include "esp_system.h"
+#include "nvs_flash.h"
+#include "lwip/sockets.h"
+#include "esp_crt_bundle.h"
 
 // CONSTANTES DE CONFIGURACIÓN
 
@@ -38,14 +46,18 @@
 // Límites
 #define MAX_RECONNECT_ATTEMPTS  5
 #define MAX_ERROR_COUNT         10
-#define MAX_SERIAL_LENGTH       11
+#define MAX_SERIAL_LENGTH       10
 #define STATUS_S1_MIN_LENGTH    113
 
-// MQTT (preparación)
-#define MQTT_TOPIC_BASE     "v1/fiscal"
-#define MQTT_QOS            1
-#define MQTT_RETAIN         0
+// Configuración WiFi
+#define ESP_WIFI_SSID      "LorenaWiFi"
+#define ESP_WIFI_PASS      "041295wifi"
+#define ESP_MAXIMUM_RETRY  5
 
+// Configuración MQTT
+#define MQTT_TOPIC_BASE     "v1/fiscal"
+#define MQTT_QOS_LEVEL     1
+#define MQTT_RETAIN        0
 
 // TIPOS DE DATOS OPTIMIZADOS
 
@@ -117,6 +129,10 @@ typedef struct __attribute__((packed)) {
 extern mqtt_data_t mqtt_data;
 extern const char* TAG_PRINTER;
 
+// Variables globales WiFi/MQTT
+extern EventGroupHandle_t wifi_event_group;
+extern esp_mqtt_client_handle_t mqtt_client;
+
 // Colas (definidas en printer_task.c)
 extern QueueHandle_t printer_uart_queue;
 
@@ -132,6 +148,7 @@ extern QueueHandle_t printer_uart_queue;
 #define LOG_I(tag, format, ...) ESP_LOGI(tag, format, ##__VA_ARGS__)
 #define LOG_E(tag, format, ...) ESP_LOGE(tag, format, ##__VA_ARGS__)
 #define LOG_W(tag, format, ...) ESP_LOGW(tag, format, ##__VA_ARGS__)
+#define LOG_D(tag, format, ...) ESP_LOGD(tag, format, ##__VA_ARGS__)
 
 // Verificación de errores
 #define CHECK_ERROR(condition, error_code) \

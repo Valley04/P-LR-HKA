@@ -2,10 +2,6 @@
 #ifndef PRINTER_TASK_H
 #define PRINTER_TASK_H
 
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-
 #include "printer_config.h"
 
 // CONFIGURACIÓN DE LA TAREA

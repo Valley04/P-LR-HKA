@@ -28,7 +28,7 @@ void app_main(void) {
         ESP_LOGE(TAG, "Error crítico: No se pudo inicializar UART");
         
         // Esperar antes de reintentar
-        vTaskDelay(pdMS_TO_TICKS(5000));
+        vTaskDelay(pdMS_TO_TICKS(RECONNECT_DELAY_MS));
         
         // Reiniciar ESP
         esp_restart();
@@ -45,31 +45,13 @@ void app_main(void) {
         printer_uart_deinit();
         
         // Esperar y reintentar
-        vTaskDelay(pdMS_TO_TICKS(5000));
+        vTaskDelay(pdMS_TO_TICKS(POLLING_INTERVAL_MS));
         esp_restart();
         return;
     }
     ESP_LOGI(TAG, "Tarea de impresora iniciada");
     
-    // 3. Iniciar simulador MQTT
-    ESP_LOGI(TAG, "Iniciando simulador MQTT...");
-    mqtt_data_init();
-    
-    // 4. Crear tarea MQTT
-    BaseType_t mqtt_result = xTaskCreate(
-        mqtt_task,
-        MQTT_SIMULATOR_NAME,
-        MQTT_SIMULATOR_STACK,
-        NULL,
-        MQTT_SIMULATOR_PRIORITY,
-        NULL
-    );
-    
-    if (mqtt_result != pdPASS) {
-        ESP_LOGE(TAG, "Error al crear tarea MQTT: %d", mqtt_result);
-    } else {
-        ESP_LOGI(TAG, "Tarea MQTT creada exitosamente");
-    }
+    start_mqtt_system();
     
     ESP_LOGI(TAG, "========================================");
     ESP_LOGI(TAG, "Sistema iniciado exitosamente");
@@ -77,7 +59,7 @@ void app_main(void) {
     ESP_LOGI(TAG, "Tópico base MQTT: %s/{serial}", MQTT_TOPIC_BASE);
     ESP_LOGI(TAG, "========================================");
     
-    // 5. Tarea principal (monitoreo mejorado)
+    // Tarea principal (monitoreo mejorado)
     int loop_count = 0;
     while (1) {
         loop_count++;

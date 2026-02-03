@@ -8,30 +8,38 @@
 
 // VARIABLES ESTÁTICAS
 static const char* TAG_MQTT = "mqtt_events";
-static const char *TAG_WIFI = "wifi station";
-static TaskHandle_t mqtt_simulator_handle = NULL;
+static const char* TAG_WIFI = "wifi station";
+static TaskHandle_t mqtt_task_handle = NULL;
+
 static bool wifi_connected = false;
 static bool mqtt_connected = false;
 
-// VARIABLES GLOBALES (declaradas en printer_config.h como extern)
-EventGroupHandle_t wifi_event_group;
-esp_mqtt_client_handle_t mqttClient;
-
 // Cliente MQTT
 esp_mqtt_client_handle_t mqtt_client = NULL;
+EventGroupHandle_t wifi_event_group = NULL;
 
 // FUNCIONES PARA CONEXIÓN WIFI
 
-static void wifi_event_handler(void* arg, esp_event_base_t event_base,
+void wifi_event_handler(void* arg, esp_event_base_t event_base,
                                int32_t event_id, void* event_data) {
-    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
-        LOG_I(TAG_WIFI, "WiFi STA iniciado");
-    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        LOG_I(TAG_WIFI, "WiFi desconectado");
-        wifi_connected = false;
-        mqtt_connected = false;
-        esp_wifi_connect();
-        xEventGroupClearBits(wifi_event_group, WIFI_CONNECTED_BIT);
+    if (event_base == WIFI_EVENT) {
+        switch (event_id) {
+            case WIFI_EVENT_STA_START:
+                LOG_I(TAG_WIFI, "WiFi STA iniciado");
+                esp_wifi_connect();
+                break;
+                
+            case WIFI_EVENT_STA_DISCONNECTED:
+                LOG_I(TAG_WIFI, "WiFi desconectado");
+                wifi_connected = false;
+                mqtt_connected = false;
+                // Intenta reconectar después de 5 segundos
+                vTaskDelay(pdMS_TO_TICKS(5000));
+                esp_wifi_connect();
+                xEventGroupClearBits(wifi_event_group, WIFI_CONNECTED_BIT);
+                xEventGroupSetBits(wifi_event_group, WIFI_FAIL_BIT);
+                break;
+        }
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
         LOG_I(TAG_WIFI, "IP obtenida: " IPSTR, IP2STR(&event->ip_info.ip));
@@ -40,7 +48,7 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
     }
 }
 
-static void mqtt_event_handler(void *handler_args, esp_event_base_t base, 
+void mqtt_event_handler(void *handler_args, esp_event_base_t base, 
                                int32_t event_id, void *event_data) {
     esp_mqtt_event_handle_t event = (esp_mqtt_event_handle_t) event_data;
     
@@ -83,7 +91,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base,
             break;
             
         default:
-            LOG_D(TAG_MQTT, "Evento MQTT: %ld", event_id);
+            LOG_E(TAG_MQTT, "Evento MQTT: %ld", event_id);
             break;
     }
 }
@@ -156,36 +164,18 @@ void wifi_init_sta(void)
 // FUNCIONES AUXILIARES
 
 // Inicializar MQTT
-static void mqtt_app_start(void) {
+void mqtt_app_start(void) {
     LOG_I(TAG_MQTT, "Iniciando cliente MQTT...");
     
-    // Configuración MQTT v5 con TLS
+    // CONFIGURACIÓN CORRECTA para ESP-IDF v5.5.2
     esp_mqtt_client_config_t mqtt_cfg = {
-        .broker = {
-            .address.hostname = "832b8689599f4045be005c116bc416f0.s1.eu.hivemq.cloud",
-            .address.port = 8883,  // Puerto MQTTS
-            .address.transport = MQTT_TRANSPORT_OVER_SSL,
-            .verification.crt_bundle_attach = esp_crt_bundle_attach,
-        },
-        .credentials = {
-            .username = "esp32_001",
-            .authentication.password = "Esp12345",
-        },
-        .session = {
-            .protocol_ver = MQTT_PROTOCOL_V_5,
-        },
-        .network = {
-            .reconnect_timeout_ms = 5000,
-            .disable_auto_reconnect = false,
-        },
-        .task = {
-            .stack_size = 6144,
-            .priority = 5,
-        },
-        .buffer = {
-            .size = 2048,
-            .out_size = 512,
-        },
+        .broker.address.hostname = "832b8689599f4045be005c116bc416f0.s1.eu.hivemq.cloud",
+        .broker.address.port = 8883,
+        .broker.address.transport = MQTT_TRANSPORT_OVER_SSL,
+        .broker.verification.crt_bundle_attach = esp_crt_bundle_attach,
+        .credentials.username = "esp32_001",
+        .credentials.authentication.password = "Esp12345",
+        .session.protocol_ver = MQTT_PROTOCOL_V_5,
     };
     
     // Crear cliente MQTT
@@ -210,6 +200,155 @@ static void mqtt_app_start(void) {
     
     LOG_I(TAG_MQTT, "Cliente MQTT iniciado");
 }
+
+// Inicializar datos MQTT
+void mqtt_data_init(void) {
+    memset(&mqtt_data, 0, sizeof(mqtt_data_t));
+    mqtt_data.timestamp = xTaskGetTickCount() * portTICK_PERIOD_MS;
+    strncpy(mqtt_data.register_number, "DESCONOCIDO", MAX_SERIAL_LENGTH);
+    LOG_I(TAG_MQTT, "Datos MQTT inicializados");
+}
+
+// publicación MQTT
+bool mqtt_publish(const char* topic, const char* payload) {
+    if (!mqtt_connected || mqtt_client == NULL) {
+        LOG_W(TAG_MQTT, "MQTT no conectado, no se puede publicar: %s", topic);
+        return false;
+    }
+    
+    int msg_id = esp_mqtt_client_publish(mqtt_client, topic, payload, 
+                                         strlen(payload), MQTT_QOS_LEVEL, 0);
+    
+    if (msg_id < 0) {
+        LOG_E(TAG_MQTT, "Error publicando en %s: %d", topic, msg_id);
+        return false;
+    }
+    
+    LOG_E(TAG_MQTT, "Publicado: %s -> %s", topic, payload);
+    return true;
+}
+
+// Loggear mensaje MQTT
+void log_mqtt_message(const char* topic, const char* payload) {
+    ESP_LOGI(TAG_MQTT, "TOPIC: %s", topic);
+    ESP_LOGI(TAG_MQTT, "PAYLOAD: %s", payload);
+}
+
+// TAREA MQTT
+
+void mqtt_task(void* pvParameters) {
+    LOG_I(TAG_MQTT, "Tarea MQTT iniciada");
+
+    char last_serial[MAX_SERIAL_LENGTH + 1] = "";
+    uint32_t last_sync_time = 0;
+    int sync_count = 0;
+    
+    while (1) {
+        if (!mqtt_connected) {
+            LOG_W(TAG_MQTT, "Esperando conexión MQTT...");
+            vTaskDelay(pdMS_TO_TICKS(RECONNECT_DELAY_MS));
+            continue;
+        }
+        if (mqtt_data.needs_sync) {
+            sync_count++;
+            LOG_I(TAG_MQTT, "Sincronizando datos (%d)...", sync_count);
+
+            // Detectar cambio de serial
+            if (strcmp(last_serial, mqtt_data.register_number) != 0) {
+                strcpy(last_serial, mqtt_data.register_number);
+                LOG_I(TAG_MQTT, "¡Nuevo serial detectado!: %s", last_serial);
+                
+                // Tópico de descubrimiento
+                char discovery_topic[128];
+                snprintf(discovery_topic, sizeof(discovery_topic), 
+                        "%s/%s/discovery", MQTT_TOPIC_BASE, mqtt_data.register_number);
+                mqtt_publish(discovery_topic, "online");
+            }
+            
+            // Publicar todos los campos individualmente
+            char topic[64];
+            char payload[512];
+            
+            // JSON completo
+            char json_buffer[1024];
+            format_mqtt_json(json_buffer, sizeof(json_buffer), &mqtt_data);
+            prepare_mqtt_topic(topic, sizeof(topic), "json_completo");
+            mqtt_publish(topic, json_buffer);
+            
+            // Estadísticas de intervalo
+            uint32_t current_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
+            if (last_sync_time > 0) {
+                uint32_t interval = current_time - last_sync_time;
+                LOG_I(TAG_MQTT, "Intervalo desde última sincronización: %lu ms", interval);
+            }
+            last_sync_time = current_time;
+            
+            mqtt_data.needs_sync = false;
+            LOG_I(TAG_MQTT, "Sincronización completada (%d)", sync_count);
+        }
+        
+        vTaskDelay(pdMS_TO_TICKS(POLLING_INTERVAL_MS)); // Verificar cada 5 segundos
+    }
+}
+
+// Función para iniciar la tarea MQTT (para ser llamada desde app_main)
+void start_mqtt_system(void) {
+    LOG_I(TAG_MQTT, "Iniciando sistema MQTT...");
+
+    // 1. Inicializar NVS
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+      ESP_ERROR_CHECK(nvs_flash_erase());
+      ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
+    LOG_I(TAG_MQTT, "NVS inicializado");
+
+    // 2. Inicializar WiFi
+    wifi_init_sta();
+
+    if (!wifi_connected) {
+        LOG_E(TAG_MQTT, "No se pudo conectar WiFi");
+        return;
+    }
+
+    // 3. Inicializar MQTT
+    mqtt_app_start();
+
+    // 4. Esperar conexión MQTT
+    int attempts = 0;
+    while (!mqtt_connected && attempts < 30) {
+        LOG_I(TAG_MQTT, "Esperando conexión MQTT... (%d/30)", attempts + 1);
+        vTaskDelay(pdMS_TO_TICKS(1000));
+        attempts++;
+    }
+
+    if (!mqtt_connected) {
+        LOG_E(TAG_MQTT, "No se pudo conectar MQTT después de %d intentos", attempts);
+        return;
+    }
+
+    // 5. Inicializar datos
+    mqtt_data_init();
+    
+    // 6. Crear tarea MQTT
+    BaseType_t result = xTaskCreate(
+        mqtt_task,
+        MQTT_SIMULATOR_NAME,
+        MQTT_SIMULATOR_STACK,
+        NULL,
+        MQTT_SIMULATOR_PRIORITY,
+        &mqtt_task_handle
+    );
+            
+    if (result == pdPASS) {
+        LOG_I(TAG_MQTT, "Tarea MQTT creada exitosamente");
+    } else {
+        LOG_E(TAG_MQTT, "Error al crear tarea MQTT");
+    }
+}
+
+// FUNCIONES AUXILIARES
 
 // Preparar tópico MQTT
 void prepare_mqtt_topic(char* topic, size_t size, const char* data_type) {
@@ -296,220 +435,4 @@ void prepare_mqtt_payload(uint8_t sts1, uint8_t sts2,
     LOG_I(TAG_MQTT, "Estado: %s", estado_str);
     LOG_I(TAG_MQTT, "Error: %s", error_str);
     LOG_I(TAG_MQTT, "==================================");
-}
-
-// Simular publicación MQTT
-void mqtt_publish(const char* topic, const char* payload) {
-    int msg_id = esp_mqtt_client_publish(mqttClient, topic, payload, 0, MQTT_QOS_LEVEL, 0);
-    if (msg_id != 0) LOG_I(TAG_MQTT, "[SIM] Publicar: %s -> %s", topic, payload);
-    else ESP_LOGI(TAG_MQTT, "Error en envio de datos, msg_id=%d", msg_id);
-}
-
-// Loggear mensaje MQTT
-void log_mqtt_message(const char* topic, const char* payload) {
-    ESP_LOGI(TAG_MQTT, "TOPIC: %s", topic);
-    ESP_LOGI(TAG_MQTT, "PAYLOAD: %s", payload);
-}
-
-// TAREA MQTT
-
-void mqtt_task(void* pvParameters) {
-    LOG_I(TAG_MQTT, "Tarea MQTT iniciada");
-
-    esp_mqtt_client_config_t mqtt5_cfg = {
-        .broker.address.uri = "mqtts://832b8689599f4045be005c116bc416f0.s1.eu.hivemq.cloud",
-        .credentials.username = "esp32_001",
-        .credentials.authentication.password = "Esp12345",
-        .broker.verification.crt_bundle_attach = esp_crt_bundle_attach,
-        .session.protocol_ver = MQTT_PROTOCOL_V_5,
-        .network.disable_auto_reconnect = true,
-        .task.stack_size = 6144,
-        .buffer.size = 2048
-
-    };
-
-    // Crear y configurar cliente MQTT
-    esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt5_cfg);
-    esp_mqtt_client_start(client);
-    
-    char last_serial[11] = "";
-    uint32_t last_sync_time = 0;
-    
-    while (1) {
-        if (mqtt_data.needs_sync) {
-            // Detectar cambio de serial
-            if (strcmp(last_serial, mqtt_data.register_number) != 0) {
-                strcpy(last_serial, mqtt_data.register_number);
-                LOG_I(TAG_MQTT, "¡Nuevo serial detectado!: %s", last_serial);
-                
-                // Tópico de descubrimiento
-                char discovery_topic[128];
-                snprintf(discovery_topic, sizeof(discovery_topic), 
-                        "%s/%s/discovery", MQTT_TOPIC_BASE, mqtt_data.register_number);
-                mqtt_publish(discovery_topic, "online");
-            }
-            
-            // Publicar todos los campos individualmente
-            char topic[128];
-            char payload[64];
-            
-            // STS1
-            prepare_mqtt_topic(topic, sizeof(topic), "sts1");
-            snprintf(payload, sizeof(payload), "0x%02X", mqtt_data.sts1);
-            mqtt_publish(topic, payload);
-            
-            // STS2
-            prepare_mqtt_topic(topic, sizeof(topic), "sts2");
-            snprintf(payload, sizeof(payload), "0x%02X", mqtt_data.sts2);
-            mqtt_publish(topic, payload);
-            
-            // Estado
-            if (mqtt_data.estado_str[0] != '\0') {
-                prepare_mqtt_topic(topic, sizeof(topic), "estado");
-                mqtt_publish(topic, mqtt_data.estado_str);
-            }
-            
-            // Error
-            if (mqtt_data.error_str[0] != '\0') {
-                prepare_mqtt_topic(topic, sizeof(topic), "error");
-                mqtt_publish(topic, mqtt_data.error_str);
-            }
-            
-            // Cajero
-            prepare_mqtt_topic(topic, sizeof(topic), "cajero");
-            mqtt_publish(topic, mqtt_data.atm_number);
-            
-            // Ventas
-            prepare_mqtt_topic(topic, sizeof(topic), "ventas");
-            mqtt_publish(topic, mqtt_data.ventas);
-            
-            // Última factura
-            prepare_mqtt_topic(topic, sizeof(topic), "ultima_factura");
-            mqtt_publish(topic, mqtt_data.last_bill_number);
-            
-            // Facturas emitidas
-            prepare_mqtt_topic(topic, sizeof(topic), "facturas_emitidas");
-            mqtt_publish(topic, mqtt_data.bill_issue);
-            
-            // Última nota débito
-            prepare_mqtt_topic(topic, sizeof(topic), "ultima_nota_debito");
-            mqtt_publish(topic, mqtt_data.number_last_debit);
-            
-            // Cantidad notas débito
-            prepare_mqtt_topic(topic, sizeof(topic), "cantidad_notas_debito");
-            mqtt_publish(topic, mqtt_data.amount_debit);
-            
-            // Última nota crédito
-            prepare_mqtt_topic(topic, sizeof(topic), "ultima_nota_credito");
-            mqtt_publish(topic, mqtt_data.number_last_credit);
-            
-            // Cantidad notas crédito
-            prepare_mqtt_topic(topic, sizeof(topic), "cantidad_notas_credito");
-            mqtt_publish(topic, mqtt_data.amount_credit);
-            
-            // Último documento no fiscal
-            prepare_mqtt_topic(topic, sizeof(topic), "ultimo_doc_nofiscal");
-            mqtt_publish(topic, mqtt_data.number_last_notfiscal);
-            
-            // Cantidad documentos no fiscales
-            prepare_mqtt_topic(topic, sizeof(topic), "cantidad_docs_nofiscal");
-            mqtt_publish(topic, mqtt_data.amount_notfiscal);
-            
-            // Cierres Z
-            prepare_mqtt_topic(topic, sizeof(topic), "cierres_z");
-            mqtt_publish(topic, mqtt_data.counter_daily_z);
-            
-            // Reportes fiscal
-            prepare_mqtt_topic(topic, sizeof(topic), "reportes_fiscal");
-            mqtt_publish(topic, mqtt_data.counter_report_fiscal);
-            
-            // RIF
-            prepare_mqtt_topic(topic, sizeof(topic), "rif");
-            mqtt_publish(topic, mqtt_data.rif_cliente);
-            
-            // Hora
-            prepare_mqtt_topic(topic, sizeof(topic), "hora");
-            mqtt_publish(topic, mqtt_data.hour_machine);
-            
-            // Fecha
-            prepare_mqtt_topic(topic, sizeof(topic), "fecha");
-            mqtt_publish(topic, mqtt_data.date_machine);
-            
-            // Timestamp
-            prepare_mqtt_topic(topic, sizeof(topic), "timestamp");
-            snprintf(payload, sizeof(payload), "%lu", mqtt_data.timestamp);
-            mqtt_publish(topic, payload);
-            
-            // Errores
-            prepare_mqtt_topic(topic, sizeof(topic), "errores");
-            snprintf(payload, sizeof(payload), "%d", mqtt_data.error_count);
-            mqtt_publish(topic, payload);
-            
-            // Intentos reconexión
-            prepare_mqtt_topic(topic, sizeof(topic), "reconexiones");
-            snprintf(payload, sizeof(payload), "%d", mqtt_data.reconnect_attempts);
-            mqtt_publish(topic, payload);
-            
-            // JSON completo
-            char json_buffer[1024];
-            format_mqtt_json(json_buffer, sizeof(json_buffer), &mqtt_data);
-            prepare_mqtt_topic(topic, sizeof(topic), "json_completo");
-            mqtt_publish(topic, json_buffer);
-            
-            // Estadísticas de intervalo
-            uint32_t current_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
-            if (last_sync_time > 0) {
-                uint32_t interval = current_time - last_sync_time;
-                LOG_I(TAG_MQTT, "Intervalo desde última sincronización: %lu ms", interval);
-            }
-            last_sync_time = current_time;
-            
-            mqtt_data.needs_sync = false;
-        }
-        
-        vTaskDelay(pdMS_TO_TICKS(POLLING_INTERVAL_MS)); // Verificar cada 5 segundos
-    }
-}
-
-// Función para iniciar la tarea MQTT (para ser llamada desde app_main)
-void start_mqtt_simulator(void) {
-    if (mqtt_simulator_handle != NULL) {
-        return; // Ya está corriendo
-    }
-
-    //Initialize NVS
-    esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-      ESP_ERROR_CHECK(nvs_flash_erase());
-      ret = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(ret);
-
-    wifi_init_sta();
-
-    while (1) 
-    {
-        if (isConnected) 
-        {            
-            BaseType_t result = xTaskCreate(
-                mqtt_task,
-                MQTT_SIMULATOR_NAME,
-                MQTT_SIMULATOR_STACK,
-                NULL,
-                MQTT_SIMULATOR_PRIORITY,
-                &mqtt_simulator_handle
-            );
-            
-            if (result == pdPASS) {
-                LOG_I(TAG_MQTT, "Tarea simuladora MQTT creada exitosamente");
-            } else {
-                LOG_E(TAG_MQTT, "Error al crear tarea simuladora MQTT");
-            }
-            break;
-        }
-        else
-        {
-            vTaskDelay(pdMS_TO_TICKS(RESPONSE_TIMEOUT_MS));
-        }
-    }
 }

@@ -143,8 +143,8 @@ bool printer_uart_init(void) {
     // Instalar driver UART
     ESP_LOGI(TAG_PRINTER, "Instalando driver UART...");
     esp_err_t err = uart_driver_install(UART_PORT, 
-                                        UART_BUFFER_SIZE,
-                                        UART_BUFFER_SIZE,
+                                        UART_BUFFER_SIZE * 2,
+                                        UART_BUFFER_SIZE * 2,
                                         UART_QUEUE_SIZE,
                                         &printer_uart_queue,
                                         0);

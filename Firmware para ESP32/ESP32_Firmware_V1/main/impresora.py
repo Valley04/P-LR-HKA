@@ -66,7 +66,7 @@ def simulador_depuracion():
                 # Responder según el byte recibido
                 if byte == b'\x05':  # ENQ
                     print("  -> Enviando respuesta ENQ: 0x02 0x60 0x40 0x03")
-                    respuesta = b'\x02\x60\x40\x03'
+                    respuesta = b'\x02\x61\x40\x03'
                     ser.write(respuesta)
                     ser.flush()
                     
