@@ -2,17 +2,16 @@
 #include "printer_config.h"
 #include "printer_task.h"
 #include "printer_mqtt.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/queue.h"
+#include <stdio.h>
+#include <string.h>
 #include "driver/uart.h"
 #include "esp_log.h"
-#include <string.h>
+
 
 // VARIABLES GLOBALES (declaradas en printer_config.h como extern)
 mqtt_data_t mqtt_data;
 const char* TAG_PRINTER = "printer_events";
-static QueueHandle_t printer_uart_queue = NULL;
+QueueHandle_t printer_uart_queue = NULL;
 
 // VARIABLES ESTÁTICAS (solo visibles en este archivo)
 static TaskHandle_t printer_task_handle = NULL;
@@ -147,7 +146,7 @@ bool printer_uart_init(void) {
                                         UART_BUFFER_SIZE,
                                         UART_BUFFER_SIZE,
                                         UART_QUEUE_SIZE,
-                                        &uart_queue,
+                                        &printer_uart_queue,
                                         0);
     
     if (err != ESP_OK) {
@@ -581,12 +580,12 @@ static void printer_task_main(void* pvParameters) {
                     ESP_LOGW(TAG_PRINTER, "Trama inválida recibida");
                     ESP_LOG_BUFFER_HEX(TAG_PRINTER, rx_buffer, received < 16 ? received : 16);
                     printer_handle_error(ERROR_INVALID_RESPONSE);
-                    uart_flush();
+                    printer_uart_flush();
                 }
             } else {
                 ESP_LOGW(TAG_PRINTER, "No se recibió respuesta (timeout)");
                 printer_handle_error(ERROR_NO_RESPONSE);
-                uart_flush();
+                printer_uart_flush();
             }
         } else {
             ESP_LOGE(TAG_PRINTER, "Error al enviar ENQ");

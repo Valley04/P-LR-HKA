@@ -5,6 +5,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
+#include "esp_log.h"
 
 // CONSTANTES DE CONFIGURACIÓN
 
@@ -13,8 +17,8 @@
 #define UART_BAUDRATE       9600
 #define UART_TX_PIN         18
 #define UART_RX_PIN         19
-#define UART_BUFFER_SIZE    512      // Reducido de 1024
-#define UART_QUEUE_SIZE     10       // Reducido de 20
+#define UART_BUFFER_SIZE    1024      // Reducido de 1024
+#define UART_QUEUE_SIZE     20       // Reducido de 20
 
 // Protocolo Fiscal
 #define ENQ_CMD             0x05
@@ -25,7 +29,7 @@
 #define NAK_BYTE            0x15
 
 // Tiempos (ms) - Optimizados
-#define POLLING_INTERVAL_MS     10000   // 10 segundos
+#define POLLING_INTERVAL_MS     30000   // 30 segundos
 #define RESPONSE_TIMEOUT_MS     2000    // 2 segundos
 #define STATUS_S1_TIMEOUT_MS    5000    // 5 segundos
 #define RECONNECT_DELAY_MS      5000    // 5 segundos
@@ -86,8 +90,8 @@ typedef struct __attribute__((packed)) {
     uint32_t timestamp;
     
     // Strings de estado (punteros a constantes en Flash)
-    const char* estado_str;
-    const char* error_str;
+    char estado_str[64];
+    char error_str[64];
     
     // Datos STATUS S1
     char atm_number[5];
@@ -114,7 +118,7 @@ extern mqtt_data_t mqtt_data;
 extern const char* TAG_PRINTER;
 
 // Colas (definidas en printer_task.c)
-extern void* uart_queue;
+extern QueueHandle_t printer_uart_queue;
 
 // MACROS UTILES
 

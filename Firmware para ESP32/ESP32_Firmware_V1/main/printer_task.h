@@ -2,11 +2,15 @@
 #ifndef PRINTER_TASK_H
 #define PRINTER_TASK_H
 
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
 #include "printer_config.h"
 
 // CONFIGURACIÓN DE LA TAREA
 
-#define TASK_STACK_SIZE     3072    // Reducido de 4096
+#define TASK_STACK_SIZE     4096    // Reducido de 4096
 #define TASK_PRIORITY       5
 #define TASK_NAME           "printer_task"
 

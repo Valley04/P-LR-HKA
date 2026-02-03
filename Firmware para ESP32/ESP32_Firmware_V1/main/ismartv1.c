@@ -53,11 +53,11 @@ void app_main(void) {
     
     // 3. Iniciar simulador MQTT
     ESP_LOGI(TAG, "Iniciando simulador MQTT...");
-    mqtt_simulator_init();
+    mqtt_data_init();
     
     // 4. Crear tarea MQTT
     BaseType_t mqtt_result = xTaskCreate(
-        mqtt_simulator_task,
+        mqtt_task,
         MQTT_SIMULATOR_NAME,
         MQTT_SIMULATOR_STACK,
         NULL,
