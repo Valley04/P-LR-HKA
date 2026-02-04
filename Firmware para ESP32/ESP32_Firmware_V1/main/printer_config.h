@@ -30,16 +30,18 @@
 
 // Protocolo Fiscal
 #define ENQ_CMD             0x05
-#define STATUS_S1_CMD       0x4C
 #define STX_BYTE            0x02
 #define ETX_BYTE            0x03
 #define ACK_BYTE            0x06
 #define NAK_BYTE            0x15
 
+extern const uint8_t CMD_STATUS_S1[];
+
 // Tiempos (ms) - Optimizados
 #define POLLING_INTERVAL_MS     30000   // 30 segundos
 #define RESPONSE_TIMEOUT_MS     2000    // 2 segundos
-#define STATUS_S1_TIMEOUT_MS    5000    // 5 segundos
+#define STATUS_S1_TIMEOUT_MS    3000    // 3 segundos
+#define ACK_TIMEOUT_MS          1000
 #define RECONNECT_DELAY_MS      5000    // 5 segundos
 #define COMMAND_DELAY_MS        100     // 100ms entre comandos
 
@@ -82,7 +84,8 @@ typedef enum {
     ERROR_PARITY,
     ERROR_COMMUNICATION_LOST,
     ERROR_MAX_RETRIES_EXCEEDED,
-    ERROR_STATUS_S1_FAILED
+    ERROR_STATUS_S1_FAILED,
+    ERROR_NO_ACK
 } printer_error_t;
 
 // Estructura compacta para datos MQTT

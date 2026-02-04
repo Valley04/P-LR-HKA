@@ -1,106 +1,164 @@
 import serial
 import time
-import sys
 
-def simulador_depuracion():
-    """Simulador con depuración detallada"""
+# Control bytes
+STX = 0x02
+ETX = 0x03
+ENQ = 0x05
+ACK = 0x06
+NAK = 0x15
+
+# Estado fiscal fijo
+STS1 = 0x60
+STS2 = 0x40
+
+def calcular_lrc(data: bytes) -> int:
+    lrc = 0
+    for b in data:
+        lrc ^= b
+    return lrc
+
+
+def enviar_status(ser):
+    frame = bytes([
+        STX,
+        STS1,
+        STS2,
+        ETX,
+        STS1 ^ STS2 ^ ETX
+    ])
+    ser.write(frame)
+    ser.flush()
+
+    print("➡ STATUS enviado:", frame.hex(" ").upper())
+
+def construir_trama(data: bytes) -> bytes:
+    lrc = 0
+    for b in data:
+        lrc ^= b
+    lrc ^= ETX
+    return bytes([STX]) + data + bytes([ETX, lrc])
+
+def enviar_respuesta_s1(ser):
+    payload = (
+        b"001000000000000000000000000000000000000000000000000000000000000000000000000000000J3121711970Z1F9999988123000300126"
+    )
+
+    cuerpo = payload + bytes([ETX])
+    lrc = calcular_lrc(cuerpo)
+    frame = bytes([STX]) + cuerpo + bytes([lrc])
+
+    ser.write(frame)
+    ser.flush()
+
+    print("➡ Respuesta S1 enviada:", frame.hex(" ").upper())
+    print("➡ Longitud trama S1:", len(frame))
+
+def simulador_fiscal():
+    ser = serial.Serial(
+        port="COM6",
+        baudrate=9600,
+        bytesize=serial.EIGHTBITS,
+        parity=serial.PARITY_EVEN,
+        stopbits=serial.STOPBITS_ONE,
+        timeout=1
+    )
+
+    buffer = bytearray()
+
+    print("🖨️ Simulador Fiscal HKA activo...")
+    print(f"Conectado a {ser.port} a {ser.baudrate} baudios")
+    
+    # Limpiar buffers
+    ser.reset_input_buffer()
+    ser.reset_output_buffer()
+
     try:
-        ser = serial.Serial(
-            port='COM6',
-            baudrate=9600,
-            bytesize=serial.EIGHTBITS,
-            parity=serial.PARITY_EVEN,
-            stopbits=serial.STOPBITS_ONE,
-            timeout=1
-        )
-        
-        print("=" * 60)
-        print("SIMULADOR DE IMPRESORA FISCAL - MODO DEPURACIÓN")
-        print("=" * 60)
-        print(f"Puerto: {ser.port}")
-        print(f"Baudrate: {ser.baudrate}")
-        print(f"Bytesize: {ser.bytesize}")
-        print(f"Parity: {ser.parity}")
-        print(f"Stopbits: {ser.stopbits}")
-        print("=" * 60)
-        print("Esperando comandos...")
-        print("Presiona Ctrl+C para salir")
-        print("=" * 60)
-        
-        contador = 0
-        
         while True:
-            # Leer datos byte por byte
-            if ser.in_waiting > 0:
-                byte = ser.read(1)
-                contador += 1
-                
-                print(f"\n[{contador}] Byte recibido:")
-                print(f"  Hexadecimal: 0x{byte.hex().upper()}")
-                print(f"  Decimal: {int.from_bytes(byte, 'big')}")
-                print(f"  Binario: {bin(int.from_bytes(byte, 'big'))[2:].zfill(8)}")
-                
-                # Intentar interpretar como ASCII
-                try:
-                    ascii_char = byte.decode('ascii')
-                    print(f"  ASCII: '{ascii_char}'")
-                except:
-                    print(f"  ASCII: No es ASCII válido")
-                
-                # Mostrar tipo de comando
-                if byte == b'\x05':
-                    print(f"  TIPO: ENQ (Consulta de estado)")
-                elif byte == b'\x4C':
-                    print(f"  TIPO: STATUS S1")
-                elif byte == b'\x02':
-                    print(f"  TIPO: STX (Inicio de trama)")
-                elif byte == b'\x03':
-                    print(f"  TIPO: ETX (Fin de trama)")
-                elif byte == b'\x15':
-                    print(f"  TIPO: NAK (No reconocimiento)")
-                elif byte == b'\x06':
-                    print(f"  TIPO: ACK (Reconocimiento)")
-                else:
-                    print(f"  TIPO: Desconocido")
-                
-                # Responder según el byte recibido
-                if byte == b'\x05':  # ENQ
-                    print("  -> Enviando respuesta ENQ: 0x02 0x60 0x40 0x03")
-                    respuesta = b'\x02\x61\x40\x03'
-                    ser.write(respuesta)
-                    ser.flush()
+            if ser.in_waiting:
+                byte = ser.read(1)[0]
+                print(f"⬅ Byte recibido: {byte:02X}")
+
+                # Manejo de ENQ
+                if byte == ENQ:
+                    print("⬅ ENQ recibido → Enviando STATUS")
+                    enviar_status(ser)
+                    continue
+
+                # Ignorar ACK/NAK entrantes
+                if byte in (ACK, NAK):
+                    print(f"⬅ {'ACK' if byte == ACK else 'NAK'} recibido (ignorado)")
+                    continue
+
+                # Inicio de trama
+                if byte == STX:
+                    buffer.clear()
+                    buffer.append(byte)
+                    print("⬅ STX detectado, iniciando nueva trama")
+                    continue
+
+                if buffer:
+                    buffer.append(byte)
                     
-                elif byte == b'\x4C':  # STATUS S1
-                    print("  -> Enviando respuesta STATUS S1")
-                    # Construir datos de prueba
-                    datos = "001000000000000000000000000000000000000000000000000000000000000000000000000000000J3121711970Z1F9999988123000300126"
-                    
-                    # Enviar STX + datos + ETX
-                    respuesta = b'\x02' + datos.encode('ascii') + b'\x03'
-                    print(f"  -> Longitud respuesta: {len(respuesta)} bytes")
-                    print(f"  -> STX: 0x02, ETX: 0x03")
-                    print(f"  -> Datos ASCII: {len(datos)} caracteres")
-                    
-                    ser.write(respuesta)
-                    ser.flush()
-                    
-                else:
-                    print(f"  -> Byte desconocido, NO respondiendo")
-                    # NO enviar NAK para evitar el bucle infinito
-                    # ser.write(b'\x15')
-                
-                print("-" * 40)
-            
+                    # Si tenemos ETX en posición -2, necesitamos LRC
+                    if len(buffer) >= 4 and buffer[-2] == ETX:
+                        # Ya tenemos ETX, esperar LRC si no está
+                        if len(buffer) == 4:  # STX + DATA + ETX
+                            # Necesitamos leer LRC
+                            if ser.in_waiting >= 1:
+                                lrc_byte = ser.read(1)[0]
+                                buffer.append(lrc_byte)
+                                
+                                trama = bytes(buffer)
+                                print(f"✅ Trama completa recibida: {trama.hex(' ').upper()}")
+                                print(f"   Longitud: {len(trama)} bytes")
+                                
+                                # Validar LRC
+                                data_etx = trama[1:-1]  # STX hasta LRC (excluido)
+                                lrc_rx = trama[-1]
+                                lrc_calc = calcular_lrc(data_etx)
+                                
+                                if lrc_rx == lrc_calc:
+                                    print(f"✅ LRC válido: 0x{lrc_rx:02X}")
+                                    print("➡ Enviando ACK inmediatamente...")
+                                    ser.write(bytes([ACK]))
+                                    ser.flush()
+                                    print("➡ ACK enviado (0x06)")
+                                    
+                                    # Procesar comando
+                                    comando = data_etx[:-1]  # Excluye ETX
+                                    print(f"📥 Comando recibido: {comando}")
+                                    
+                                    if comando == b"S1":
+                                        print("✅ Comando 'S1' reconocido")
+                                        print("➡ Enviando respuesta S1...")
+                                        enviar_respuesta_s1(ser)
+                                    else:
+                                        print(f"⚠️ Comando '{comando}' no reconocido")
+                                    
+                                else:
+                                    print(f"❌ LRC inválido: RX=0x{lrc_rx:02X}, CALC=0x{lrc_calc:02X}")
+                                    print("➡ Enviando NAK...")
+                                    ser.write(bytes([NAK]))
+                                    ser.flush()
+                                    print("➡ NAK enviado (0x15)")
+                                
+                                buffer.clear()
+                            else:
+                                # Esperar LRC
+                                continue
+                            
             time.sleep(0.01)
-            
+
     except KeyboardInterrupt:
-        print("\n\nSimulador detenido por usuario")
+        print("\n⏹️ Simulador detenido")
     except Exception as e:
-        print(f"\nError: {e}")
+        print(f"❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
     finally:
-        if 'ser' in locals() and ser.is_open:
-            ser.close()
-            print("Puerto serial cerrado")
+        ser.close()
+
 
 if __name__ == "__main__":
-    simulador_depuracion()
+    simulador_fiscal()

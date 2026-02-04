@@ -7,7 +7,6 @@
 #include "driver/uart.h"
 #include "esp_log.h"
 
-
 // VARIABLES GLOBALES (declaradas en printer_config.h como extern)
 mqtt_data_t mqtt_data;
 const char* TAG_PRINTER = "printer_events";
@@ -16,6 +15,7 @@ QueueHandle_t printer_uart_queue = NULL;
 // VARIABLES ESTÁTICAS (solo visibles en este archivo)
 static TaskHandle_t printer_task_handle = NULL;
 static bool uart_initialized = false;
+const uint8_t CMD_STATUS_S1[] = {0x53, 0x31};
 
 // Tablas de strings en FLASH para ahorrar RAM
 static const char* const estado_strings[] __attribute__((section(".rodata"))) = {
@@ -72,6 +72,43 @@ static bool uart_send_command(uint8_t command) {
     return false;
 }
 
+static bool uart_send_frame(const uint8_t *data, size_t len)
+{
+    if (!uart_initialized || data == NULL || len == 0) {
+        return false;
+    }
+
+    uint8_t frame[UART_BUFFER_SIZE];
+    size_t idx = 0;
+
+    // STX
+    frame[idx++] = STX_BYTE;
+
+    // DATA (puede ser 1 o más bytes)
+    for (size_t i = 0; i < len; i++) {
+        frame[idx++] = data[i];
+    }
+
+    // ETX
+    frame[idx++] = ETX_BYTE;
+
+    // LRC = XOR desde DATA hasta ETX
+    uint8_t lrc = 0;
+    for (size_t i = 1; i < idx; i++) {
+        lrc ^= frame[i];
+    }
+    frame[idx++] = lrc;
+
+    int sent = uart_write_bytes(UART_PORT, (const char *)frame, idx);
+    uart_wait_tx_done(UART_PORT, pdMS_TO_TICKS(100));
+
+    ESP_LOGI(TAG_PRINTER, "Frame enviado (%d bytes):", idx);
+
+    return sent == idx;
+}
+
+
+
 // Función para recibir datos con timeout
 static int uart_receive_with_timeout(uint8_t* buffer, size_t buffer_size, uint32_t timeout_ms) {
     if (!uart_initialized || buffer == NULL || buffer_size == 0) {
@@ -80,26 +117,31 @@ static int uart_receive_with_timeout(uint8_t* buffer, size_t buffer_size, uint32
     
     TickType_t start_time = xTaskGetTickCount();
     int total_received = 0;
+    bool etx_detected = false;
     
     while ((xTaskGetTickCount() - start_time) < pdMS_TO_TICKS(timeout_ms)) {
         size_t available = 0;
         uart_get_buffered_data_len(UART_PORT, &available);
         
         if (available > 0) {
-            int to_read = (available < (buffer_size - total_received)) ? 
-                          available : (buffer_size - total_received);
-            
+            // Leer todos los bytes disponibles
+            int to_read = (available < (buffer_size - total_received)) ?
+                           available : (buffer_size - total_received);
             int received = uart_read_bytes(UART_PORT, buffer + total_received, to_read, 0);
+            
             if (received > 0) {
                 total_received += received;
                 
-                // Verificar si tenemos una respuesta completa
-                if (total_received >= 4) {
-                    if (buffer[0] == STX_BYTE) {
-                        // Buscar ETX
-                        for (int i = 0; i < total_received; i++) {
-                            if (buffer[i] == ETX_BYTE) {
-                                return total_received;
+                // Verificar si ya tenemos una trama completa
+                if (total_received >= 5) {  // Mínimo STX + DATA + ETX + LRC
+                    for (int i = 0; i < total_received; i++) {
+                        if (buffer[i] == STX_BYTE) {
+                            // Buscar ETX desde STX
+                            for (int j = i + 1; j < total_received; j++) {
+                                if (buffer[j] == ETX_BYTE && (j + 1) < total_received) {
+                                    // Tenemos STX...ETX + al menos 1 byte para LRC
+                                    return total_received;
+                                }
                             }
                         }
                     }
@@ -177,10 +219,6 @@ bool printer_uart_init(void) {
     }
     ESP_LOGI(TAG_PRINTER, "Pines UART configurados");
     
-    // Configurar detección de patrones (opcional, solo si lo necesitas)
-    // uart_enable_pattern_det_baud_intr(UART_PORT, '+', PATTERN_CHR_NUM, 9, 0, 0);
-    // uart_pattern_queue_reset(UART_PORT, 20);
-    
     uart_initialized = true;
     task_ctx.initialized = true;
     task_ctx.state = PRINTER_STATE_IDLE;
@@ -247,8 +285,9 @@ void procesar_status_s1(const uint8_t* data, size_t len) {
         return;
     }
     
-    const uint8_t* trama = data + stx_pos;
-    size_t trama_len = len - stx_pos;
+    const uint8_t* trama = &data[stx_pos + 1];
+    size_t trama_len = len - stx_pos - 3;
+
     
     if (trama_len < STATUS_S1_MIN_LENGTH) {
         LOG_E(TAG_PRINTER, "Trama después de STX muy corta: %d", trama_len);
@@ -257,67 +296,67 @@ void procesar_status_s1(const uint8_t* data, size_t len) {
     
     // Extraer TODOS los campos según posiciones del protocolo
     // Número de Cajero (posición 1-4 después de STX)
-    memcpy(mqtt_data.atm_number, &trama[1], 4);
+    memcpy(mqtt_data.atm_number, &trama[0], 4);
     mqtt_data.atm_number[4] = '\0';
     
     // Subtotal de Ventas (posición 5-21)
-    memcpy(mqtt_data.ventas, &trama[5], 17);
+    memcpy(mqtt_data.ventas, &trama[4], 17);
     mqtt_data.ventas[17] = '\0';
     
     // Número de última factura (posición 22-29)
-    memcpy(mqtt_data.last_bill_number, &trama[22], 8);
+    memcpy(mqtt_data.last_bill_number, &trama[21], 8);
     mqtt_data.last_bill_number[8] = '\0';
     
     // Cantidad de facturas emitidas (posición 30-34)
-    memcpy(mqtt_data.bill_issue, &trama[30], 5);
+    memcpy(mqtt_data.bill_issue, &trama[29], 5);
     mqtt_data.bill_issue[5] = '\0';
     
     // Número de la última nota de débito (posición 35-42)
-    memcpy(mqtt_data.number_last_debit, &trama[35], 8);
+    memcpy(mqtt_data.number_last_debit, &trama[34], 8);
     mqtt_data.number_last_debit[8] = '\0';
     
     // Cantidad de notas de débito del día (posición 43-47)
-    memcpy(mqtt_data.amount_debit, &trama[43], 5);
+    memcpy(mqtt_data.amount_debit, &trama[42], 5);
     mqtt_data.amount_debit[5] = '\0';
     
     // Número de la última nota de crédito (posición 48-55)
-    memcpy(mqtt_data.number_last_credit, &trama[48], 8);
+    memcpy(mqtt_data.number_last_credit, &trama[47], 8);
     mqtt_data.number_last_credit[8] = '\0';
     
     // Cantidad de notas de crédito (posición 56-60)
-    memcpy(mqtt_data.amount_credit, &trama[56], 5);
+    memcpy(mqtt_data.amount_credit, &trama[55], 5);
     mqtt_data.amount_credit[5] = '\0';
     
     // Número del último documento no fiscal (posición 61-68)
-    memcpy(mqtt_data.number_last_notfiscal, &trama[61], 8);
+    memcpy(mqtt_data.number_last_notfiscal, &trama[60], 8);
     mqtt_data.number_last_notfiscal[8] = '\0';
     
     // Cantidad de documentos no fiscales (posición 69-73)
-    memcpy(mqtt_data.amount_notfiscal, &trama[69], 5);
+    memcpy(mqtt_data.amount_notfiscal, &trama[68], 5);
     mqtt_data.amount_notfiscal[5] = '\0';
     
     // Contador de cierres diarios (Z) (posición 74-77)
-    memcpy(mqtt_data.counter_daily_z, &trama[74], 4);
+    memcpy(mqtt_data.counter_daily_z, &trama[73], 4);
     mqtt_data.counter_daily_z[4] = '\0';
     
     // Contador de reportes de memoria fiscal (posición 78-81)
-    memcpy(mqtt_data.counter_report_fiscal, &trama[78], 4);
+    memcpy(mqtt_data.counter_report_fiscal, &trama[77], 4);
     mqtt_data.counter_report_fiscal[4] = '\0';
     
     // RIF (posición 82-92)
-    memcpy(mqtt_data.rif_cliente, &trama[82], 11);
+    memcpy(mqtt_data.rif_cliente, &trama[81], 11);
     mqtt_data.rif_cliente[11] = '\0';
     
     // Número de registro (posición 93-102) - ¡ESTE ES EL SERIAL!
-    memcpy(mqtt_data.register_number, &trama[93], 10);
+    memcpy(mqtt_data.register_number, &trama[92], 10);
     mqtt_data.register_number[10] = '\0';
     
     // Hora actual (posición 103-108)
-    memcpy(mqtt_data.hour_machine, &trama[103], 6);
+    memcpy(mqtt_data.hour_machine, &trama[102], 6);
     mqtt_data.hour_machine[6] = '\0';
     
     // Fecha actual (posición 109-114)
-    memcpy(mqtt_data.date_machine, &trama[109], 6);
+    memcpy(mqtt_data.date_machine, &trama[108], 6);
     mqtt_data.date_machine[6] = '\0';
     
     // Actualizar serial
@@ -333,10 +372,19 @@ void procesar_status_s1(const uint8_t* data, size_t len) {
 
 // Validar trama
 bool validate_frame(const uint8_t* data, size_t len) {
-    if (len < 4) return false; // Mínimo STX + 2 bytes + ETX
+    if (len < 5) return false; // Mínimo STX + DATA + ETX + LRC
     if (data[0] != STX_BYTE) return false;
-    if (data[len-1] != ETX_BYTE) return false;
-    return true;
+    if (data[len-2] != ETX_BYTE) return false;
+
+    uint8_t lrc_rx = data[len - 1];
+    uint8_t lrc_calc = 0;
+
+    // LRC se calcula desde DATA hasta ETX inclusive
+    for (size_t i = 1; i < len - 1; i++) {
+        lrc_calc ^= data[i];
+    }
+
+    return (lrc_rx == lrc_calc);
 }
 
 // Verificar respuesta válida
@@ -460,11 +508,6 @@ bool send_enq_command(void) {
     return uart_send_command(ENQ_CMD);
 }
 
-// Enviar comando STATUS S1
-bool send_status_s1_command(void) {
-    return uart_send_command(STATUS_S1_CMD);
-}
-
 // Recibir respuesta
 int receive_response(uint8_t* buffer, size_t buffer_size, uint32_t timeout_ms) {
     return uart_receive_with_timeout(buffer, buffer_size, timeout_ms);
@@ -544,7 +587,7 @@ static void printer_task_main(void* pvParameters) {
                 if (validate_frame(rx_buffer, received)) {
                     ESP_LOGI(TAG_PRINTER, "Trama válida recibida");
                     ESP_LOGI(TAG_PRINTER, "STX: 0x%02X, STS1: 0x%02X, STS2: 0x%02X, ETX: 0x%02X",
-                            rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[received-1]);
+                            rx_buffer[0], rx_buffer[1], rx_buffer[2], rx_buffer[received-2]);
                     
                     // 3. Procesar estado
                     interpretar_estado(rx_buffer[1], rx_buffer[2]);
@@ -553,32 +596,74 @@ static void printer_task_main(void* pvParameters) {
                     if (rx_buffer[1] == 0x60) {
                         ESP_LOGI(TAG_PRINTER, "Impresora en modo fiscal, solicitando STATUS S1...");
                         vTaskDelay(pdMS_TO_TICKS(COMMAND_DELAY_MS));
-                        
-                        if (send_status_s1_command()) {
-                            task_ctx.state = PRINTER_STATE_WAITING_STATUS_S1;
-                            ESP_LOGI(TAG_PRINTER, "STATUS S1 solicitado, esperando...");
-                            
-                            // Recibir STATUS S1
-                            received = receive_response(rx_buffer, sizeof(rx_buffer), STATUS_S1_TIMEOUT_MS);
-                            
-                            if (received > 0 && validate_frame(rx_buffer, received)) {
-                                ESP_LOGI(TAG_PRINTER, "STATUS S1 recibido: %d bytes", received);
-                                procesar_status_s1(rx_buffer, received);
+
+                        ESP_LOGI(TAG_PRINTER, "Enviando comando S1...")
+                        if (uart_send_frame(CMD_STATUS_S1, sizeof(CMD_STATUS_S1))) {
+                            ESP_LOGI(TAG_PRINTER, "Comando S1 enviado, esperando ACK...");
+
+                            // Esperar a que se transmita completamente
+                            uart_wait_tx_done(UART_PORT, pdMS_TO_TICKS(100));
+
+                            printer_uart_flush();
+
+                            // Esperar ACK con timeout más corto
+                            uint8_t ack_buffer[1];
+                            int ack_received = uart_receive_with_timeout(ack_buffer, 1, 1000); // 1 segundo
+
+                            if (ack_received > 0) {
+                                ESP_LOGI(TAG_PRINTER, "ACK recibido, esperando respuesta S1... 0x%02X", ack_buffer[0]);
+                                
+                                if (ack_buffer[0] == ACK_BYTE) {
+                                    ESP_LOGI(TAG_PRINTER, "ACK recibido, esperando respuesta S1...");
+
+                                    print_uart_flush();
+
+                                    // Ahora esperar la trama S1
+                                    received = receive_response(rx_buffer, sizeof(rx_buffer), STATUS_S1_TIMEOUT_MS);
+                                if (received > 0) {
+                                    ESP_LOGI(TAG_PRINTER, "Posible S1 recibido: %d bytes", received);
+                                    
+                                    // DEBUG: Mostrar bytes recibidos
+                                    for (int i = 0; i < received; i++) {
+                                        ESP_LOGI(TAG_PRINTER, "[%d]: 0x%02X", i, rx_buffer[i]);
+                                    }
+                                    
+                                    if (validate_frame(rx_buffer, received)) {
+                                        // Enviar ACK de confirmación
+                                        uart_write_bytes(UART_PORT, (const char[]){ACK_BYTE}, 1);
+                                        uart_wait_tx_done(UART_PORT, pdMS_TO_TICKS(100));
+                                        ESP_LOGI(TAG_PRINTER, "STATUS S1 válido → ACK enviado");
+                                        
+                                        procesar_status_s1(rx_buffer, received);
+                                    } else {
+                                        // Enviar NAK si la trama es inválida
+                                        uart_write_bytes(UART_PORT, (const char[]){NAK_BYTE}, 1);
+                                        uart_wait_tx_done(UART_PORT, pdMS_TO_TICKS(100));
+                                        ESP_LOGW(TAG_PRINTER, "STATUS S1 inválido → NAK");
+                                        printer_handle_error(ERROR_INVALID_RESPONSE);
+                                        printer_uart_flush();
+                                    }
+                                } else {
+                                    ESP_LOGW(TAG_PRINTER, "No se recibió respuesta S1 (timeout)");
+                                    printer_handle_error(ERROR_STATUS_S1_FAILED);
+                                }
                             } else {
-                                ESP_LOGW(TAG_PRINTER, "No se recibió STATUS S1 válido");
-                                printer_handle_error(ERROR_STATUS_S1_FAILED);
+                                ESP_LOGW(TAG_PRINTER, "Se recibió 0x%02X en lugar de ACK", ack_buffer[0]);
+                                printer_handle_error(ERROR_NO_ACK);
                             }
-                            
-                            task_ctx.state = PRINTER_STATE_IDLE;
+                        } else {
+                            ESP_LOGW(TAG_PRINTER, "No se recibió ACK para comando S1 (timeout)");
+                            printer_handle_error(ERROR_NO_ACK);
                         }
+                    } else {
+                        ESP_LOGE(TAG_PRINTER, "Error al enviar comando S1");
+                        printer_handle_error(ERROR_COMMUNICATION_LOST);
                     }
-                    
-                    task_ctx.last_success_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
-                    task_ctx.error_count = 0;
-                    
+                }
+
                 } else {
-                    ESP_LOGW(TAG_PRINTER, "Trama inválida recibida");
-                    ESP_LOG_BUFFER_HEX(TAG_PRINTER, rx_buffer, received < 16 ? received : 16);
+                    uart_write_bytes(UART_PORT, (const char[]){NAK_BYTE}, 1);
+                    LOG_E(TAG_PRINTER, "Trama inválida → NAK");
                     printer_handle_error(ERROR_INVALID_RESPONSE);
                     printer_uart_flush();
                 }
