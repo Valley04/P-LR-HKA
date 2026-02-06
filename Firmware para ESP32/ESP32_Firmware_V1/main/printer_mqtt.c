@@ -5,6 +5,18 @@
 #include "freertos/portmacro.h"
 #include <string.h>
 #include <stdio.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
+#include "freertos/event_groups.h"
+#include "esp_event.h"
+#include "esp_wifi.h"
+#include "mqtt_client.h"
+#include "esp_log.h"
+#include "esp_system.h"
+#include "nvs_flash.h"
+#include "lwip/sockets.h"
+#include "esp_crt_bundle.h"
 
 // VARIABLES ESTÁTICAS
 static const char* TAG_MQTT = "mqtt_events";
@@ -267,7 +279,6 @@ void mqtt_task(void* pvParameters) {
             
             // Publicar todos los campos individualmente
             char topic[64];
-            char payload[512];
             
             // JSON completo
             char json_buffer[1024];

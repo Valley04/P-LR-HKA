@@ -5,18 +5,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/queue.h"
-#include "freertos/event_groups.h"
-#include "esp_event.h"
-#include "esp_wifi.h"
-#include "mqtt_client.h"
-#include "esp_log.h"
-#include "esp_system.h"
-#include "nvs_flash.h"
-#include "lwip/sockets.h"
-#include "esp_crt_bundle.h"
 
 // CONSTANTES DE CONFIGURACIÓN
 
@@ -25,8 +13,8 @@
 #define UART_BAUDRATE       9600
 #define UART_TX_PIN         18
 #define UART_RX_PIN         19
-#define UART_BUFFER_SIZE    1024      // Reducido de 1024
-#define UART_QUEUE_SIZE     20       // Reducido de 20
+#define UART_BUFFER_SIZE    2048      
+#define UART_QUEUE_SIZE     40      
 
 // Protocolo Fiscal
 #define ENQ_CMD             0x05
@@ -94,36 +82,35 @@ typedef struct __attribute__((packed)) {
     uint8_t sts1;
     uint8_t sts2;
     uint16_t error_count;
-    uint8_t reconnect_attempts : 4;  // 0-15 intentos
-    uint8_t needs_sync : 1;          // Flag booleano
-    uint8_t serial_obtained : 1;     // Flag booleano
+
+    // Flags de control
+    uint8_t reconnect_attempts : 4;
+    uint8_t needs_sync : 1;
+    uint8_t serial_obtained : 1;
+    uint8_t reserved : 2;
     
-    // Serial (10 + 1 bytes)
-    char register_number[11];
+    // Serial y datos numéricos del S1
     
-    // Timestamp (4 bytes)
     uint32_t timestamp;
-    
-    // Strings de estado (punteros a constantes en Flash)
-    char estado_str[64];
-    char error_str[64];
     
     // Datos STATUS S1
     char atm_number[5];
-    char ventas[18];
+    uint32_t ventas;
     char last_bill_number[9];
     char bill_issue[6];
     char number_last_debit[9];
-    char amount_debit[6];
+    uint32_t amount_debit;
     char number_last_credit[9];
-    char amount_credit[6];
+    uint32_t amount_credit;
     char number_last_notfiscal[9];
-    char amount_notfiscal[6];
+    uint32_t amount_notfiscal;
     char counter_daily_z[5];
     char counter_report_fiscal[5];
     char rif_cliente[12];
+    char register_number[11];
     char hour_machine[7];
     char date_machine[7];
+    
 } mqtt_data_t;
 
 // DECLARACIONES EXTERNAS
@@ -135,6 +122,7 @@ extern const char* TAG_PRINTER;
 // Variables globales WiFi/MQTT
 extern EventGroupHandle_t wifi_event_group;
 extern esp_mqtt_client_handle_t mqtt_client;
+extern SemaphoreHandle_t mqtt_data_mutex;
 
 // Colas (definidas en printer_task.c)
 extern QueueHandle_t printer_uart_queue;
