@@ -1,62 +1,40 @@
 // printer_mqtt.c
-#include "printer_config.h"
 #include "printer_mqtt.h"
 #include "printer_task.h"
-#include "freertos/portmacro.h"
 #include <string.h>
 #include <stdio.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/queue.h"
-#include "freertos/event_groups.h"
 #include "esp_event.h"
 #include "esp_wifi.h"
-#include "mqtt_client.h"
 #include "esp_log.h"
-#include "esp_system.h"
 #include "nvs_flash.h"
-#include "lwip/sockets.h"
+#include "mqtt_client.h"
 #include "esp_crt_bundle.h"
 
 // VARIABLES ESTÁTICAS
 static const char* TAG_MQTT = "mqtt_events";
 static const char* TAG_WIFI = "wifi station";
-static TaskHandle_t mqtt_task_handle = NULL;
 
-static bool wifi_connected = false;
-static bool mqtt_connected = false;
-
-// Cliente MQTT
+TaskHandle_t mqtt_task_handle = NULL;
 esp_mqtt_client_handle_t mqtt_client = NULL;
-EventGroupHandle_t wifi_event_group = NULL;
+
+volatile bool wifi_connected = false;
+volatile bool mqtt_connected = false;
 
 // FUNCIONES PARA CONEXIÓN WIFI
 
 void wifi_event_handler(void* arg, esp_event_base_t event_base,
                                int32_t event_id, void* event_data) {
-    if (event_base == WIFI_EVENT) {
-        switch (event_id) {
-            case WIFI_EVENT_STA_START:
-                LOG_I(TAG_WIFI, "WiFi STA iniciado");
-                esp_wifi_connect();
-                break;
-                
-            case WIFI_EVENT_STA_DISCONNECTED:
-                LOG_I(TAG_WIFI, "WiFi desconectado");
-                wifi_connected = false;
-                mqtt_connected = false;
-                // Intenta reconectar después de 5 segundos
-                vTaskDelay(pdMS_TO_TICKS(5000));
-                esp_wifi_connect();
-                xEventGroupClearBits(wifi_event_group, WIFI_CONNECTED_BIT);
-                xEventGroupSetBits(wifi_event_group, WIFI_FAIL_BIT);
-                break;
-        }
+    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+        esp_wifi_connect();
+    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+        wifi_connected = false;
+        LOG_W(TAG_MQTT, "WiFi perdido, reintentando conexión...");
+        esp_wifi_connect();
+
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
         LOG_I(TAG_WIFI, "IP obtenida: " IPSTR, IP2STR(&event->ip_info.ip));
         wifi_connected = true;
-        xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
     }
 }
 
@@ -66,44 +44,32 @@ void mqtt_event_handler(void *handler_args, esp_event_base_t base,
     
     switch ((esp_mqtt_event_id_t)event_id) {
         case MQTT_EVENT_CONNECTED:
-            LOG_I(TAG_MQTT, "MQTT conectado");
             mqtt_connected = true;
+            LOG_I(TAG_MQTT, "MQTT conectado");
+
+            if (mqtt_task_handle != NULL) {
+                xTaskNotifyGive(mqtt_task_handle);
+            }
             break;
             
         case MQTT_EVENT_DISCONNECTED:
-            LOG_I(TAG_MQTT, "MQTT desconectado");
             mqtt_connected = false;
-            break;
-            
-        case MQTT_EVENT_SUBSCRIBED:
-            LOG_I(TAG_MQTT, "MQTT suscrito, msg_id=%d", event->msg_id);
-            break;
-            
-        case MQTT_EVENT_UNSUBSCRIBED:
-            LOG_I(TAG_MQTT, "MQTT desuscrito, msg_id=%d", event->msg_id);
-            break;
-            
-        case MQTT_EVENT_PUBLISHED:
-            LOG_I(TAG_MQTT, "MQTT publicado, msg_id=%d", event->msg_id);
+            LOG_I(TAG_MQTT, "MQTT desconectado");
             break;
             
         case MQTT_EVENT_DATA:
-            LOG_I(TAG_MQTT, "MQTT datos recibidos: topic=%.*s, data=%.*s",
-                  event->topic_len, event->topic,
-                  event->data_len, event->data);
+            // Para futuras actualizaciones (en el caso de si aplica)
             break;
             
         case MQTT_EVENT_ERROR:
-            LOG_E(TAG_MQTT, "Error MQTT");
+            mqtt_connected = false;
             if (event->error_handle->error_type == MQTT_ERROR_TYPE_TCP_TRANSPORT) {
-                LOG_E(TAG_MQTT, "Error de transporte: errno=%d", 
+                LOG_E(TAG_MQTT, "TCP error=%d", 
                       event->error_handle->esp_transport_sock_errno);
             }
-            mqtt_connected = false;
             break;
             
         default:
-            LOG_E(TAG_MQTT, "Evento MQTT: %ld", event_id);
             break;
     }
 }
@@ -111,13 +77,16 @@ void mqtt_event_handler(void *handler_args, esp_event_base_t base,
 void wifi_init_sta(void)
 {
     LOG_I(TAG_WIFI, "Inicializando WiFi...");
-    wifi_event_group = xEventGroupCreate();
 
+    // Iniciar la pila TCP/IP
     ESP_ERROR_CHECK(esp_netif_init());
 
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
-    esp_netif_t *sta_netif = esp_netif_create_default_wifi_sta();
-    assert(sta_netif);
+    esp_err_t err = esp_event_loop_create_default();
+    if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) {
+        ESP_ERROR_CHECK(err);
+    }
+
+    esp_netif_create_default_wifi_sta();
     
     // Inicializar WiFi
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
@@ -153,24 +122,6 @@ void wifi_init_sta(void)
     ESP_ERROR_CHECK(esp_wifi_start());
     
     LOG_I(TAG_WIFI, "WiFi iniciado, SSID: %s", ESP_WIFI_SSID);
-    
-    // Esperar conexión
-    EventBits_t bits = xEventGroupWaitBits(wifi_event_group,
-            WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
-            pdFALSE,
-            pdFALSE,
-            pdMS_TO_TICKS(10000));
-    
-    if (bits & WIFI_CONNECTED_BIT) {
-        LOG_I(TAG_WIFI, "Conectado a AP: %s", ESP_WIFI_SSID);
-        wifi_connected = true;
-    } else if (bits & WIFI_FAIL_BIT) {
-        LOG_E(TAG_WIFI, "Falló conexión a: %s", ESP_WIFI_SSID);
-        wifi_connected = false;
-    } else {
-        LOG_E(TAG_WIFI, "Timeout WiFi");
-        wifi_connected = false;
-    }
 }
 
 // FUNCIONES AUXILIARES
@@ -188,6 +139,7 @@ void mqtt_app_start(void) {
         .credentials.username = "esp32_001",
         .credentials.authentication.password = "Esp12345",
         .session.protocol_ver = MQTT_PROTOCOL_V_5,
+        .buffer.size = 2048,
     };
     
     // Crear cliente MQTT
@@ -197,227 +149,55 @@ void mqtt_app_start(void) {
         return;
     }
     
-    // Registrar handler de eventos
-    ESP_ERROR_CHECK(esp_mqtt_client_register_event(mqtt_client, 
-                                                   ESP_EVENT_ANY_ID,
-                                                   mqtt_event_handler, 
-                                                   NULL));
+    esp_mqtt_client_register_event(mqtt_client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
     
-    // Iniciar cliente MQTT
     esp_err_t err = esp_mqtt_client_start(mqtt_client);
     if (err != ESP_OK) {
-        LOG_E(TAG_MQTT, "Error al iniciar cliente MQTT: 0x%x", err);
-        return;
+        LOG_E(TAG_MQTT, "Error al iniciar: %s", esp_err_to_name(err));
     }
-    
-    LOG_I(TAG_MQTT, "Cliente MQTT iniciado");
 }
 
 // Inicializar datos MQTT
 void mqtt_data_init(void) {
     memset(&mqtt_data, 0, sizeof(mqtt_data_t));
+
     mqtt_data.timestamp = xTaskGetTickCount() * portTICK_PERIOD_MS;
+    mqtt_data.needs_sync = false;
+
     strncpy(mqtt_data.register_number, "DESCONOCIDO", MAX_SERIAL_LENGTH);
+    mqtt_data.register_number[MAX_SERIAL_LENGTH] = '\0';
+
     LOG_I(TAG_MQTT, "Datos MQTT inicializados");
 }
 
 // publicación MQTT
 bool mqtt_publish(const char* topic, const char* payload) {
     if (!mqtt_connected || mqtt_client == NULL) {
-        LOG_W(TAG_MQTT, "MQTT no conectado, no se puede publicar: %s", topic);
+        LOG_W(TAG_MQTT, "Publiación cancelada: MQTT Offline");
         return false;
     }
     
     int msg_id = esp_mqtt_client_publish(mqtt_client, topic, payload, 
-                                         strlen(payload), MQTT_QOS_LEVEL, 0);
+                                         0, MQTT_QOS_LEVEL, 0);
     
     if (msg_id < 0) {
         LOG_E(TAG_MQTT, "Error publicando en %s: %d", topic, msg_id);
         return false;
     }
     
-    LOG_E(TAG_MQTT, "Publicado: %s -> %s", topic, payload);
+    LOG_I(TAG_MQTT, "Mensaje enviado con éxito [ID: %d]", msg_id);
     return true;
-}
-
-// Loggear mensaje MQTT
-void log_mqtt_message(const char* topic, const char* payload) {
-    ESP_LOGI(TAG_MQTT, "TOPIC: %s", topic);
-    ESP_LOGI(TAG_MQTT, "PAYLOAD: %s", payload);
-}
-
-// TAREA MQTT
-
-void mqtt_task(void* pvParameters) {
-    LOG_I(TAG_MQTT, "Tarea MQTT iniciada");
-
-    char last_serial[MAX_SERIAL_LENGTH + 1] = "";
-    uint32_t last_sync_time = 0;
-    int sync_count = 0;
-    
-    while (1) {
-        if (!mqtt_connected) {
-            LOG_W(TAG_MQTT, "Esperando conexión MQTT...");
-            vTaskDelay(pdMS_TO_TICKS(RECONNECT_DELAY_MS));
-            continue;
-        }
-        if (mqtt_data.needs_sync) {
-            sync_count++;
-            LOG_I(TAG_MQTT, "Sincronizando datos (%d)...", sync_count);
-
-            // Detectar cambio de serial
-            if (strcmp(last_serial, mqtt_data.register_number) != 0) {
-                strcpy(last_serial, mqtt_data.register_number);
-                LOG_I(TAG_MQTT, "¡Nuevo serial detectado!: %s", last_serial);
-                
-                // Tópico de descubrimiento
-                char discovery_topic[128];
-                snprintf(discovery_topic, sizeof(discovery_topic), 
-                        "%s/%s/discovery", MQTT_TOPIC_BASE, mqtt_data.register_number);
-                mqtt_publish(discovery_topic, "online");
-            }
-            
-            // Publicar todos los campos individualmente
-            char topic[64];
-            
-            // JSON completo
-            char json_buffer[1024];
-            format_mqtt_json(json_buffer, sizeof(json_buffer), &mqtt_data);
-            prepare_mqtt_topic(topic, sizeof(topic), "json_completo");
-            mqtt_publish(topic, json_buffer);
-            
-            // Estadísticas de intervalo
-            uint32_t current_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
-            if (last_sync_time > 0) {
-                uint32_t interval = current_time - last_sync_time;
-                LOG_I(TAG_MQTT, "Intervalo desde última sincronización: %lu ms", interval);
-            }
-            last_sync_time = current_time;
-            
-            mqtt_data.needs_sync = false;
-            LOG_I(TAG_MQTT, "Sincronización completada (%d)", sync_count);
-        }
-        
-        vTaskDelay(pdMS_TO_TICKS(POLLING_INTERVAL_MS)); // Verificar cada 5 segundos
-    }
-}
-
-// Función para iniciar la tarea MQTT (para ser llamada desde app_main)
-void start_mqtt_system(void) {
-    LOG_I(TAG_MQTT, "Iniciando sistema MQTT...");
-
-    // 1. Inicializar NVS
-    esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-      ESP_ERROR_CHECK(nvs_flash_erase());
-      ret = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(ret);
-    LOG_I(TAG_MQTT, "NVS inicializado");
-
-    // 2. Inicializar WiFi
-    wifi_init_sta();
-
-    if (!wifi_connected) {
-        LOG_E(TAG_MQTT, "No se pudo conectar WiFi");
-        return;
-    }
-
-    // 3. Inicializar MQTT
-    mqtt_app_start();
-
-    // 4. Esperar conexión MQTT
-    int attempts = 0;
-    while (!mqtt_connected && attempts < 30) {
-        LOG_I(TAG_MQTT, "Esperando conexión MQTT... (%d/30)", attempts + 1);
-        vTaskDelay(pdMS_TO_TICKS(1000));
-        attempts++;
-    }
-
-    if (!mqtt_connected) {
-        LOG_E(TAG_MQTT, "No se pudo conectar MQTT después de %d intentos", attempts);
-        return;
-    }
-
-    // 5. Inicializar datos
-    mqtt_data_init();
-    
-    // 6. Crear tarea MQTT
-    BaseType_t result = xTaskCreate(
-        mqtt_task,
-        MQTT_SIMULATOR_NAME,
-        MQTT_SIMULATOR_STACK,
-        NULL,
-        MQTT_SIMULATOR_PRIORITY,
-        &mqtt_task_handle
-    );
-            
-    if (result == pdPASS) {
-        LOG_I(TAG_MQTT, "Tarea MQTT creada exitosamente");
-    } else {
-        LOG_E(TAG_MQTT, "Error al crear tarea MQTT");
-    }
 }
 
 // FUNCIONES AUXILIARES
 
 // Preparar tópico MQTT
-void prepare_mqtt_topic(char* topic, size_t size, const char* data_type) {
-    snprintf(topic, size, "%s/%s/%s", 
+void prepare_mqtt_topic(char* buffer, size_t size, const char* serial, const char* data_type) {
+    // Ya no usamos mqtt_data directamente aquí
+    snprintf(buffer, size, "%s/%s/%s", 
              MQTT_TOPIC_BASE, 
-             mqtt_data.register_number, 
+             serial, 
              data_type);
-}
-
-// Formatear JSON para MQTT
-void format_mqtt_json(char* buffer, size_t size, const mqtt_data_t* data) {
-    snprintf(buffer, size,
-        "{\"timestamp\":%lu,"
-        "\"sts1\":\"0x%02X\","
-        "\"sts2\":\"0x%02X\","
-        "\"estado\":\"%s\","
-        "\"error\":\"%s\","
-        "\"cajero\":\"%s\","
-        "\"ventas\":\"%s\","
-        "\"ult_factura\":\"%s\","
-        "\"fact_emitidas\":\"%s\","
-        "\"ult_debito\":\"%s\","
-        "\"cant_debito\":\"%s\","
-        "\"ult_credito\":\"%s\","
-        "\"cant_credito\":\"%s\","
-        "\"ult_nofiscal\":\"%s\","
-        "\"cant_nofiscal\":\"%s\","
-        "\"cierres_z\":\"%s\","
-        "\"reportes_fiscal\":\"%s\","
-        "\"rif\":\"%s\","
-        "\"registro\":\"%s\","
-        "\"hora\":\"%s\","
-        "\"fecha\":\"%s\"}",
-        data->timestamp,
-        data->sts1, data->sts2,
-        data->estado_str,
-        data->error_str,
-        data->atm_number,
-        data->ventas,
-        data->last_bill_number,
-        data->bill_issue,
-        data->number_last_debit,
-        data->amount_debit,
-        data->number_last_credit,
-        data->amount_credit,
-        data->number_last_notfiscal,
-        data->amount_notfiscal,
-        data->counter_daily_z,
-        data->counter_report_fiscal,
-        data->rif_cliente,
-        data->register_number,
-        data->hour_machine,
-        data->date_machine);
-}
-
-// Formatear JSON de estado
-void format_mqtt_status_json(char* buffer, size_t size) {
-    format_mqtt_json(buffer, size, &mqtt_data);
 }
 
 // Actualizar serial de impresora
@@ -430,20 +210,140 @@ void update_printer_serial(const char* serial) {
     }
 }
 
-// Preparar payload MQTT
-void prepare_mqtt_payload(uint8_t sts1, uint8_t sts2, 
-                         const char* estado_str, const char* error_str) {
-    mqtt_data.sts1 = sts1;
-    mqtt_data.sts2 = sts2;
-    strncpy(mqtt_data.estado_str, estado_str ? estado_str : "", sizeof(mqtt_data.estado_str) - 1);
-    strncpy(mqtt_data.error_str,  error_str  ? error_str  : "", sizeof(mqtt_data.error_str) - 1);
-    mqtt_data.timestamp = xTaskGetTickCount() * portTICK_PERIOD_MS;
-    mqtt_data.needs_sync = true;
+void format_mqtt_json(char* buffer, size_t max_len, const mqtt_data_t* data) {
+    // Usamos snprintf para proteger el stack y la memoria
+    snprintf(buffer, max_len,
+        "{"
+        "\"sts1\":%u,"
+        "\"sts2\":%u,"
+        "\"err_cnt\":%u,"
+        "\"rec_att\":%u,"
+        "\"atm\":\"%s\","
+        "\"vts\":%lu,"
+        "\"last_b\":\"%s\","
+        "\"b_iss\":\"%s\","
+        "\"db_n\":\"%s\","
+        "\"db_a\":%lu,"
+        "\"cr_n\":\"%s\","
+        "\"cr_a\":%lu,"
+        "\"nf_n\":\"%s\","
+        "\"nf_a\":%lu,"
+        "\"z_cnt\":\"%s\","
+        "\"f_cnt\":\"%s\","
+        "\"rif\":\"%s\","
+        "\"ser\":\"%s\","
+        "\"time\":\"%s\","
+        "\"date\":\"%s\","
+        "\"ts\":%lu"
+        "}",
+        data->sts1, data->sts2, data->error_count, data->reconnect_attempts,
+        data->atm_number, data->ventas, data->last_bill_number, data->bill_issue,
+        data->number_last_debit, data->amount_debit, data->number_last_credit, data->amount_credit,
+        data->number_last_notfiscal, data->amount_notfiscal, data->counter_daily_z, data->counter_report_fiscal,
+        data->rif_cliente, data->register_number, data->hour_machine, data->date_machine,
+        data->timestamp
+    );
+}
+
+// TAREA MQTT
+void mqtt_task(void* pvParameters) {
+    LOG_I(TAG_MQTT, "Tarea MQTT iniciada");
+
+    const TickType_t xMaxBlockTime = pdMS_TO_TICKS(60000); // 60 segundos de "seguro"
+    static char last_serial[MAX_SERIAL_LENGTH + 1] = "";
+    static char json_buffer[768];
+    uint32_t notificationValue;
+    int sync_count = 0;
     
-    LOG_I(TAG_MQTT, "=== DATOS PREPARADOS PARA MQTT ===");
-    LOG_I(TAG_MQTT, "Serial: %s", mqtt_data.register_number);
-    LOG_I(TAG_MQTT, "STS1: 0x%02X, STS2: 0x%02X", sts1, sts2);
-    LOG_I(TAG_MQTT, "Estado: %s", estado_str);
-    LOG_I(TAG_MQTT, "Error: %s", error_str);
-    LOG_I(TAG_MQTT, "==================================");
+    while (1) {
+        // ESPERA ACTIVA/PASIVA
+        BaseType_t notified = xTaskNotifyWait(0x00, ULONG_MAX, &notificationValue, xMaxBlockTime);
+
+        // VERIFICACIÓN DE CONEXIÓN
+        if (!mqtt_connected) {
+            LOG_W(TAG_MQTT, "MQTT desconectado, reintentando en breve...");
+            vTaskDelay(pdMS_TO_TICKS(RECONNECT_DELAY_MS)); // Delay de cortesía para no saturar
+            continue;
+        }
+
+        // PROCESAMIENTO (Si fue notificado o el flag está arriba)
+        if (xSemaphoreTake(mqtt_data_mutex, pdMS_TO_TICKS(200)) == pdTRUE) {
+            
+            if (mqtt_data.needs_sync) {
+                sync_count++;
+                LOG_I(TAG_MQTT, "Sincronizando datos (%d)...", sync_count);
+
+                // Detectar cambio de serial de forma segura
+                if (strcmp(last_serial, mqtt_data.register_number) != 0) {
+                    strncpy(last_serial, mqtt_data.register_number, MAX_SERIAL_LENGTH);
+                    last_serial[MAX_SERIAL_LENGTH] = '\0';
+                    
+                    char discovery_topic[128];
+                    snprintf(discovery_topic, sizeof(discovery_topic), 
+                            "%s/%s/discovery", MQTT_TOPIC_BASE, last_serial);
+                    mqtt_publish(discovery_topic, "online");
+                }
+
+                // Formateamos el JSON mientras tenemos la llave
+                format_mqtt_json(json_buffer, sizeof(json_buffer), &mqtt_data);
+
+                // Bajamos el flag y SOLTAMOS LA LLAVE rápido
+                mqtt_data.needs_sync = false;
+                xSemaphoreGive(mqtt_data_mutex);
+                
+                // PUBLICACIÓN (Fuera del Mutex para no bloquear a la impresora)
+                char topic[64];                
+                prepare_mqtt_topic(topic, sizeof(topic), last_serial, "json_completo");
+                mqtt_publish(topic, json_buffer);
+                
+                LOG_I(TAG_MQTT, "Sincronización completada (%d)", sync_count);
+            } else {
+                xSemaphoreGive(mqtt_data_mutex);
+            }
+        }
+    }
+}
+
+// Función para iniciar la tarea MQTT (para ser llamada desde app_main)
+void start_mqtt_system(void) {
+    LOG_I(TAG_MQTT, "Iniciando sistema MQTT...");
+
+    // Creamos el Mutex
+    if (mqtt_data_mutex == NULL) {
+        mqtt_data_mutex = xSemaphoreCreateMutex();
+        if (mqtt_data_mutex == NULL) {
+            LOG_E(TAG_MQTT, "Error, no se pudo crear el Mutex");
+            return;
+        }
+    }
+
+    mqtt_data_init();
+
+    // Inicializar NVS
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+      ESP_ERROR_CHECK(nvs_flash_erase());
+      ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
+
+    // Inicializar WiFi y MQTT
+    wifi_init_sta();
+    mqtt_app_start();
+
+    // 6. Crear tarea MQTT
+    BaseType_t result = xTaskCreate(
+        mqtt_task,
+        MQTT_NAME,
+        MQTT_STACK,
+        NULL,
+        MQTT_PRIORITY,
+        &mqtt_task_handle
+    );
+
+    if (result == pdPASS) {
+        LOG_I(TAG_MQTT, "Tarea MQTT creada exitosamente");
+    } else {
+        LOG_E(TAG_MQTT, "Error al crear tarea MQTT");
+    }
 }

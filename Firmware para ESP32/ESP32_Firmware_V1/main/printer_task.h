@@ -24,7 +24,7 @@ typedef struct {
 // PROTOTIPOS PÚBLICOS
 
 // Gestión de la tarea
-bool printer_task_start(void);
+esp_err_t printer_task_start(void);
 void printer_task_stop(void);
 void printer_task_suspend(void);
 void printer_task_resume(void);

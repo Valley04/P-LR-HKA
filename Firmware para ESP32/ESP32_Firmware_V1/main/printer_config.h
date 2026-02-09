@@ -6,13 +6,18 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/semphr.h"
+#include "mqtt_client.h"
+
 // CONSTANTES DE CONFIGURACIÓN
 
 // UART
 #define UART_PORT           UART_NUM_1
 #define UART_BAUDRATE       9600
-#define UART_TX_PIN         18
-#define UART_RX_PIN         19
+#define UART_TX_PIN         32
+#define UART_RX_PIN         33
 #define UART_BUFFER_SIZE    2048      
 #define UART_QUEUE_SIZE     40      
 
@@ -26,11 +31,11 @@
 extern const uint8_t CMD_STATUS_S1[];
 
 // Tiempos (ms) - Optimizados
-#define POLLING_INTERVAL_MS     30000   // 30 segundos
+#define POLLING_INTERVAL_MS     5000   // 30 segundos
 #define RESPONSE_TIMEOUT_MS     2000    // 2 segundos
 #define STATUS_S1_TIMEOUT_MS    3000    // 3 segundos
 #define ACK_TIMEOUT_MS          1000
-#define RECONNECT_DELAY_MS      5000    // 5 segundos
+#define RECONNECT_DELAY_MS      5000    // 2 segundos
 #define COMMAND_DELAY_MS        100     // 100ms entre comandos
 
 // Límites
@@ -120,9 +125,9 @@ extern mqtt_data_t mqtt_data;
 extern const char* TAG_PRINTER;
 
 // Variables globales WiFi/MQTT
-extern EventGroupHandle_t wifi_event_group;
 extern esp_mqtt_client_handle_t mqtt_client;
 extern SemaphoreHandle_t mqtt_data_mutex;
+extern TaskHandle_t mqtt_task_handle;
 
 // Colas (definidas en printer_task.c)
 extern QueueHandle_t printer_uart_queue;

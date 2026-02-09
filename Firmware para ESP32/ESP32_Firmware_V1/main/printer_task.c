@@ -4,20 +4,12 @@
 #include "printer_mqtt.h"
 #include <stdio.h>
 #include <string.h>
-#include "driver/uart.h"
-#include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
+#include <stdlib.h>
 #include "freertos/queue.h"
-#include "freertos/event_groups.h"
-#include "esp_event.h"
-#include "esp_wifi.h"
-#include "mqtt_client.h"
+#include "driver/uart.h"
+#include "esp_err.h"
 #include "esp_log.h"
 #include "esp_system.h"
-#include "nvs_flash.h"
-#include "lwip/sockets.h"
-#include "esp_crt_bundle.h"
 
 // VARIABLES GLOBALES (declaradas en printer_config.h como extern)
 mqtt_data_t mqtt_data;
@@ -112,38 +104,8 @@ static int recibir_trama_generica(uint8_t* buffer, size_t longitud_total, uint32
     return longitud_total;
 }
 
-// Función específica para recibir ACK/NAK
-static int uart_receive_ack_with_timeout(uint8_t* ack_byte, uint32_t timeout_ms) {
-    if (!uart_initialized || ack_byte == NULL) {
-        return -1;
-    }
-    
-    TickType_t start_time = xTaskGetTickCount();
-    
-    ESP_LOGI(TAG_PRINTER, "Esperando ACK/NAK por %lu ms...", timeout_ms);
-    
-    while ((xTaskGetTickCount() - start_time) < pdMS_TO_TICKS(timeout_ms)) {
-        size_t available = 0;
-        uart_get_buffered_data_len(UART_PORT, &available);
-        
-        if (available > 0) {
-            int received = uart_read_bytes(UART_PORT, ack_byte, 1, 0);
-            if (received > 0) {
-                ESP_LOGI(TAG_PRINTER, "ACK/NAK recibido: 0x%02X", *ack_byte);
-                return 1;
-            }
-        }
-        
-        vTaskDelay(pdMS_TO_TICKS(10));
-    }
-    
-    ESP_LOGI(TAG_PRINTER, "Timeout esperando ACK/NAK");
-    return 0;
-}
-
 static void printer_uart_flush(void) {
     if (uart_initialized) {
-        ESP_LOGI(TAG_PRINTER, "Limpiando buffer UART...");
         uart_flush_input(UART_PORT);
         
         // Verificar que esté vacío
@@ -220,6 +182,9 @@ bool printer_uart_init(void) {
     ESP_LOGI(TAG_PRINTER, "Buffer: %d bytes, Cola: %d", 
              UART_BUFFER_SIZE, UART_QUEUE_SIZE);
     
+    uart_flush_input(UART_PORT);
+
+    ESP_LOGI(TAG_PRINTER, "UART inicializado y limpio");
     return true;
 }
 
@@ -358,6 +323,10 @@ void procesar_status_s1(const uint8_t* data, size_t len) {
 
         // Devolvemos la llave
         xSemaphoreGive(mqtt_data_mutex);
+
+        if (mqtt_task_handle != NULL) {
+            xTaskNotifyGive(mqtt_task_handle);
+        }
         LOG_I(TAG_PRINTER, "Datos de STATUS S1 actualizados");
     } else {
         LOG_W(TAG_PRINTER, "No se pudo obtener el Mutex, datos no actualizados");
@@ -367,40 +336,32 @@ void procesar_status_s1(const uint8_t* data, size_t len) {
 // SISTEMA DE RECONEXIÓN
 
 bool printer_reconnect(void) {
-    if (task_ctx.reconnect_attempts >= MAX_RECONNECT_ATTEMPTS) {
-        LOG_E(TAG_PRINTER, "Máximo de intentos de reconexión alcanzado (%d)", 
-              MAX_RECONNECT_ATTEMPTS);
-        task_ctx.state = PRINTER_STATE_ERROR;
-        mqtt_data.reconnect_attempts = task_ctx.reconnect_attempts;
-        return false;
-    }
-    
-    task_ctx.reconnect_attempts++;
-    task_ctx.state = PRINTER_STATE_RECONNECTING;
-    mqtt_data.reconnect_attempts = task_ctx.reconnect_attempts;
-    
-    LOG_W(TAG_PRINTER, "Intentando reconexión %d/%d...", 
-          task_ctx.reconnect_attempts, MAX_RECONNECT_ATTEMPTS);
-    
-    // 1. Desinicializar UART
-    printer_uart_deinit();
-    
-    // 2. Esperar antes de reintentar
-    vTaskDelay(pdMS_TO_TICKS(RECONNECT_DELAY_MS));
-    
-    // 3. Re-inicializar UART
-    if (printer_uart_init()) {
-        LOG_I(TAG_PRINTER, "Reconexión exitosa");
-        task_ctx.reconnect_attempts = 0;
-        task_ctx.error_count = 0;
-        task_ctx.state = PRINTER_STATE_IDLE;
-        mqtt_data.reconnect_attempts = 0;
-        mqtt_data.error_count = 0;
-        return true;
+    if (xSemaphoreTake(mqtt_data_mutex, pdMS_TO_TICKS(500)) == pdTRUE) {
+
+        task_ctx.state = PRINTER_STATE_RECONNECTING;
+        
+        // Desinicializar UART
+        printer_uart_deinit();
+        vTaskDelay(pdMS_TO_TICKS(RECONNECT_DELAY_MS));
+        
+        // Re-inicializar UART
+        if (printer_uart_init()) {
+            LOG_I(TAG_PRINTER, "Reconexión exitosa");
+            // Limpiamos contadores
+            task_ctx.reconnect_attempts = 0;
+            task_ctx.error_count = 0;
+            task_ctx.state = PRINTER_STATE_IDLE;
+
+            // Liberamos la llave
+            xSemaphoreGive(mqtt_data_mutex);
+            return true;
+        }
+
+        // Si falla inicialización, liberamos llave de todos modos
+        xSemaphoreGive(mqtt_data_mutex);
     }
     
     LOG_E(TAG_PRINTER, "Reconexión fallida");
-    task_ctx.state = PRINTER_STATE_ERROR;
     return false;
 }
 
@@ -408,8 +369,6 @@ bool printer_reconnect(void) {
 void printer_reset_errors(void) {
     task_ctx.error_count = 0;
     task_ctx.reconnect_attempts = 0;
-    mqtt_data.error_count = 0;
-    mqtt_data.reconnect_attempts = 0;
     task_ctx.state = PRINTER_STATE_IDLE;
 }
 
@@ -476,19 +435,19 @@ int ejecutar_solicitud_s1(uint8_t* buffer, int bytes_maximos) {
     
     // Esperar ACK con timeout más corto
     uint8_t ack_buffer[1];
-    int ack_received = uart_receive_ack_with_timeout(ack_buffer, 1, 1000); // 1 segundo
+    int ack_received = uart_read_bytes(UART_PORT, ack_buffer, 1, pdMS_TO_TICKS(1000)); // 1 segundo
     
-    if (ack_received <= 0) {
-        ESP_LOGW(TAG_PRINTER, "Timeout esperando ACK para S1");
-        printer_handle_error(ERROR_NO_ACK);
-        return 0;
-        
-    }
-        
-    if (ack_buffer[0] != ACK_BYTE) {
-        ESP_LOGI(TAG_PRINTER, "Byte recibido después de S1: 0x%02X", ack_buffer[0]);
-        printer_handle_error(ERROR_NO_ACK);
-        return 0;
+    if (ack_received > 0) {
+        ESP_LOGI(TAG_PRINTER, "ACK/NAK recibido: 0x%02X", ack_buffer[0]);
+    
+        // Aquí validas si es ACK o NAK
+        if (ack_buffer[0] != ACK_BYTE) {
+            ESP_LOGI(TAG_PRINTER, "Byte recibido después de S1: 0x%02X", ack_buffer[0]);
+            printer_handle_error(ERROR_NO_ACK);
+            return 0;
+        }
+    } else {
+        ESP_LOGW(TAG_PRINTER, "Timeout esperando ACK (Sin respuesta)");
     }
 
     ESP_LOGI(TAG_PRINTER, "ACK recibido, esperando STATUS S1...");
@@ -503,6 +462,7 @@ static void printer_task_main(void* pvParameters) {
     ESP_LOGI(TAG_PRINTER, "TAREA IMPRESORA INICIADA");
     task_ctx.initialized = true;
     task_ctx.state = PRINTER_STATE_IDLE;
+    const uint8_t nak_msg = NAK_BYTE;
     
     while (1) {
         
@@ -534,7 +494,7 @@ static void printer_task_main(void* pvParameters) {
         
         // Validar trama
         if (!validate_frame(rx_buffer, received)) {
-            uart_write_bytes(UART_PORT, (const char[]{NAK_BYTE}), 1);
+            uart_write_bytes(UART_PORT, &nak_msg, 1);
             ESP_LOGW(TAG_PRINTER, "Trama inválida detectada");
             printer_handle_error(ERROR_INVALID_RESPONSE);
             continue;

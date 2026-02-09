@@ -3,6 +3,8 @@
 #include "printer_task.h"
 #include "printer_mqtt.h"
 
+#include "esp_log.h"
+
 // Tag para logging
 static const char* TAG = "MAIN";
 
@@ -20,9 +22,10 @@ void app_main(void) {
         return;
     }
     
+    esp_err_t err = printer_task_start();
+
     // Iniciar tarea de impresora
-    ESP_LOGI(TAG, "Iniciando tarea de impresora...");
-    if (!printer_task_start()) {
+    if (err != ESP_OK) {
         ESP_LOGE(TAG, "Error crítico: No se pudo iniciar tarea de impresora");
         
         // Intentar desinicializar UART
@@ -32,7 +35,6 @@ void app_main(void) {
     }
     
     // Lanzar tareas de forma independiente mejora el uso de IRAM y DRAM
-    ESP_ERROR_CHECK(printer_task_start());
     start_mqtt_system();
     
     // Tarea principal (monitoreo ligero)
