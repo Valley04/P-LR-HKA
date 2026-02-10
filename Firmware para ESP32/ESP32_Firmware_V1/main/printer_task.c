@@ -45,6 +45,7 @@ static printer_task_context_t task_ctx = {
 // Función para enviar comando por UART
 static bool uart_send_command(uint8_t command) {
     if (!uart_initialized) return false;
+    uart_flush_input(UART_PORT);
     
     int sent = uart_write_bytes(UART_PORT, (const char*)&command, 1);
     if (sent == 1) {
@@ -62,7 +63,7 @@ static bool uart_send_frame(const uint8_t *data, size_t len) {
     uint8_t lrc = 0;
 
     // Calculamos el LRC
-    for (size_t i = 1; i < len; i++) lrc ^= data[i];
+    for (size_t i = 0; i < len; i++) lrc ^= data[i];
     lrc ^= etx;
 
     // Enviamos datos parte por parte
@@ -82,39 +83,67 @@ static bool uart_send_frame(const uint8_t *data, size_t len) {
     return true;
 }
 
-static int recibir_trama_generica(uint8_t* buffer, size_t longitud_total, uint32_t timeout_ms) {
-    uint8_t byte_inicial;
-    
-    // Buscamos el STX (Inicio de trama)
-    int r = uart_read_bytes(UART_PORT, &byte_inicial, 1, pdMS_TO_TICKS(timeout_ms));
-    
-    if (r <= 0 || byte_inicial != STX_BYTE) {
-        return -1; // No empezó una trama válida
-    }
+// Esta función va dentro de printer_task.c
 
-    // Ahora pedimos el resto de la trama (4 bytes más: DATA1, DATA2, ETX, LRC)
-    buffer[0] = STX_BYTE;
-    size_t faltan = longitud_total - 1;
-    int leidos = uart_read_bytes(UART_PORT, &buffer[1], faltan, pdMS_TO_TICKS(500));
+// En printer_task.c
+
+static int recibir_trama_generica(uint8_t* buffer, size_t longitud_maxima, uint32_t timeout_ms) {
+    uint8_t byte_temporal;
+    int leidos;
+    int total_bytes_recibidos = 0;
     
-    if (leidos < faltan) {
-        return -2; // Trama incompleta
-    }
+    TickType_t tiempo_inicio = xTaskGetTickCount();
+    TickType_t tiempo_limite = pdMS_TO_TICKS(timeout_ms);
+    bool stx_encontrado = false;
 
-    return longitud_total;
-}
-
-static void printer_uart_flush(void) {
-    if (uart_initialized) {
-        uart_flush_input(UART_PORT);
+    // Buscamos STX
+    while ((xTaskGetTickCount() - tiempo_inicio) < tiempo_limite) {
+        leidos = uart_read_bytes(UART_PORT, &byte_temporal, 1, pdMS_TO_TICKS(50));
         
-        // Verificar que esté vacío
-        size_t available = 0;
-        uart_get_buffered_data_len(UART_PORT, &available);
-        if (available > 0) {
-            ESP_LOGW(TAG_PRINTER, "Aún hay %d bytes en buffer después de flush", available);
+        if (leidos > 0) {
+            if (byte_temporal == STX_BYTE) { // 0x02
+                buffer[0] = STX_BYTE;
+                total_bytes_recibidos = 1;
+                stx_encontrado = true;
+                break;
+            } else {
+                 ESP_LOGW(TAG_PRINTER, "🗑️ Ignorando basura: 0x%02X", byte_temporal);
+            }
         }
     }
+
+    if (!stx_encontrado) return -1; // Nunca llegó el inicio
+
+    // Llegamos hasta ETX + 1
+    while (total_bytes_recibidos < longitud_maxima) {
+        // Usamos un timeout corto entre caracteres (ej. 100ms)
+        leidos = uart_read_bytes(UART_PORT, &byte_temporal, 1, pdMS_TO_TICKS(100));
+        
+        if (leidos > 0) {
+            buffer[total_bytes_recibidos] = byte_temporal;
+
+            total_bytes_recibidos++;
+
+            // Si encontramos el ETX (0x03), hemos terminado de leer el cuerpo
+            if (byte_temporal == ETX_BYTE) { // 0x03
+                // Leemos 1 byte más (el LRC)
+                uint8_t lrc;
+                leidos = uart_read_bytes(UART_PORT, &lrc, 1, pdMS_TO_TICKS(100));
+                if (leidos > 0) {
+                    buffer[total_bytes_recibidos] = lrc;
+                    total_bytes_recibidos++;
+                    ESP_LOGI(TAG_PRINTER, "Trama completa recibida (%d bytes)", total_bytes_recibidos);
+                    return total_bytes_recibidos; 
+                }
+            }
+        } else {
+            // Pasó tiempo y no llegaron más bytes, pero ya teníamos el STX...
+            ESP_LOGE(TAG_PRINTER, "Se cortó la trama (Timeout entre bytes)");
+            return -2;
+        }
+    }
+    ESP_LOGE(TAG_PRINTER, "Error: BUFFER LLENO (%d bytes) sin encontrar ETX", total_bytes_recibidos);
+    return -3; // Buffer lleno sin encontrar ETX
 }
 
 // FUNCIONES PÚBLICAS (declaradas en printer_task.h)
@@ -367,6 +396,7 @@ bool printer_reconnect(void) {
 
 // Reiniciar contadores de error
 void printer_reset_errors(void) {
+    task_ctx.last_success_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
     task_ctx.error_count = 0;
     task_ctx.reconnect_attempts = 0;
     task_ctx.state = PRINTER_STATE_IDLE;
@@ -424,6 +454,7 @@ int ejecutar_solicitud_s1(uint8_t* buffer, int bytes_maximos) {
     ESP_LOGI(TAG_PRINTER, "Enviando comando S1...");
     vTaskDelay(pdMS_TO_TICKS(100));
 
+    uart_flush_input(UART_PORT);
     // Enviar comando S1
     if (!uart_send_frame(CMD_STATUS_S1, sizeof(CMD_STATUS_S1))) {
         ESP_LOGE(TAG_PRINTER, "Error al enviar S1");
@@ -451,10 +482,9 @@ int ejecutar_solicitud_s1(uint8_t* buffer, int bytes_maximos) {
     }
 
     ESP_LOGI(TAG_PRINTER, "ACK recibido, esperando STATUS S1...");
-    printer_uart_flush();
     
     // Recibir STATUS S1 con timeout
-    return receive_response(buffer, sizeof(bytes_maximos), 3000); // 3 segundos
+    return receive_response(buffer, UART_BUFFER_SIZE, 3000); // 3 segundos
 }
 
 // TAREA PRINCIPAL DE LA IMPRESORA
@@ -481,14 +511,16 @@ static void printer_task_main(void* pvParameters) {
         if (!send_enq_command()) {
             ESP_LOGI(TAG_PRINTER, "Error al enviar ENQ");
             printer_handle_error(ERROR_COMMUNICATION_LOST);
+            printer_reset_errors();
             continue;
         }
             
         // Recibir respuesta
-        int received = receive_response(rx_buffer, sizeof(rx_buffer), RESPONSE_TIMEOUT_MS);
+        int received = receive_response(rx_buffer, UART_BUFFER_SIZE, RESPONSE_TIMEOUT_MS);
         if (received <= 0) {
             ESP_LOGI(TAG_PRINTER, "Sin respuesta al ENQ (Timeout)");
             printer_handle_error(ERROR_NO_RESPONSE);
+            printer_reset_errors();
             continue;
         }
         
@@ -497,6 +529,7 @@ static void printer_task_main(void* pvParameters) {
             uart_write_bytes(UART_PORT, &nak_msg, 1);
             ESP_LOGW(TAG_PRINTER, "Trama inválida detectada");
             printer_handle_error(ERROR_INVALID_RESPONSE);
+            printer_reset_errors();
             continue;
         } 
 
@@ -505,6 +538,7 @@ static void printer_task_main(void* pvParameters) {
             
         if (rx_buffer[1] != 0x60) {  // Modo fiscal y en espera
             ESP_LOGI(TAG_PRINTER, "Modo no permitido para solicitar S1");
+            printer_reset_errors();
             continue;            
         }
 
@@ -513,6 +547,7 @@ static void printer_task_main(void* pvParameters) {
         if (bytes_leidos <= 0) {
             ESP_LOGW(TAG_PRINTER, "No se recibió respuesta S1 (timeout)");
             printer_handle_error(ERROR_STATUS_S1_FAILED);
+            printer_reset_errors();
             continue;
         }
     
@@ -521,6 +556,7 @@ static void printer_task_main(void* pvParameters) {
             uart_write_bytes(UART_PORT, (const char[]){NAK_BYTE}, 1);
             ESP_LOGW(TAG_PRINTER, "STATUS S1 inválido → NAK");
             printer_handle_error(ERROR_INVALID_RESPONSE);
+            printer_reset_errors();
             continue;
         }
 
@@ -529,6 +565,8 @@ static void printer_task_main(void* pvParameters) {
         ESP_LOGI(TAG_PRINTER, "STATUS S1 válido → ACK enviado");
         
         procesar_status_s1(rx_buffer, bytes_leidos);
+
+        printer_reset_errors();
 
         ESP_LOGI(TAG_PRINTER, "Ciclo completado exitosamente");        
     }

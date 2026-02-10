@@ -11,7 +11,7 @@
 
 // CONFIGURACIÓN MQTT
 
-#define MQTT_STACK              4096
+#define MQTT_STACK              5120
 #define MQTT_PRIORITY           5
 #define MQTT_NAME               "mqtt_task"
 

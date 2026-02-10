@@ -23,18 +23,33 @@ volatile bool mqtt_connected = false;
 // FUNCIONES PARA CONEXIÓN WIFI
 
 void wifi_event_handler(void* arg, esp_event_base_t event_base,
-                               int32_t event_id, void* event_data) {
-    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+                        int32_t event_id, void* event_data) {
+    
+    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
-    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
-        wifi_connected = false;
-        LOG_W(TAG_MQTT, "WiFi perdido, reintentando conexión...");
-        esp_wifi_connect();
+    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+        // --- ESTO ES LO QUE NECESITAMOS VER ---
+        wifi_event_sta_disconnected_t* event = (wifi_event_sta_disconnected_t*) event_data;
 
+        LOG_E(TAG_WIFI, "❌ Error de conexión WiFi. Razón: %d", event->reason);
+
+        wifi_connected = false;
+        mqtt_connected = false;
+        
+        wifi_connected = false;
+        esp_wifi_connect(); // Reintento automático
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
-        LOG_I(TAG_WIFI, "IP obtenida: " IPSTR, IP2STR(&event->ip_info.ip));
+        LOG_I(TAG_WIFI, "✅ IP obtenida: " IPSTR, IP2STR(&event->ip_info.ip));
         wifi_connected = true;
+        
+        // Lanzamos MQTT aquí mismo, ahora que sabemos que hay internet
+        if (mqtt_client == NULL) {
+            mqtt_app_start();
+        } else {
+            LOG_I(TAG_MQTT, "Re-iniciando cliente MQTT existente...");
+            esp_mqtt_client_start(mqtt_client);
+        }  
     }
 }
 
@@ -109,7 +124,7 @@ void wifi_init_sta(void)
         .sta = {
             .ssid = ESP_WIFI_SSID,
             .password = ESP_WIFI_PASS,
-            .threshold.authmode = WIFI_AUTH_WPA2_PSK,
+            .threshold.authmode = WIFI_AUTH_OPEN,
             .pmf_cfg = {
                 .capable = true,
                 .required = false
@@ -141,9 +156,23 @@ void mqtt_app_start(void) {
         .session.protocol_ver = MQTT_PROTOCOL_V_5,
         .buffer.size = 2048,
     };
+
+    esp_mqtt5_user_property_item_t props[] = {
+        {.key = "dispositivo", .value = "HKA80"},
+        {.key = "tipo_dato", .value = "status_s1"},
+        {.key = "serial", .value = mqtt_data.register_number} // Tu serial dinámico
+    };
+
+    esp_mqtt5_publish_property_config_t publish_props = {
+        .user_property = props,
+        .user_property_count = 3, // Cuántas etiquetas llevas
+    };
     
     // Crear cliente MQTT
     mqtt_client = esp_mqtt_client_init(&mqtt_cfg);
+    esp_mqtt5_client_set_connect_property(mqtt_client, &publish_props);
+    esp_mqtt_client_register_event(mqtt_client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
+
     if (mqtt_client == NULL) {
         LOG_E(TAG_MQTT, "Error al inicializar cliente MQTT");
         return;
@@ -214,8 +243,8 @@ void format_mqtt_json(char* buffer, size_t max_len, const mqtt_data_t* data) {
     // Usamos snprintf para proteger el stack y la memoria
     snprintf(buffer, max_len,
         "{"
-        "\"sts1\":%u,"
-        "\"sts2\":%u,"
+        "\"sts1\":\"%02X\","
+        "\"sts2\":\"%02X\","
         "\"err_cnt\":%u,"
         "\"rec_att\":%u,"
         "\"atm\":\"%s\","
@@ -251,14 +280,10 @@ void mqtt_task(void* pvParameters) {
 
     const TickType_t xMaxBlockTime = pdMS_TO_TICKS(60000); // 60 segundos de "seguro"
     static char last_serial[MAX_SERIAL_LENGTH + 1] = "";
-    static char json_buffer[768];
-    uint32_t notificationValue;
+    static char json_buffer[1024];
     int sync_count = 0;
     
     while (1) {
-        // ESPERA ACTIVA/PASIVA
-        BaseType_t notified = xTaskNotifyWait(0x00, ULONG_MAX, &notificationValue, xMaxBlockTime);
-
         // VERIFICACIÓN DE CONEXIÓN
         if (!mqtt_connected) {
             LOG_W(TAG_MQTT, "MQTT desconectado, reintentando en breve...");
@@ -329,21 +354,16 @@ void start_mqtt_system(void) {
 
     // Inicializar WiFi y MQTT
     wifi_init_sta();
-    mqtt_app_start();
 
     // 6. Crear tarea MQTT
-    BaseType_t result = xTaskCreate(
-        mqtt_task,
-        MQTT_NAME,
-        MQTT_STACK,
-        NULL,
-        MQTT_PRIORITY,
-        &mqtt_task_handle
-    );
-
-    if (result == pdPASS) {
-        LOG_I(TAG_MQTT, "Tarea MQTT creada exitosamente");
-    } else {
-        LOG_E(TAG_MQTT, "Error al crear tarea MQTT");
+    if (mqtt_task_handle == NULL) {
+        BaseType_t result = xTaskCreate(
+            mqtt_task,
+            MQTT_NAME,
+            MQTT_STACK,
+            NULL,
+            MQTT_PRIORITY,
+            &mqtt_task_handle
+        );
     }
 }

@@ -3,7 +3,7 @@ import time
 import sys
 
 # --- CONFIGURACIÓN ---
-PUERTO_PC = "COM6"  # <--- ¡VERIFICA ESTO EN TU ADMINISTRADOR DE DISPOSITIVOS!
+PUERTO_PC = "COM7"  # <--- ¡VERIFICA ESTO EN TU ADMINISTRADOR DE DISPOSITIVOS!
 BAUDIOS = 9600
 
 # Control bytes
@@ -31,9 +31,7 @@ def enviar_status(ser):
     ser.write(frame)
     ser.flush()
     
-    # AGREGAR ESTO: Pequeña pausa y limpieza para evitar leer nuestro propio eco
-    time.sleep(0.05) 
-    ser.reset_input_buffer() 
+    ser.read(len(frame)) 
     
     print(f"➡ STATUS enviado (LRC: {lrc:02X})")
 
@@ -50,6 +48,9 @@ def enviar_respuesta_s1(ser):
     
     ser.write(frame)
     ser.flush()
+
+    ser.read(len(frame))
+
     print(f"➡ Respuesta S1 enviada ({len(frame)} bytes)")
 
 def procesar_trama_completa(ser, trama):

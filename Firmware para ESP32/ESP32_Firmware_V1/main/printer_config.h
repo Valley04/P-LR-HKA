@@ -16,10 +16,10 @@
 // UART
 #define UART_PORT           UART_NUM_1
 #define UART_BAUDRATE       9600
-#define UART_TX_PIN         32
-#define UART_RX_PIN         33
-#define UART_BUFFER_SIZE    2048      
-#define UART_QUEUE_SIZE     40      
+#define UART_TX_PIN         4
+#define UART_RX_PIN         5
+#define UART_BUFFER_SIZE    1024      
+#define UART_QUEUE_SIZE     20      
 
 // Protocolo Fiscal
 #define ENQ_CMD             0x05
@@ -42,7 +42,7 @@ extern const uint8_t CMD_STATUS_S1[];
 #define MAX_RECONNECT_ATTEMPTS  5
 #define MAX_ERROR_COUNT         10
 #define MAX_SERIAL_LENGTH       10
-#define STATUS_S1_MIN_LENGTH    113
+#define STATUS_S1_MIN_LENGTH    117
 
 // Configuración WiFi
 #define ESP_WIFI_SSID      "LorenaWiFi"
