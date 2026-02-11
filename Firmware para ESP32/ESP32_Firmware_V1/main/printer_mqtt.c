@@ -8,11 +8,13 @@
 #include "esp_log.h"
 #include "nvs_flash.h"
 #include "mqtt_client.h"
+#include "mqtt5_client.h"
 #include "esp_crt_bundle.h"
 
 // VARIABLES ESTÁTICAS
 static const char* TAG_MQTT = "mqtt_events";
 static const char* TAG_WIFI = "wifi station";
+static mqtt5_user_property_handle_t user_prop_handle = NULL;
 
 TaskHandle_t mqtt_task_handle = NULL;
 esp_mqtt_client_handle_t mqtt_client = NULL;
@@ -35,8 +37,7 @@ void wifi_event_handler(void* arg, esp_event_base_t event_base,
 
         wifi_connected = false;
         mqtt_connected = false;
-        
-        wifi_connected = false;
+
         esp_wifi_connect(); // Reintento automático
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
@@ -157,21 +158,25 @@ void mqtt_app_start(void) {
         .buffer.size = 2048,
     };
 
-    esp_mqtt5_user_property_item_t props[] = {
-        {.key = "dispositivo", .value = "HKA80"},
-        {.key = "tipo_dato", .value = "status_s1"},
-        {.key = "serial", .value = mqtt_data.register_number} // Tu serial dinámico
+    esp_mqtt5_user_property_item_t user_prop_items[] = {
+        {"modelo_dispositivo", "HKA80"},
+        {"firmware_version", "V1.0"},
+        {"serial", mqtt_data.register_number},
+        {"tipo_dato", "status_s1"}
     };
 
-    esp_mqtt5_publish_property_config_t publish_props = {
-        .user_property = props,
-        .user_property_count = 3, // Cuántas etiquetas llevas
-    };
+    if (strcmp(mqtt_data.register_number, "DESCONOCIDO") != 0) {
+        mqtt_cfg.credentials.username = mqtt_data.register_number;
+    } else {
+        LOG_W(TAG_MQTT, "Serial desconocido, usando usuario genérico");
+    }
     
-    // Crear cliente MQTT
+    LOG_W(TAG_MQTT, "Intentando conectar con Usuario: ['%s'] y Clave: ['%s']", 
+          mqtt_cfg.credentials.username, 
+          mqtt_cfg.credentials.authentication.password);
+
     mqtt_client = esp_mqtt_client_init(&mqtt_cfg);
-    esp_mqtt5_client_set_connect_property(mqtt_client, &publish_props);
-    esp_mqtt_client_register_event(mqtt_client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
+    esp_mqtt5_client_set_user_property(&user_prop_handle, user_prop_items, 4);
 
     if (mqtt_client == NULL) {
         LOG_E(TAG_MQTT, "Error al inicializar cliente MQTT");
@@ -206,6 +211,16 @@ bool mqtt_publish(const char* topic, const char* payload) {
         return false;
     }
     
+    esp_mqtt5_publish_property_config_t publish_prop_cfg = {
+        .user_property = user_prop_handle,
+    };
+
+    esp_mqtt5_client_set_publish_property(mqtt_client, &publish_prop_cfg);
+
+    if (strcmp(mqtt_data.register_number, "DESCONOCIDO") == 0) {
+        return false;
+    }
+    
     int msg_id = esp_mqtt_client_publish(mqtt_client, topic, payload, 
                                          0, MQTT_QOS_LEVEL, 0);
     
@@ -215,6 +230,7 @@ bool mqtt_publish(const char* topic, const char* payload) {
     }
     
     LOG_I(TAG_MQTT, "Mensaje enviado con éxito [ID: %d]", msg_id);
+    esp_mqtt5_client_delete_user_property(user_prop_handle);
     return true;
 }
 
@@ -277,8 +293,6 @@ void format_mqtt_json(char* buffer, size_t max_len, const mqtt_data_t* data) {
 // TAREA MQTT
 void mqtt_task(void* pvParameters) {
     LOG_I(TAG_MQTT, "Tarea MQTT iniciada");
-
-    const TickType_t xMaxBlockTime = pdMS_TO_TICKS(60000); // 60 segundos de "seguro"
     static char last_serial[MAX_SERIAL_LENGTH + 1] = "";
     static char json_buffer[1024];
     int sync_count = 0;
@@ -357,13 +371,6 @@ void start_mqtt_system(void) {
 
     // 6. Crear tarea MQTT
     if (mqtt_task_handle == NULL) {
-        BaseType_t result = xTaskCreate(
-            mqtt_task,
-            MQTT_NAME,
-            MQTT_STACK,
-            NULL,
-            MQTT_PRIORITY,
-            &mqtt_task_handle
-        );
+        xTaskCreate(mqtt_task, MQTT_NAME, MQTT_STACK, NULL, MQTT_PRIORITY, &mqtt_task_handle);
     }
 }
