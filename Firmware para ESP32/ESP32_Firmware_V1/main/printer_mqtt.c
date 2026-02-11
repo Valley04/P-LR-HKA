@@ -14,7 +14,6 @@
 // VARIABLES ESTÁTICAS
 static const char* TAG_MQTT = "mqtt_events";
 static const char* TAG_WIFI = "wifi station";
-static mqtt5_user_property_handle_t user_prop_handle = NULL;
 
 TaskHandle_t mqtt_task_handle = NULL;
 esp_mqtt_client_handle_t mqtt_client = NULL;
@@ -158,13 +157,6 @@ void mqtt_app_start(void) {
         .buffer.size = 2048,
     };
 
-    esp_mqtt5_user_property_item_t user_prop_items[] = {
-        {"modelo_dispositivo", "HKA80"},
-        {"firmware_version", "V1.0"},
-        {"serial", mqtt_data.register_number},
-        {"tipo_dato", "status_s1"}
-    };
-
     if (strcmp(mqtt_data.register_number, "DESCONOCIDO") != 0) {
         mqtt_cfg.credentials.username = mqtt_data.register_number;
     } else {
@@ -176,7 +168,6 @@ void mqtt_app_start(void) {
           mqtt_cfg.credentials.authentication.password);
 
     mqtt_client = esp_mqtt_client_init(&mqtt_cfg);
-    esp_mqtt5_client_set_user_property(&user_prop_handle, user_prop_items, 4);
 
     if (mqtt_client == NULL) {
         LOG_E(TAG_MQTT, "Error al inicializar cliente MQTT");
@@ -210,10 +201,25 @@ bool mqtt_publish(const char* topic, const char* payload) {
         LOG_W(TAG_MQTT, "Publiación cancelada: MQTT Offline");
         return false;
     }
+
+    // Validación de seguridad para el Serial
+    if (strcmp(mqtt_data.register_number, "DESCONOCIDO") == 0) {
+        return false; // No publicamos si no tenemos serial
+    }
+
+    esp_mqtt5_user_property_item_t user_prop_items[] = {
+        {"modelo_dispositivo", "HKA80"},
+        {"firmware_version", "V1.0"},
+        {"serial", mqtt_data.register_number},
+        {"tipo_dato", "status_s1"}
+    };
+
+    mqtt5_user_property_handle_t user_prop_handle = NULL;
+    esp_mqtt5_client_set_user_property(&user_prop_handle, user_prop_items, 4);
     
     esp_mqtt5_publish_property_config_t publish_prop_cfg = {
         .user_property = user_prop_handle,
-    };
+    };   
 
     esp_mqtt5_client_set_publish_property(mqtt_client, &publish_prop_cfg);
 
@@ -223,6 +229,9 @@ bool mqtt_publish(const char* topic, const char* payload) {
     
     int msg_id = esp_mqtt_client_publish(mqtt_client, topic, payload, 
                                          0, MQTT_QOS_LEVEL, 0);
+
+    esp_mqtt5_client_delete_user_property(user_prop_handle);
+    user_prop_handle = NULL;
     
     if (msg_id < 0) {
         LOG_E(TAG_MQTT, "Error publicando en %s: %d", topic, msg_id);
@@ -230,7 +239,6 @@ bool mqtt_publish(const char* topic, const char* payload) {
     }
     
     LOG_I(TAG_MQTT, "Mensaje enviado con éxito [ID: %d]", msg_id);
-    esp_mqtt5_client_delete_user_property(user_prop_handle);
     return true;
 }
 
