@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Monitor de Impresora Fiscal</title>
+    <link rel="icon" href="data:,">
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+</head>
+<body>
+    <h1>Estado de la Impresora 🖨️</h1>
+    
+    <div style="background-color: #f0f0f0; padding: 20px; border-radius: 8px;">
+        <pre id="pantalla-datos">Iniciando conexión con MQTT.js...</pre>
+    </div>
+
+    <script>
+        // 🔌 Con MQTT.js la URL incluye el protocolo (wss) y la ruta (/mqtt)
+        const urlBroker = "wss://832b8689599f4045be005c116bc416f0.s1.eu.hivemq.cloud:8884/mqtt";
+        
+        const opciones = {
+            clientId: "web_" + Math.random().toString(16).substring(2, 8),
+            username: "djangochannels", // Tu usuario
+            password: "Channels12345",  // Tu contraseña
+        };
+
+        // 1. Iniciamos la conexión
+        const cliente = mqtt.connect(urlBroker, opciones);
+
+        // 2. Evento: Al conectar con éxito
+        cliente.on('connect', function () {
+            console.log("✅ ¡Conectado a HiveMQ con éxito!");
+            document.querySelector('#pantalla-datos').innerText = "✅ Conectado. Esperando datos de la impresora...";
+            
+            // Nos suscribimos a tu TÓPICO
+            cliente.subscribe("v1/fiscal/+/json_completo");
+        });
+
+        // 3. Evento: Al recibir un mensaje
+        cliente.on('message', function (topic, message) {
+            const dato = message.toString(); // Convertimos el paquete a texto
+            console.log("📥 Mensaje recibido en", topic, ":", dato);
+            
+            // Inyectamos el dato en la pantalla
+            document.querySelector('#pantalla-datos').innerText = dato;
+        });
+
+        // 4. Evento: Si ocurre un error
+        cliente.on('error', function (error) {
+            console.error("❌ Error de conexión:", error);
+            document.querySelector('#pantalla-datos').innerText = "❌ Error. Revisa la consola F12.";
+        });
+    </script>
+</body>
+</html>
