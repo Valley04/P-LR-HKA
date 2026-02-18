@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex h-100">
+    <div class="bg-white border-end shadow-sm" style="width: 220px; min-height: 80vh;">
+        <div class="p-3">
+            <h6 class="text-muted text-uppercase fw-bold" style="font-size: 0.8rem;">Gestión</h6>
+            <ul class="nav nav-pills flex-column mt-2">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active">Dispositivos</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link text-dark">Log Capture</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link text-dark">Grupos</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="flex-grow-1 bg-white">
+        {% block dispositivos_content %}
+        {% endblock %}
+    </div>
+</div>
+{% endblock %}
