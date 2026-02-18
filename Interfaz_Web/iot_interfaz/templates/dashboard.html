@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard Principal{% endblock %}
+
+{% block sidebar %}
+<div class="sidebar d-flex flex-column p-3">
+    <h4 class="text-center mb-4">Monitor IoT</h4>
+    <hr>
+    <ul class="nav nav-pills flex-column mb-auto">
+        <li class="nav-item">
+            <a href="#" class="nav-link active">Dashboard</a>
+        </li>
+        <li><a href="#" class="nav-link">Gestión de Usuario</a></li>
+        <li><a href="#" class="nav-link">Gestión de Firmware</a></li>
+        <li><a href="#" class="nav-link">Gestión de Asociados</a></li>
+        <li><a href="#" class="nav-link">Gestión de Dispositivos</a></li>
+        <li><a href="#" class="nav-link">Reportes</a></li>
+    </ul>
+    {% if user.is_superuser %}
+        <hr>
+        <div class="dropdown">
+            <a href="/admin/auth/user/" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
+                <strong>Admin</strong>
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<h2>Bienvenido al Panel de Control</h2>
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white shadow">
+            <div class="card-body">
+                <h6>Dispositivos Activos</h6>
+                <h2 id="activos-count">0</h2>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-success text-white shadow">
+            <div class="card-body">
+                <h6>En Línea (MQTT)</h6>
+                <h2 id="online-count">0</h2>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Nuevos Dispositivos (Últimos 6 meses)</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="graficaTiempo" style="height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
