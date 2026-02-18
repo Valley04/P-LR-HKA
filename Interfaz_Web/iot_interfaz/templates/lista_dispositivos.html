@@ -1,13 +1,20 @@
 {% extends 'dispositivos_base.html' %}
 
 {% block dispositivos_content %}
+
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
 <div class="p-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h4>Listado de Dispositivos</h4>
         <div class="btn-group shadow-sm">
-            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalAñadir">
-                + Añadir
-            </button>
+            <form method="GET" action="{% url 'dispositivos_lista' %}" class="d-flex me-2">
+                <div class="input-group input-group-sm">
+                    <input type="text" name="buscar" class="form-control" placeholder="Serial o modelo..." value="{{ request.GET.buscar }}">
+                    <button class="btn btn-outline-secondary" type="submit">🔍</button>
+                </div>
+            </form>
+            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalAñadir">+ Añadir</button>
             <button class="btn btn-sm btn-outline-dark">📥 Exportar</button>
         </div>
     </div>
@@ -24,12 +31,22 @@
             </thead>
             <tbody>
                 {% for equipo in dispositivos %}
-                <tr>
-                    <td><strong>{{ equipo.serial }}</strong></td>
-                    <td>{{ equipo.modelo }}</td>
-                    <td>{{ equipo.grupo }}</td>
-                    <td>{{ equipo.estado }}</td>
-                </tr>
+                    <tr data-bs-toggle="modal" 
+                        data-bs-target="#modalMonitor" 
+                        data-serial="{{ equipo.serial }}" 
+                        style="cursor: pointer;">
+                        
+                        <td><strong>{{ equipo.serial }}</strong></td>
+                        <td>{{ equipo.modelo }}</td>
+                        <td>{{ equipo.grupo }}</td>
+                        <td>{{ equipo.estado }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">
+                            No se encontraron dispositivos que coincidan con la búsqueda...
+                        </td>
+                    </tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -55,4 +72,119 @@
     </div>
   </div>
 </div>
+
+<div class="modal fade" id="modalMonitor" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title"> Monitor: <span id="serial-display"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bg-light">
+                <div class="row text-start p-2">
+                    <div class="col-md-5">
+                        <h6 class="border-bottom pb-2 text-primary">📦 Datos del Equipo</h6>
+                        <p class="mb-1 small"><strong>RIF:</strong> <span id="val-rif">--</span></p>
+                        <p class="mb-1 small"><strong>Serial:</strong> <span id="val-ser">--</span></p>
+                        <p class="mb-1 small"><strong>Cajero (ATM):</strong> <span id="val-atm">--</span></p>
+                        <p class="mb-1 small"><strong>Estado (STS1):</strong> <span id="val-sts1">--</span></p>
+                        <p class="mb-1 small"><strong>Error (STS2):</strong> <span id="val-sts2">--</span></p>
+                        <p class="mb-1 small"><strong>Fecha:</strong> <span id="val-date">--</span></p>
+                        <p class="mb-1 small"><strong>Hora:</strong> <span id="val-time">--</span></p>
+                    </div>
+                    
+                    <div class="col-md-7">
+                        <h6 class="border-bottom pb-2 text-success">🧾 Facturación y Contadores</h6>
+                        <p class="mb-1 small"><strong>Cierres Z / Reportes Fisc.:</strong> <span id="val-z_cnt">--</span> / <span id="val-f_cnt">--</span></p>
+                        <p class="mb-1 small"><strong>Subtotal Ventas:</strong> <span id="val-vts">--</span></p>
+                        <p class="mb-1 small"><strong>Última Factura / Emitidas:</strong> <span id="val-last_b">--</span> / <span id="val-b_iss">--</span></p>
+                        <p class="mb-1 small"><strong>Última Nota Débito / Cant:</strong> <span id="val-db_n">--</span> / <span id="val-db_a">--</span></p>
+                        <p class="mb-1 small"><strong>Última Nota Crédito / Cant:</strong> <span id="val-cr_n">--</span> / <span id="val-cr_a">--</span></p>
+                        <p class="mb-1 small"><strong>Último No Fiscal / Cant:</strong> <span id="val-nf_n">--</span> / <span id="val-nf_a">--</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // CONFIGURACIÓN GLOBAL
+    const urlBroker = "wss://832b8689599f4045be005c116bc416f0.s1.eu.hivemq.cloud:8884/mqtt";
+    const opciones = {
+        clientId: "web_" + Math.random().toString(16).substring(2, 8),
+        username: "djangochannels", 
+        password: "Channels12345",
+    };
+
+    const cliente = mqtt.connect(urlBroker, opciones);
+    let topicoActual = null; // Guardamos el tópico para poder desuscribirnos
+
+    // 2. LÓGICA AL ABRIR EL MODAL
+    const modalMonitor = document.getElementById('modalMonitor');
+    modalMonitor.addEventListener('show.bs.modal', function (event) {
+        const fila = event.relatedTarget;
+        const serial = fila.getAttribute('data-serial');
+        const nuevoTopico = `v1/fiscal/${serial}/json_completo`;
+        
+        // Actualizamos el título del modal
+        document.getElementById('serial-display').innerText = serial;
+        
+        // Limpiamos los datos del dispositivo anterior (si lo hubo)
+        const llavesJSON = [
+            'sts1', 'sts2', 'atm', 'vts', 'last_b', 'b_iss', 
+            'db_n', 'db_a', 'cr_n', 'cr_a', 'nf_n', 'nf_a', 
+            'z_cnt', 'f_cnt', 'rif', 'ser', 'time', 'date'
+        ];
+        llavesJSON.forEach(llave => {
+            const elemento = document.getElementById(`val-${llave}`);
+            if (elemento) elemento.innerText = "--";
+        });
+
+        // Si ya estábamos escuchando otro equipo, nos desuscribimos
+        if (topicoActual) { cliente.unsubscribe(topicoActual); }
+
+        // Nos suscribimos al nuevo equipo
+        cliente.subscribe(nuevoTopico);
+        topicoActual = nuevoTopico;
+        console.log("📡 Suscrito a:", nuevoTopico);
+    });
+
+    // 3. RECIBIR DATOS (Versión Detective 🕵️‍♂️)
+    cliente.on('message', function (topic, message) {
+        console.log("📥 Tópico que acaba de llegar:", topic);
+        console.log("🎯 Tópico que el modal está escuchando:", topicoActual);
+
+        if (topic === topicoActual) {
+            const textoCrudo = message.toString();
+            console.log("📦 Texto crudo recibido:", textoCrudo);
+            
+            try {
+                // Intentamos convertir el texto a Objeto
+                const data = JSON.parse(textoCrudo);
+                console.log("✅ JSON decodificado con éxito:", data);
+                
+                const llavesJSON = [
+                    'sts1', 'sts2', 'atm', 'vts', 'last_b', 'b_iss', 
+                    'db_n', 'db_a', 'cr_n', 'cr_a', 'nf_n', 'nf_a', 
+                    'z_cnt', 'f_cnt', 'rif', 'ser', 'time', 'date'
+                ];
+                
+                llavesJSON.forEach(llave => {
+                    const elemento = document.getElementById(`val-${llave}`);
+                    if (elemento && data[llave] !== undefined) {
+                        elemento.innerText = data[llave];
+                    }
+                });
+
+            } catch (error) {
+                console.error("❌ Falló la conversión del JSON. El error es:", error);
+            }
+        } else {
+            console.log("⚠️ Los tópicos no coinciden. Ignorando mensaje.");
+        }
+    });
+
+    cliente.on('connect', () => console.log("✅ Conectado al Broker"));
+</script>
 {% endblock %}

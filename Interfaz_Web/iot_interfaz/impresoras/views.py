@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from impresoras.forms import DispositivoForm
 from .models import Dispositivo
+from django.db.models import Q
 
 class MiLogin(LoginView):
     template_name = "login.html"
@@ -14,6 +15,15 @@ def dashboard_view(request):
 @login_required
 def lista_dispositivos(request):
 
+    query = request.GET.get('buscar')
+
+    dispositivos = Dispositivo.objects.all()
+
+    if query:
+        dispositivos = dispositivos.filter(
+            Q(serial__icontains=query) | Q(modelo__icontains=query)
+        )
+
     if request.method == 'POST':
 
         form = DispositivoForm(request.POST)
@@ -21,9 +31,7 @@ def lista_dispositivos(request):
             form.save() 
             return redirect('dispositivos_lista')
     else:
-        form = DispositivoForm()
-
-    dispositivos = Dispositivo.objects.all()
+        form = DispositivoForm()    
     
     context = {
         'dispositivos': dispositivos,
