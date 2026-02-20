@@ -8,6 +8,6 @@ class DispositivoForm(forms.ModelForm):
 
         widgets = {
             'serial': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: Z1F9999988'}),
-            'modelo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: HKA80'}),
+            'modelo': forms.Select(attrs={'class': 'form-control'}),
             'grupo': forms.Select(attrs={'class': 'form-control'}),
         }

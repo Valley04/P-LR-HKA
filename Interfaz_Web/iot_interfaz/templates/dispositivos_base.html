@@ -2,20 +2,32 @@
 
 {% block content %}
 <div class="d-flex h-100">
-    <div class="bg-white border-end shadow-sm" style="width: 220px; min-height: 80vh;">
+    <div class="bg-white border-end shadow-sm" style="width: 200px; min-height: 80vh;">
         <div class="p-3">
             <h6 class="text-muted text-uppercase fw-bold" style="font-size: 0.8rem;">Gestión</h6>
             <ul class="nav nav-pills flex-column mt-2">
                 <li class="nav-item">
-                    <a href="#" class="nav-link active">Dispositivos</a>
+                    <a href="{% url 'dispositivos_lista' %}" class="nav-link {% if request.resolver_match.url_name == 'dispositivos_lista' %}active{% else %}text-dark{% endif %}">
+                        Monitor en Tiempo Real
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link text-dark">Log Capture</a>
+                    <a href="{% url 'grupos_modelos' %}" class="nav-link {% if request.resolver_match.url_name == 'grupos_modelos' %}active{% else %}text-dark{% endif %}">
+                        Grupos y Modelos
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link text-dark">Grupos</a>
+                    <a href="{% url 'log_capture' %}" class="nav-link {% if request.resolver_match.url_name == 'log_capture' %}active{% else %}text-dark{% endif %}">
+                        Log Capture
+                    </a>
                 </li>
             </ul>
+        </div>
+
+        <div class="p-3 mt-auto">
+            <hr class="text-muted mb-3"> <a href="{% url 'dashboard' %}" class="btn btn-sm btn-light border w-100 text-center shadow-sm text-secondary fw-bold">
+                Volver al Inicio
+            </a>
         </div>
     </div>
 

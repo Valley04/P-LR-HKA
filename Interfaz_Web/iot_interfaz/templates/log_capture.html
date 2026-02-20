@@ -1,0 +1,79 @@
+{% extends 'dispositivos_base.html' %}
+
+{% block dispositivos_content %}
+<div class="p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4>Historial de Eventos</h4>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body bg-light rounded">
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Serial</label>
+                    <input type="text" name="serial" class="form-control form-control-sm" placeholder="Buscar serial..." value="{{ request.GET.serial }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Desde</label>
+                    <input type="date" name="inicio" class="form-control form-control-sm" value="{{ request.GET.inicio }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Hasta</label>
+                    <input type="date" name="fin" class="form-control form-control-sm" value="{{ request.GET.fin }}">
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-sm btn-primary w-100">Filtrar</button>
+                        <a href="{% url 'log_capture' %}" class="btn btn-sm btn-outline-secondary w-100">Limpiar</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="table-responsive shadow-sm border rounded bg-white">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 15%;">Fecha/Hora</th>
+                    <th style="width: 15%;">Dispositivo</th>
+                    <th style="width: 15%;">Evento</th>
+                    <th>Detalles (Data MQTT)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in page_obj %}
+                <tr>
+                    <td class="small text-muted">{{ log.fecha|date:"d/m/Y H:i:s" }}</td>
+                    <td><span class="badge bg-info text-dark">{{ log.dispositivo.serial }}</span></td>
+                    <td><span class="badge bg-light text-secondary border">{{ log.evento }}</span></td>
+                    <td>
+                        <code class="small text-primary" style="font-size: 0.75rem;">
+                            {{ log.detalles }}
+                        </code>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center py-4 text-muted">No se encontraron registros.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <nav class="mt-4">
+        <ul class="pagination pagination-sm justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page=1&serial={{ request.GET.serial }}&inicio={{ request.GET.inicio }}&fin={{ request.GET.fin }}">Primera</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&serial={{ request.GET.serial }}&inicio={{ request.GET.inicio }}&fin={{ request.GET.fin }}">Anterior</a></li>
+            {% endif %}
+
+            <li class="page-item disabled"><span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></li>
+
+            {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&serial={{ request.GET.serial }}&inicio={{ request.GET.inicio }}&fin={{ request.GET.fin }}">Siguiente</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&serial={{ request.GET.serial }}&inicio={{ request.GET.inicio }}&fin={{ request.GET.fin }}">Última</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endblock %}
