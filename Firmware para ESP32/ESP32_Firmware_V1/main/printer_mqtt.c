@@ -151,21 +151,17 @@ void mqtt_app_start(void) {
         .broker.address.port = 8883,
         .broker.address.transport = MQTT_TRANSPORT_OVER_SSL,
         .broker.verification.crt_bundle_attach = esp_crt_bundle_attach,
-        .credentials.username = "esp32_001",
-        .credentials.authentication.password = "Esp12345",
+        .credentials.username = "HKAESP32",
+        .credentials.authentication.password = "ESPhka32",
         .session.protocol_ver = MQTT_PROTOCOL_V_5,
         .buffer.size = 2048,
     };
 
     if (strcmp(mqtt_data.register_number, "DESCONOCIDO") != 0) {
-        mqtt_cfg.credentials.username = mqtt_data.register_number;
-    } else {
-        LOG_W(TAG_MQTT, "Serial desconocido, usando usuario genérico");
+        // Usamos el serial como Client ID, no como Username
+        mqtt_cfg.credentials.client_id = mqtt_data.register_number; 
+        LOG_I(TAG_MQTT, "Asignando Client ID único: %s", mqtt_cfg.credentials.client_id);
     }
-    
-    LOG_W(TAG_MQTT, "Intentando conectar con Usuario: ['%s'] y Clave: ['%s']", 
-          mqtt_cfg.credentials.username, 
-          mqtt_cfg.credentials.authentication.password);
 
     mqtt_client = esp_mqtt_client_init(&mqtt_cfg);
 

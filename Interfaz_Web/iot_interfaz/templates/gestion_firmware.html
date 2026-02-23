@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .fw-list-item:not(.active):hover {
+        background-color: #e9ecef;
+        transition: background-color 0.2s ease-in-out;
+    }
+</style>
+
+<div class="d-flex h-100" style="min-height: 85vh;">
+    <div class="bg-white border-end shadow-sm d-flex flex-column" style="width: 330px;">
+        <div class="p-3 border-bottom">
+            <h6 class="text-muted text-uppercase fw-bold mb-3" style="font-size: 0.8rem;">GESTIÓN DE FIRMWARE</h6>
+            
+            <div class="d-flex gap-2 mb-2">
+                <form method="GET" class="flex-grow-1">
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="buscar" class="form-control" placeholder="Buscar versión..." value="{{ query }}">
+                        <button class="btn btn-outline-secondary" type="submit">🔍</button>
+                    </div>
+                </form>
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoFirmware">
+                    + Añadir
+                </button>
+            </div>
+        </div>
+
+        <div class="list-group list-group-flush overflow-auto flex-grow-1">
+            {% for fw in firmwares %}
+                <a href="{% url 'gestion_firmware_detalle' fw.id %}" 
+                   class="list-group-item list-group-item-action fw-list-item py-3 {% if fw_seleccionado and fw_seleccionado.id == fw.id %}active bg-primary text-white border-primary{% endif %}">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1 fw-bold">{{ fw.version }}</h6>
+                        <small>{% if fw.es_obligatoria %}⚠️ Forzada{% endif %}</small>
+                    </div>
+                    <small class="mb-1 {% if fw_seleccionado and fw_seleccionado.id == fw.id %}text-light{% else %}text-muted{% endif %}">
+                        Subido: {{ fw.fecha_subida|date:"d M Y" }}
+                    </small>
+                </a>
+            {% empty %}
+                <div class="p-4 text-center text-muted small">No hay firmwares registrados.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="flex-grow-1 bg-light p-4">
+        {% if fw_seleccionado %}
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h4 class="m-0 fw-bold text-dark">Versión {{ fw_seleccionado.version }}</h4>
+                    
+                    <div>
+                        {% if fw_seleccionado.es_obligatoria %}
+                            <span class="badge bg-danger me-2">Actualización Crítica</span>
+                        {% else %}
+                            <span class="badge bg-secondary me-2">Opcional</span>
+                        {% endif %}
+                        
+                        <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalEliminarFw">
+                            🗑️ Eliminar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="modalEliminarFw" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content border-0 shadow-lg">
+                            <div class="modal-header bg-danger text-white">
+                                <h5 class="modal-title">⚠️ Confirmar Eliminación</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>¿Estás completamente seguro de que deseas eliminar el firmware <strong>{{ fw_seleccionado.version }}</strong>?</p>
+                                <div class="alert alert-warning small mb-0">
+                                    <strong>Nota técnica:</strong> Esto borrará el registro y eliminará permanentemente el archivo <code>.bin</code> del servidor. Los equipos que ya tengan esta versión seguirán funcionando, pero ya no estará disponible para nuevas descargas.
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                                <form method="POST" action="{% url 'eliminar_firmware' fw_seleccionado.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger">Sí, eliminar firmware</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <p class="text-muted mb-1 small">Fecha de publicación</p>
+                            <p class="fw-bold">{{ fw_seleccionado.fecha_subida|date:"d/m/Y H:i" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="text-muted mb-1 small">Archivo físico (.bin)</p>
+                            <a href="{{ fw_seleccionado.archivo_bin.url }}" class="btn btn-sm btn-outline-primary" download>
+                                📥 Descargar {{ fw_seleccionado.archivo_bin.name|slice:"10:" }}
+                            </a>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold text-dark mt-4 border-bottom pb-2">Notas de la Versión (Changelog)</h6>
+                    <div class="bg-light p-3 rounded border">
+                        <pre style="white-space: pre-wrap; font-family: inherit;">{{ fw_seleccionado.notas_version|default:"Sin notas especificadas para esta versión." }}</pre>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="h-100 d-flex flex-column align-items-center justify-content-center text-muted">
+                <i class="bi bi-cloud-arrow-up display-1 mb-3"></i>
+                <h5>Selecciona o añade un firmware</h5>
+                <p>Aquí verás los detalles y podrás gestionar los archivos .bin</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="modal fade" id="modalNuevoFirmware" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title">Subir Nuevo Firmware OTA</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Versión</label>
+                        <input type="text" name="version" class="form-control" placeholder="Ej: v1.0.5" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Archivo Binario (.bin)</label>
+                        <input type="file" name="archivo_bin" class="form-control" accept=".bin" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Notas de la versión</label>
+                        <textarea name="notas_version" class="form-control" rows="3" placeholder="¿Qué errores se corrigieron en el código de C?"></textarea>
+                    </div>
+                    <div class="form-check form-switch mt-3">
+                        <input class="form-check-input" type="checkbox" name="es_obligatoria" id="checkForzada">
+                        <label class="form-check-label" for="checkForzada">Marcar como actualización crítica/obligatoria</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Subir Archivo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -3,23 +3,32 @@
 {% block title %}Dashboard Principal{% endblock %}
 
 {% block sidebar %}
-<div class="sidebar d-flex flex-column p-3">
-    <h4 class="text-center mb-4">Monitor IoT</h4>
+<style>
+    .sidebar .nav-link:not(.active):hover {
+        background-color: #e9ecef;
+        color: #0d6efd !important;
+        transition: background-color 0.2s ease-in-out;
+        border-radius: 0.25rem;
+    }
+</style>
+
+<div class="sidebar d-flex flex-column p-3 bg-light border-end" style="min-height: 100vh;">
+    <h4 class="text-center mb-4 text-primary fw-bold">Monitor IoT</h4>
     <hr>
     <ul class="nav nav-pills flex-column mb-auto">
         <li class="nav-item">
-            <a href="#" class="nav-link active">Dashboard</a>
+            <a href="{% url 'dashboard' %}" class="nav-link active">Dashboard</a>
         </li>
-        <li><a href="/dispositivos/" class="nav-link">Gestión de Dispositivos</a></li>
-        <li><a href="#" class="nav-link">Gestión de Firmware</a></li>
-        <li><a href="#" class="nav-link">Reportes</a></li>
+        <li><a href="/dispositivos/" class="nav-link text-dark">Gestión de Dispositivos</a></li>
+        <li><a href="/firmware/" class="nav-link text-dark">Gestión de Firmware</a></li>
+        <li><a href="#" class="nav-link text-dark">Reportes</a></li>
     </ul>
     
     <hr>
     <ul class="nav nav-pills flex-column">
         {% if user.is_superuser %}
             <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle text-white" href="#" id="navbarScrollingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <a class="nav-link dropdown-toggle text-dark" href="#" id="navbarScrollingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     Admin
                 </a>
                 <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarScrollingDropdown">
@@ -37,7 +46,7 @@
             <li class="nav-item">
                 <form method="post" action="{% url 'logout' %}">
                     {% csrf_token %}
-                    <button type="submit" class="nav-link">
+                    <button type="submit" class="nav-link text-danger fw-bold">
                         Cerrar sesión
                     </button>
                 </form>
@@ -48,38 +57,122 @@
 {% endblock %}
 
 {% block content %}
-<h2>Bienvenido al Panel de Control</h2>
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card bg-primary text-white shadow">
-            <div class="card-body">
-                <h6>Dispositivos Activos</h6>
-                <h2 id="activos-count">0</h2>
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 mb-0 text-gray-800">Panel de Control General</h2>
+        <span class="text-muted small">Estado del Sistema: <span class="text-success fw-bold">● Activo</span></span>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 border-start border-primary border-4 shadow-sm h-100 py-2">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs fw-bold text-primary text-uppercase mb-1">Equipos Registrados</div>
+                            <div class="h3 mb-0 fw-bold">{{ total_dispositivos }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-pc-display-horizontal fs-1 text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card bg-success text-white shadow">
-            <div class="card-body">
-                <h6>En Línea (MQTT)</h6>
-                <h2 id="online-count">0</h2>
+
+        <div class="col-md-4">
+            <div class="card border-0 border-start border-success border-4 shadow-sm h-100 py-2">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs fw-bold text-success text-uppercase mb-1">En Línea (MQTT)</div>
+                            <div class="h3 mb-0 fw-bold">{{ en_linea }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-broadcast fs-1 text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 border-start border-danger border-4 shadow-sm h-100 py-2">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs fw-bold text-danger text-uppercase mb-1">Alertas</div>
+                            <div class="h3 mb-0 fw-bold">{{ alertas }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-exclamation-octagon fs-1 text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    </div>
-
-<div class="row">
-    <div class="col-md-8">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Nuevos Dispositivos (Últimos 6 meses)</h6>
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="m-0 fw-bold text-dark">Crecimiento de Dispositivos (6 meses)</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="graficaTiempo" style="max-height: 350px;"></canvas>
+                </div>
             </div>
-            <div class="card-body">
-                <canvas id="graficaTiempo" style="height: 300px;"></canvas>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="m-0 fw-bold text-dark">Modelos Registrados</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="graficaModelos" style="max-height: 350px;"></canvas>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Gráfica de Línea (Tiempo)
+    new Chart(document.getElementById("graficaTiempo"), {
+        type: 'line',
+        data: {
+            labels: {{ labels_meses|safe }},
+            datasets: [{
+                label: "Nuevos Registros",
+                data: {{ data_meses|safe }},
+                borderColor: "#0d6efd",
+                backgroundColor: "rgba(13, 110, 253, 0.05)",
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: { plugins: { legend: { display: false } } }
+    });
+
+    // Gráfica de Barras (Modelos)
+    new Chart(document.getElementById("graficaModelos"), {
+        type: 'bar',
+        data: {
+            labels: {{ labels_modelos|safe }},
+            datasets: [{
+                label: 'Equipos',
+                data: {{ counts_modelos|safe }},
+                backgroundColor: '#198754'
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            plugins: { legend: { display: false } }
+        }
+    });
+</script>
 {% endblock %}

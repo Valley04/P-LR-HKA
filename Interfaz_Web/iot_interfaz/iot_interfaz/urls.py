@@ -1,6 +1,12 @@
 from django.contrib import admin
+from django.contrib.auth import views
 from django.urls import path
-from impresoras.views import MiLogin, dashboard_view, lista_dispositivos, editar_dispositivo, eliminar_dispositivo, grupos_modelos, eliminar_grupo, eliminar_modelo, exportar_dispositivos_excel, log_capture_view #Importamos views
+from django.conf import settings
+from django.conf.urls.static import static
+from impresoras.views import MiLogin, dashboard_view, lista_dispositivos, editar_dispositivo, eliminar_dispositivo  #Importamos views
+from impresoras.views import grupos_modelos, eliminar_grupo, eliminar_modelo, exportar_dispositivos_excel, log_capture_view
+from impresoras.views import log_capture_view, descargar_logs_dispositivos, gestion_firmware_view, api_ultimo_firmware
+from impresoras.views import eliminar_firmware, disparar_ota_mqtt
 from django.contrib.auth.views import LogoutView
 
 urlpatterns = [
@@ -22,4 +28,16 @@ urlpatterns = [
 
     # Ruta para log
     path('log-capture/', log_capture_view, name='log_capture'),
+    path('log-capture/', log_capture_view, name='log_capture'),
+    path('log-capture/descargar/<int:dispositivo_id>/', descargar_logs_dispositivos, name='descargar_logs_equipo'),
+
+    # Rutas para Firmware
+    path('firmware/', gestion_firmware_view, name='gestion_firmware'),
+    path('firmware/<int:fw_id>/', gestion_firmware_view, name='gestion_firmware_detalle'),
+    path('api/firmware/latest/', api_ultimo_firmware, name='api_ultimo_firmware'),
+    path('firmware/eliminar/<int:fw_id>', eliminar_firmware, name='eliminar_firmware'),
+    path('dispositivos/ota/<int:dispositivo_id>/', disparar_ota_mqtt, name='disparar_ota'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

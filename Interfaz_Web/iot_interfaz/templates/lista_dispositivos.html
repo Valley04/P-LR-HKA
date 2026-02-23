@@ -65,6 +65,42 @@
                         </td>
                         <td class="text-end" style="overflow: visible;">
                             <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-warning fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalOta-{{ equipo.id }}">
+                                    ☁️ Actualizar
+                                </button>
+
+                                <div class="modal fade" id="modalOta-{{ equipo.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content border-0 shadow">
+                                            <div class="modal-header bg-warning text-dark">
+                                                <h5 class="modal-title fw-bold">Actualizar Firmware OTA</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            
+                                            <form method="POST" action="{% url 'disparar_ota' equipo.id %}">
+                                                {% csrf_token %}
+                                                <div class="modal-body bg-light">
+                                                    <p>Selecciona la versión de firmware a enviar al equipo <strong>{{ equipo.serial }}</strong>:</p>
+                                                    
+                                                    <select name="firmware_id" class="form-select border-warning mb-3" required>
+                                                        <option value="" disabled selected>-- Elegir Versión --</option>
+                                                        {% for fw in firmwares_disponibles %}
+                                                            <option value="{{ fw.id }}">{{ fw.version }} (Subido el {{ fw.fecha_subida|date:"d/m/Y" }})</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                    
+                                                    <div class="alert alert-info small mb-0">
+                                                        <i class="bi bi-info-circle"></i> Esto enviará un mensaje MQTT al topic <code>comandos/{{ equipo.serial }}/ota</code>.
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                    <button type="submit" class="btn btn-warning fw-bold">Enviar Comando</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
                                 <button class="btn btn-sm btn-light border dropdown-toggle" 
                                         type="button" 
                                         data-bs-toggle="dropdown" 
