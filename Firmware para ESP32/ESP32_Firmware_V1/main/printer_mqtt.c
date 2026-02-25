@@ -304,6 +304,8 @@ void mqtt_task(void* pvParameters) {
     int sync_count = 0;
     
     while (1) {
+
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         // VERIFICACIÓN DE CONEXIÓN
         if (!mqtt_connected) {
             LOG_W(TAG_MQTT, "MQTT desconectado, reintentando en breve...");
