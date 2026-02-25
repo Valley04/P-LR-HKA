@@ -50,7 +50,7 @@ def enviar_respuesta_s1(ser):
         b"00000",               # 9: Monto NF
         b"0020",                # 10: Z_cnt
         b"0017",                # 11: F_cnt
-        b"J3121711970",         # 12: RIF
+        b"J-312171197",         # 12: RIF
         b"Z1F9999988",          # 13: Serial
         b"123000",              # 14: Hora
         b"300126"               # 15: Fecha
