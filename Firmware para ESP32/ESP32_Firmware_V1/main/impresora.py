@@ -37,10 +37,27 @@ def enviar_status(ser):
 
 def enviar_respuesta_s1(ser):
     # Serial simulado: Z1F9999988
-    payload = (
-        b"002000000000017438029000000000000000000000000000000000000000000000000000000000000"
-        b"J3121711970Z1F9999988123000300126"
-    )
+    campos = [
+        b"S100",                # 0: ATM (Cajero)
+        b"00000000017438029",   # 1: Ventas
+        b"00000000",            # 2: Última factura
+        b"00000",               # 3: Emisión
+        b"00000000",            # 4: Último ND
+        b"00000",               # 5: Monto ND
+        b"00000000",            # 6: Último NC
+        b"00000",               # 7: Monto NC
+        b"00000000",            # 8: Último NF
+        b"00000",               # 9: Monto NF
+        b"0020",                # 10: Z_cnt
+        b"0017",                # 11: F_cnt
+        b"J3121711970",         # 12: RIF
+        b"Z1F9999988",          # 13: Serial
+        b"123000",              # 14: Hora
+        b"300126"               # 15: Fecha
+    ]
+
+    payload = b"".join([campo + b"\x0A" for campo in campos])
+
     cuerpo = payload + bytes([ETX])
     lrc = calcular_lrc(cuerpo)
     frame = bytes([STX]) + cuerpo + bytes([lrc])
@@ -48,9 +65,28 @@ def enviar_respuesta_s1(ser):
     ser.write(frame)
     ser.flush()
 
+    print(f"➡ Respuesta S1 enviada ({len(frame)} bytes)")
+    print(f"   Hex: {frame.hex(' ').upper()}")
+
+def enviar_respuesta_sv2(ser):
+
+    campos = [
+        b"Z7C"
+        b"VE"
+        b"020507GD00"
+    ]
+
+    payload = b"SV2\x0A" + b"\x0A".join(campos)
+
+    cuerpo = payload + bytes([ETX])
+    lrc = calcular_lrc(cuerpo)
+    frame = bytes([STX]) + cuerpo + bytes([lrc])
+    
+    ser.write(frame)
+    ser.flush()
     ser.read(len(frame))
 
-    print(f"➡ Respuesta S1 enviada ({len(frame)} bytes)")
+    print(f"➡ Respuesta SV2 enviada ({len(frame)} bytes)")
 
 def procesar_trama_completa(ser, trama):
     print(f"✅ Trama RX: {trama.hex(' ').upper()}")
@@ -80,6 +116,10 @@ def procesar_trama_completa(ser, trama):
             print("   ↳ Solicitud de Reporte S1 detectada")
             time.sleep(0.2) # Simular tiempo de procesamiento de la impresora real
             enviar_respuesta_s1(ser)
+        elif cmd_str == "SV2":
+            print("   ↳ Solicitud de Reporte SV2 detectada")
+            time.sleep(0.2)
+            enviar_respuesta_sv2(ser)
         else:
             print(f"   ↳ Comando '{cmd_str}' no implementado en simulador")
             

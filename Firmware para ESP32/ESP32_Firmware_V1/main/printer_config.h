@@ -11,7 +11,7 @@
 #include "freertos/semphr.h"
 #include "mqtt_client.h"
 
-#define ISMART_VERSION "1.0"
+#define ISMART_VERSION "010000"
 
 // CONSTANTES DE CONFIGURACIÓN
 
@@ -118,8 +118,8 @@ typedef struct __attribute__((packed)) {
     char register_number[11];
     char hour_machine[7];
     char date_machine[7];
-    char fw_ismart[8];
-    char fw_printer[8];
+    char fw_ismart[7];  // 6 caracteres + null terminator
+    char fw_printer[11];
     
 } mqtt_data_t;
 

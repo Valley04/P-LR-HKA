@@ -21,7 +21,7 @@ SemaphoreHandle_t mqtt_data_mutex = NULL;
 static TaskHandle_t printer_task_handle = NULL;
 static bool uart_initialized = false;
 const uint8_t CMD_STATUS_S1[] = {0x53, 0x31};
-const uint8_t CMD_STATUS_S3[] = {'S', '3'};
+const uint8_t CMD_STATUS_SV2[] = {'S', 'V', '2'};
 static uint8_t rx_buffer[UART_BUFFER_SIZE];
 
 // Contexto de la tarea
@@ -43,36 +43,69 @@ static printer_task_context_t task_ctx = {
 
 // FUNCIONES AUXILIARES (static para optimización)
 
+bool esperar_ack_impresora(uint32_t timeout_ms) {
+    uint8_t ack_buffer[1];
+    int ack_received = uart_read_bytes(UART_PORT, ack_buffer, 1, pdMS_TO_TICKS(timeout_ms));
+
+    if (ack_received > 0) {    
+        if (ack_buffer[0] == ACK_BYTE) {
+            ESP_LOGI(TAG_PRINTER, "✅ ACK recibido de la impresora.");
+            return true;
+
+        } else if (ack_buffer[0] == NAK_BYTE) {
+            ESP_LOGE(TAG_PRINTER, "❌ NAK recibido. La impresora rechazó el comando.");
+            return false;
+        } else {
+            ESP_LOGW(TAG_PRINTER, "⚠️ Byte inesperado recibido: 0x%02X", ack_buffer[0]);
+            return false;
+        }
+    }
+    ESP_LOGE(TAG_PRINTER, "⏰ Timeout esperando ACK/NAK.");
+    return false;
+}
+
 bool printer_get_fw_version(void) {
+
+    //Version para iSmart
+    strncpy(mqtt_data.fw_ismart, ISMART_VERSION, sizeof(mqtt_data.fw_ismart) - 1);
+    mqtt_data.fw_ismart[sizeof(mqtt_data.fw_ismart) - 1] = '\0';
     
     uart_flush(UART_PORT);
 
-    if (!uart_send_frame(CMD_STATUS_S3, sizeof(CMD_STATUS_S3))) {
+    if (!uart_send_frame(CMD_STATUS_SV2, sizeof(CMD_STATUS_SV2))) {
         LOG_E(TAG_PRINTER, "Error enviando comando de versión");
-        strcpy(mqtt_data.fw_ismart, "Desconocido");
+        strcpy(mqtt_data.fw_ismart, "0000000000");
         return false;
     }
 
-    int bytes_leidos = receive_response(rx_buffer, sizeof(rx_buffer), 1500);
+    if (!esperar_ack_impresora(500)) {
+        strcpy(mqtt_data.fw_printer, "0000000000");
+        return false; // Abortamos temprano
+    }
 
-    if (bytes_leidos > 0 && validate_frame(rx_buffer, bytes_leidos)) {
+    int bytes_leidos = receive_response(rx_buffer, sizeof(rx_buffer), 1000);    
+
+    if (bytes_leidos > 15 && validate_frame(rx_buffer, bytes_leidos)) {
+
         int etx_pos = bytes_leidos - 2;
+        int fw_len = 10; // 020507GD00
 
-        if (etx_pos >= 5) {
-            int fw_len = 5;
+        // LRC
+        if (etx_pos >= fw_len) {
             int start_idx = etx_pos - fw_len;
-
+            
+            // Version para Impresora
             memset(mqtt_data.fw_printer, 0, sizeof(mqtt_data.fw_printer));
             strncpy(mqtt_data.fw_printer, (char*)&rx_buffer[start_idx], fw_len);
 
-            ESP_LOGI(TAG_PRINTER, "✅ FW Impresora Validado: %s", mqtt_data.fw_printer);
+            ESP_LOGI(TAG_PRINTER, "✅ Versión detectada vía SV2: %s", mqtt_data.fw_printer);
             return true;
         }
     } else {
-        ESP_LOGE(TAG_PRINTER, "❌ Trama S3 inválida o error de Checksum (LRC)");
+        ESP_LOGE(TAG_PRINTER, "❌ Trama SV2 inválida o error de Checksum (LRC)");
     }
 
-    strcpy(mqtt_data.fw_printer, "0.0.0");
+    strcpy(mqtt_data.fw_printer, "0000000000");
     return false;
 }
 
@@ -89,7 +122,7 @@ static bool uart_send_command(uint8_t command) {
     return false;
 }
 
-static bool uart_send_frame(const uint8_t *data, size_t len) {
+bool uart_send_frame(const uint8_t *data, size_t len) {
     if (!uart_initialized || data == NULL || len == 0) return false;
     
     uint8_t stx = STX_BYTE;
@@ -263,20 +296,35 @@ void printer_uart_deinit(void) {
 
 // Validar trama
 bool validate_frame(const uint8_t* data, size_t len) {
-    if (len < 5) return false; // Mínimo STX + DATA + ETX + LRC
+    const uint8_t ack_msg = ACK_BYTE;
+    const uint8_t nak_msg = NAK_BYTE;
+
+    if (len < 5) {
+        uart_write_bytes(UART_PORT, &nak_msg, 1);
+        return false; // Mínimo STX + DATA + ETX + LRC
+    }
 
     uint8_t lrc_recibido = data[len - 1];
     uint8_t etx_posicion = data[len - 2];
     uint8_t lrc_calculado = 0;
 
-    if (data[0] != STX_BYTE || etx_posicion != ETX_BYTE) return false;
+    if (data[0] != STX_BYTE || etx_posicion != ETX_BYTE) {
+        uart_write_bytes(UART_PORT, &nak_msg, 1);
+        return false;
+    }
 
     // LRC se calcula desde DATA hasta ETX inclusive
     for (size_t i = 1; i < len - 1; i++) {
         lrc_calculado ^= data[i];
     }
 
-    return (lrc_recibido == lrc_calculado);
+    if (lrc_recibido == lrc_calculado) {
+        uart_write_bytes(UART_PORT, &ack_msg, 1);
+        return true;
+    } else {
+        uart_write_bytes(UART_PORT, &nak_msg, 1);
+        return false;
+    }
 }
 
 // Obtener estado actual
@@ -311,72 +359,70 @@ void guardar_estado(uint8_t sts1, uint8_t sts2) {
     mqtt_data.needs_sync = 1;
 }
 
-static uint32_t convertir_campo_a_uint32(const uint8_t* trama, int inicio, int longitud) {
-    char mini_buffer[20]; // Espacio suficiente para cualquier campo numérico
-    
-    // Limitar la longitud para evitar desbordar nuestro mini_buffer
-    if (longitud > 19) longitud = 19;
-
-    // Copiar los datos de la trama al mini_buffer
-    memcpy(mini_buffer, &trama[inicio], longitud);
-    
-    // Poner el caracter nulo para que strtoul sepa dónde terminar
-    mini_buffer[longitud] = '\0';
-
-    // Convertir y devolver el resultado
-    return strtoul(mini_buffer, NULL, 10);
-}
-
-static void copiar_campo_string(const uint8_t* trama, int inicio, int longitud, char* destino) {
-    // Copiamos los bytes exactos
-    memcpy(destino, &trama[inicio], longitud);
-
-    // Rematamos con el caracter nulo para que sea un string válido
-    destino[longitud] = '\0';
-}
-
 // Procesar STATUS S1 (manteniendo TODOS los campos)
-void procesar_status_s1(const uint8_t* data, size_t len) {
+void procesar_status_s1(uint8_t* data, size_t len) {
     if (len < STATUS_S1_MIN_LENGTH) {
         LOG_E(TAG_PRINTER, "Trama STATUS S1 muy corta: %d bytes", len);
         return;
     }
     
-    // Buscar STX
+    // Buscar STX y ETX
     int stx_pos = -1;
+    int etx_pos = -1; 
     for (int i = 0; i < len; i++) {
-        if (data[i] == STX_BYTE) {
-            stx_pos = i;
-            break;
-        }
+        if (data[i] == STX_BYTE)stx_pos = i;
+        if (data[i] == ETX_BYTE)etx_pos = i;
     }
     
-    if (stx_pos == -1) {
-        LOG_E(TAG_PRINTER, "No se encontró STX en STATUS S1");
+    if (stx_pos == -1 || etx_pos == -1 || etx_pos <= stx_pos) {
+        LOG_E(TAG_PRINTER, "No se encontró STX o ETX válido en STATUS S1");
         return;
     }
+
+    char* campos[20];
+    int num_campos = 0;
+
+    campos[num_campos++] = (char*)&data[stx_pos + 3];
+
+    for (int i = stx_pos + 3; i < etx_pos; i++) {
+        if (data[i] == 0x0A) {
+            data[i] = '\0'; // Terminar el campo actual
+            if (num_campos < 20) {
+                campos[num_campos++] = (char*)&data[i + 1]; // El siguiente campo empieza después del espacio
+            }
+        }
+    }
+    data[etx_pos] = '\0'; // Terminar el último campo
     
-    const uint8_t* trama = &data[stx_pos + 1];
+    if (num_campos < 16) {
+        LOG_E(TAG_PRINTER, "Faltan campos. Esperados >=16, recibidos: %d", num_campos);
+        return;
+    }
 
     if (xSemaphoreTake(mqtt_data_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {        
         // Extraer TODOS los campos según posiciones del protocolo
-        copiar_campo_string(trama, 0, 4, mqtt_data.atm_number);
-        mqtt_data.ventas = convertir_campo_a_uint32(trama, 4, 17);
-        copiar_campo_string(trama, 21, 8, mqtt_data.last_bill_number);
-        copiar_campo_string(trama, 29, 5, mqtt_data.bill_issue);
-        copiar_campo_string(trama, 34, 8, mqtt_data.number_last_debit);
-        mqtt_data.amount_debit = convertir_campo_a_uint32(trama, 42, 5);
-        copiar_campo_string(trama, 47, 8, mqtt_data.number_last_credit);
-        mqtt_data.amount_credit = convertir_campo_a_uint32(trama, 55, 5);
-        copiar_campo_string(trama, 60, 8, mqtt_data.number_last_notfiscal);
-        mqtt_data.amount_notfiscal = convertir_campo_a_uint32(trama, 68, 5);
-        copiar_campo_string(trama, 73, 4, mqtt_data.counter_daily_z);
-        copiar_campo_string(trama, 77, 4, mqtt_data.counter_report_fiscal);
-        copiar_campo_string(trama, 81, 11, mqtt_data.rif_cliente);
-        copiar_campo_string(trama, 92, 10, mqtt_data.register_number);
-        copiar_campo_string(trama, 102, 6, mqtt_data.hour_machine);
-        copiar_campo_string(trama, 108, 6, mqtt_data.date_machine);
+        strncpy(mqtt_data.atm_number, campos[0], sizeof(mqtt_data.atm_number) - 1);
+        mqtt_data.ventas = strtoul(campos[1], NULL, 10);
+        strncpy(mqtt_data.last_bill_number, campos[2], sizeof(mqtt_data.last_bill_number) - 1);
+        strncpy(mqtt_data.bill_issue, campos[3], sizeof(mqtt_data.bill_issue) - 1);
+        strncpy(mqtt_data.number_last_debit, campos[4], sizeof(mqtt_data.number_last_debit) - 1);
+        mqtt_data.amount_debit = strtoul(campos[5], NULL, 10);
+        strncpy(mqtt_data.number_last_credit, campos[6], sizeof(mqtt_data.number_last_credit) - 1);
+        mqtt_data.amount_credit = strtoul(campos[7], NULL, 10);
+        strncpy(mqtt_data.number_last_notfiscal, campos[8], sizeof(mqtt_data.number_last_notfiscal) - 1);
+        mqtt_data.amount_notfiscal = strtoul(campos[9], NULL, 10);
+        strncpy(mqtt_data.counter_daily_z, campos[10], sizeof(mqtt_data.counter_daily_z) - 1);
+        strncpy(mqtt_data.counter_report_fiscal, campos[11], sizeof(mqtt_data.counter_report_fiscal) - 1);
         
+        strncpy(mqtt_data.rif_cliente, campos[12], sizeof(mqtt_data.rif_cliente) - 1);
+        strncpy(mqtt_data.register_number, campos[13], sizeof(mqtt_data.register_number) - 1);
+        strncpy(mqtt_data.hour_machine, campos[14], sizeof(mqtt_data.hour_machine) - 1);
+        strncpy(mqtt_data.date_machine, campos[15], sizeof(mqtt_data.date_machine) - 1);
+        
+        // Forzar cierres nulos por seguridad en estructura packed
+        mqtt_data.register_number[sizeof(mqtt_data.register_number) - 1] = '\0';
+        mqtt_data.rif_cliente[sizeof(mqtt_data.rif_cliente) - 1] = '\0';
+
         // Actualizar serial
         update_printer_serial(mqtt_data.register_number);
         
@@ -499,25 +545,12 @@ int ejecutar_solicitud_s1(uint8_t* buffer, int bytes_maximos) {
     ESP_LOGI(TAG_PRINTER, "Comando S1 enviado, esperando ACK...");
     
     // Esperar ACK con timeout más corto
-    uint8_t ack_buffer[1];
-    int ack_received = uart_read_bytes(UART_PORT, ack_buffer, 1, pdMS_TO_TICKS(1000)); // 1 segundo
-    
-    if (ack_received > 0) {
-        ESP_LOGI(TAG_PRINTER, "ACK/NAK recibido: 0x%02X", ack_buffer[0]);
-    
-        // Aquí validas si es ACK o NAK
-        if (ack_buffer[0] != ACK_BYTE) {
-            ESP_LOGI(TAG_PRINTER, "Byte recibido después de S1: 0x%02X", ack_buffer[0]);
-            printer_handle_error(ERROR_NO_ACK);
-            return 0;
-        }
-    } else {
-        ESP_LOGW(TAG_PRINTER, "Timeout esperando ACK (Sin respuesta)");
+    if (!esperar_ack_impresora(500)) {
+        printer_handle_error(ERROR_INVALID_RESPONSE); 
+        return 0; // Abortamos, no habrá trama
     }
 
     ESP_LOGI(TAG_PRINTER, "ACK recibido, esperando STATUS S1...");
-    
-    // Recibir STATUS S1 con timeout
     return receive_response(buffer, UART_BUFFER_SIZE, 3000); // 3 segundos
 }
 
@@ -527,6 +560,7 @@ static void printer_task_main(void* pvParameters) {
     task_ctx.initialized = true;
     task_ctx.state = PRINTER_STATE_IDLE;
     const uint8_t nak_msg = NAK_BYTE;
+    bool fw_version_obtained = false;
     
     while (1) {
         
@@ -567,6 +601,15 @@ static void printer_task_main(void* pvParameters) {
             continue;
         } 
 
+        if (rx_buffer[1] == 0x60 && !fw_version_obtained) { // Modo fiscal
+            ESP_LOGI(TAG_PRINTER, "Intentando obtener versiones del sistema");
+            if (printer_get_fw_version()) {
+                fw_version_obtained = true;
+            } else {
+                ESP_LOGW(TAG_PRINTER, "No se pudo obtener versión, continuando sin ella");
+            }
+        }
+
         // Procesar el estado recibido
         guardar_estado(rx_buffer[1], rx_buffer[2]);
             
@@ -586,17 +629,10 @@ static void printer_task_main(void* pvParameters) {
         }
     
         if (!validate_frame(rx_buffer, bytes_leidos)) {
-            // Enviar NAK si la trama es inválida
-            uart_write_bytes(UART_PORT, (const char[]){NAK_BYTE}, 1);
-            ESP_LOGW(TAG_PRINTER, "STATUS S1 inválido → NAK");
             printer_handle_error(ERROR_INVALID_RESPONSE);
             printer_reset_errors();
             continue;
         }
-
-        // Enviar ACK de confirmación
-        uart_write_bytes(UART_PORT, (const char[]){ACK_BYTE}, 1);
-        ESP_LOGI(TAG_PRINTER, "STATUS S1 válido → ACK enviado");
         
         procesar_status_s1(rx_buffer, bytes_leidos);
 

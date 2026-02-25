@@ -6,7 +6,7 @@
 
 // CONFIGURACIÓN DE LA TAREA
 
-#define TASK_STACK_SIZE     4096    // Reducido de 4096
+#define TASK_STACK_SIZE     4096  
 #define TASK_PRIORITY       5
 #define TASK_NAME           "printer_task"
 
@@ -31,7 +31,7 @@ void printer_task_resume(void);
 
 // Funciones de procesamiento
 void interpretar_estado(uint8_t sts1, uint8_t sts2);
-void procesar_status_s1(const uint8_t* data, size_t len);
+void procesar_status_s1(uint8_t* data, size_t len);
 
 // Sistema de reconexión
 bool printer_reconnect(void);
@@ -41,6 +41,7 @@ void printer_handle_error(printer_error_t error);
 
 // Comunicación UART
 bool send_enq_command(void);
+bool uart_send_frame(const uint8_t *data, size_t len);
 bool send_status_s1_command(void);
 int receive_response(uint8_t* buffer, size_t buffer_size, uint32_t timeout_ms);
 
