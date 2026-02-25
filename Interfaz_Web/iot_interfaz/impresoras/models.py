@@ -42,8 +42,8 @@ class VersionFirmware(models.Model):
     proyecto = models.ForeignKey(ProyectoFirmware, on_delete=models.CASCADE, related_name='versiones', null=True)
 
     validador_version = RegexValidator(
-        regex=r'^[vV]?\d+(\.\d+)+$', 
-        message="La versión debe tener un formato válido (ej. 1.0, v1.0.5). No se permiten letras sueltas ni espacios.",
+        regex=r'^[A-Za-z0-9]+$', 
+        message="La versión solo puede contener letras y números sin espacios (ej. 010000 o 020507GD00).",
         code="version_invalida"
     )
 
@@ -85,6 +85,23 @@ class Dispositivo(models.Model):
     fw_ismart_instalado = models.CharField(max_length=20, default="Desconocida", blank=True)
     fw_printer_instalado = models.CharField(max_length=20, default="Desconocida", blank=True)
     firmware_actual = models.ForeignKey(VersionFirmware, on_delete=models.SET_NULL, null=True, blank=True, related_name='equipos_instalados')
+
+    def formatear_version_hka(self, v):
+        if v and len(v) >= 6 and v[:6].isdigit():
+            version_base = f"{v[0:2]}.{v[2:4]}.{v[4:6]}"
+            extra = v[6:]
+            if extra:
+                return f"{version_base} {extra}"
+            return version_base
+        return v
+
+    @property
+    def ismart_display(self):
+        return self.formatear_version_hka(self.fw_ismart_instalado)
+
+    @property
+    def printer_display(self):
+        return self.formatear_version_hka(self.fw_printer_instalado)
 
     def save(self, *args, **kwargs):
         if self.serial:

@@ -1,6 +1,7 @@
 // printer_mqtt.c
 #include "printer_mqtt.h"
 #include "printer_task.h"
+#include "ota_task.h"
 #include <string.h>
 #include <stdio.h>
 #include "esp_event.h"
@@ -53,9 +54,9 @@ void wifi_event_handler(void* arg, esp_event_base_t event_base,
     }
 }
 
-void mqtt_event_handler(void *handler_args, esp_event_base_t base, 
-                               int32_t event_id, void *event_data) {
-    esp_mqtt_event_handle_t event = (esp_mqtt_event_handle_t) event_data;
+void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data) {
+    esp_mqtt_event_handle_t event = event_data;
+    esp_mqtt_client_handle_t client = event->client;
     
     switch ((esp_mqtt_event_id_t)event_id) {
         case MQTT_EVENT_CONNECTED:
@@ -65,6 +66,13 @@ void mqtt_event_handler(void *handler_args, esp_event_base_t base,
             if (mqtt_task_handle != NULL) {
                 xTaskNotifyGive(mqtt_task_handle);
             }
+
+            if (strcmp(mqtt_data.register_number, "DESCONOCIDO") != 0) {
+                char topic_ota[128];
+                snprintf(topic_ota, sizeof(topic_ota), "comandos/%s/ota", mqtt_data.register_number);
+                esp_mqtt_client_subscribe(client, topic_ota, 1);
+                LOG_I(TAG_MQTT, "Resuscrito tras caída a: %s", topic_ota);
+            }
             break;
             
         case MQTT_EVENT_DISCONNECTED:
@@ -73,7 +81,17 @@ void mqtt_event_handler(void *handler_args, esp_event_base_t base,
             break;
             
         case MQTT_EVENT_DATA:
-            // Para futuras actualizaciones (en el caso de si aplica)
+            ESP_LOGI(TAG_MQTT, "Mensaje recibido");
+
+            char topic_ota[128];
+            snprintf(topic_ota, sizeof(topic_ota), "comandos/%s/ota", mqtt_data.register_number);
+
+            if (strcmp(event->topic, topic_ota) == 0) {
+                LOG_I(TAG_MQTT, "Comando OTA detectado, procesando...");
+                procesar_comando_ota(event->data, event->data_len);
+            } else {
+                LOG_W(TAG_MQTT, "Tópico no reconocido: %s", event->topic);
+            }
             break;
             
         case MQTT_EVENT_ERROR:
@@ -252,10 +270,21 @@ void prepare_mqtt_topic(char* buffer, size_t size, const char* serial, const cha
 // Actualizar serial de impresora
 void update_printer_serial(const char* serial) {
     if (serial != NULL && strlen(serial) > 0) {
-        strncpy(mqtt_data.register_number, serial, MAX_SERIAL_LENGTH);
-        mqtt_data.register_number[MAX_SERIAL_LENGTH] = '\0';
-        mqtt_data.serial_obtained = true;
-        LOG_I(TAG_MQTT, "Serial actualizado: %s", mqtt_data.register_number);
+
+        if (strcmp(mqtt_data.register_number, serial) == 0) {
+
+            strncpy(mqtt_data.register_number, serial, MAX_SERIAL_LENGTH);
+            mqtt_data.register_number[MAX_SERIAL_LENGTH] = '\0';
+            mqtt_data.serial_obtained = true;
+            LOG_I(TAG_MQTT, "Serial actualizado: %s", mqtt_data.register_number);
+
+            if (mqtt_connected && mqtt_client != NULL) {
+                char topic_ota[128];
+                snprintf(topic_ota, sizeof(topic_ota), "comandos/%s/ota", mqtt_data.register_number);
+                int msg_id = esp_mqtt_client_subscribe(mqtt_client, topic_ota, 1);
+                ESP_LOGI(TAG_MQTT, "Suscrito al tópico OTA: %s (msg_id=%d)", topic_ota, msg_id);
+            }
+        }
     }
 }
 
