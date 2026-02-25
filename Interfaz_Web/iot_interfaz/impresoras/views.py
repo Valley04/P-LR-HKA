@@ -2,14 +2,13 @@ from django.contrib.auth.views import LoginView
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from impresoras.forms import DispositivoForm
-from .models import Dispositivo, Grupo, ModeloEquipo
+from .models import Dispositivo, Grupo, ModeloEquipo, LogDispositivo, VersionFirmware, ProyectoFirmware
 from django.db.models import Q, Count
 from django.db.models.functions import TruncMonth
 import openpyxl
 from datetime import timedelta, datetime
 from django.utils import timezone
 from django.http import HttpResponse, JsonResponse
-from .models import LogDispositivo, Dispositivo, VersionFirmware
 import paho.mqtt.client as mqtt
 import ssl
 import json
@@ -19,16 +18,40 @@ class MiLogin(LoginView):
     template_name = "login.html"
 
 @login_required
+def eliminar_proyecto_firmware(request, p_id):
+    if request.method == 'POST':
+        proyecto = get_object_or_404(ProyectoFirmware, id=p_id)
+        
+        for version in proyecto.versiones.all():
+            if version.archivo_bin:
+                version.archivo_bin.delete(save=False)
+        
+        if proyecto.icono:
+            proyecto.icono.delete(save=False)
+        
+        proyecto.delete()
+        
+    return redirect('gestion_firmware')
+
+@login_required
 def disparar_ota_mqtt(request, dispositivo_id):
+
     if request.method == 'POST':
         equipo = get_object_or_404(Dispositivo, id=dispositivo_id)
         fw_id = request.POST.get('firmware_id')
         fw_destino = get_object_or_404(VersionFirmware, id=fw_id)
+        nombre_proyecto = fw_destino.proyecto.nombre.lower() if fw_destino.proyecto else ""
+
+        if "impresora" in nombre_proyecto or "printer" in nombre_proyecto:
+            objetivo_hardware = "printer"
+        else:
+            objetivo_hardware = "ismart"
 
         url_descarga = request.build_absolute_uri(fw_destino.archivo_bin.url)
 
         payload = {
             "comando": "INICIAR_OTA",
+            "objetivo": objetivo_hardware,
             "version": fw_destino.version,
             "url_descarga": url_descarga,
         }
@@ -46,24 +69,40 @@ def disparar_ota_mqtt(request, dispositivo_id):
             client.username_pw_set(USER, PASS)
 
             client.connect(BROKER, PORT, 10)
-            client.publish(topic_comando, json.dumps(payload), qos=1)
+
+            client.loop_start()
+
+            info_envio = client.publish(topic_comando, json.dumps(payload), qos=1)
+            info_envio.wait_for_publish()
+
+            client.loop_stop()
             client.disconnect()
 
-            messages.success(request, f"✅ Comando OTA enviado a {equipo.serial} para actualizar a {fw_destino.version}")
+            print(f"✅ EXITO: Comando OTA enviado al topic {topic_comando}")
+            messages.success(request, f"📡 Comando OTA ({fw_destino.version}) enviado exitosamente al equipo {equipo.serial}.")
+            
         except Exception as e:
-            messages.error(request, f"❌ Error al enviar comando OTA: {e}")
+
+            print(f"❌ ERROR MQTT FATAL: {e}")
+            messages.error(request, f"❌ Error de conexión MQTT: {e}")
 
     return redirect('dispositivos_lista')
 
-def eliminar_firmware(request, fw_id):
+@login_required
+def eliminar_version_firmware(request, v_id):
     if request.method == 'POST':
-        fw = get_object_or_404(VersionFirmware, id=fw_id)
-
-        if fw.archivo_bin:
-            fw.archivo_bin.delete(save=False)
+        version = get_object_or_404(VersionFirmware, id=v_id)
         
-        fw.delete()
-
+        proyecto_id = version.proyecto.id if version.proyecto else None
+        
+        if version.archivo_bin:
+            version.archivo_bin.delete(save=False)
+            
+        version.delete()
+        
+        if proyecto_id:
+            return redirect('gestion_firmware_detalle', proyecto_id=proyecto_id)
+            
     return redirect('gestion_firmware')
 
 def api_ultimo_firmware(request):
@@ -82,39 +121,60 @@ def api_ultimo_firmware(request):
     })
 
 @login_required
-def gestion_firmware_view(request, fw_id=None):
+def gestion_firmware_view(request, proyecto_id=None):
 
     if request.method == 'POST':
-        version = request.POST.get('version')
-        archivo = request.FILES.get('archivo_bin')
-        notas = request.POST.get('notas_version', '')
-        es_obligatoria = request.POST.get('es_obligatoria') == 'on'
+        action = request.POST.get('action')
 
-        if version and archivo:
-            VersionFirmware.objects.create(
-                version=version,
-                archivo_bin=archivo,
-                notas_version=notas,
-                es_obligatoria=es_obligatoria
-            )
-            return redirect('gestion_firmware')
+        if action == 'nuevo_proyecto':
+            nombre = request.POST.get('nombre')
+            icono = request.FILES.get('icono')
+            descripcion = request.POST.get('descripcion', '')
+
+            if nombre:
+                ProyectoFirmware.objects.create(nombre=nombre, icono=icono, descripcion=descripcion)
+                return redirect('gestion_firmware') 
+        
+        elif action == 'nueva_version':
+            p_id = request.POST.get('proyecto_id')
+            version = request.POST.get('version')
+            archivo = request.FILES.get('archivo_bin')
+            notas = request.POST.get('notas_version', '')
+            es_obligatoria = request.POST.get('es_obligatoria') == 'on'
+
+            proyecto_padre = get_object_or_404(ProyectoFirmware, id=p_id)
+
+            if version and archivo:
+                VersionFirmware.objects.create(
+                    proyecto = proyecto_padre,
+                    version=version,
+                    archivo_bin=archivo,
+                    notas_version=notas,
+                    es_obligatoria=es_obligatoria
+                )
+                return redirect('gestion_firmware_detalle', proyecto_id=p_id)
 
     query = request.GET.get('buscar', '')
-    firmwares = VersionFirmware.objects.all().order_by('-fecha_subida')
+    proyectos = ProyectoFirmware.objects.all().order_by('-fecha_creacion')
 
     if query:
-        firmwares = firmwares.filter(version__icontains=query)
+        proyectos = proyectos.filter(nombre__icontains=query)
 
-    # Determinar que firmware mostrar
-    fw_seleccionado = None
-    if fw_id:
-        fw_seleccionado = get_object_or_404(VersionFirmware, id=fw_id)
-    elif firmwares.exists():
-        fw_seleccionado = firmwares.first()
+    proyecto_seleccionado = None
+    versiones = []
+
+    if proyecto_id:
+        proyecto_seleccionado = get_object_or_404(ProyectoFirmware, id=proyecto_id)
+    elif proyectos.exists():
+        proyecto_seleccionado = proyectos.first()
+
+    if proyecto_seleccionado:
+        versiones = proyecto_seleccionado.versiones.all().order_by('-fecha_subida')
 
     context = {
-        'firmwares': firmwares,
-        'fw_seleccionado': fw_seleccionado,
+        'proyectos': proyectos,
+        'proyecto_seleccionado': proyecto_seleccionado,
+        'versiones': versiones,
         'query': query,
     }
     return render(request, 'gestion_firmware.html', context)
@@ -208,6 +268,14 @@ def dashboard_view(request):
     labels_meses = [r['mes'].strftime('%b %Y') for r in registro_mensual]
     data_meses = [r['cantidad'] for r in registro_mensual]
 
+    dist_ismart = Dispositivo.objects.values('fw_ismart_instalado').annotate(total=Count('id')).order_by('-total')
+    labels_ismart = [item['fw_ismart_instalado'] or 'Desconocida' for item in dist_ismart]
+    data_ismart = [item['total'] for item in dist_ismart]
+
+    dist_printer = Dispositivo.objects.values('fw_printer_instalado').annotate(total=Count('id')).order_by('-total')
+    labels_printer = [item['fw_printer_instalado'] or 'Desconocida' for item in dist_printer]
+    data_printer = [item['total'] for item in dist_printer]
+
     context = {
         'total_dispositivos': total_dispositivos,
         'labels_modelos': labels_modelos,
@@ -215,7 +283,11 @@ def dashboard_view(request):
         'labels_meses': labels_meses,
         'data_meses': data_meses,
         'en_linea': en_linea,
-        'alertas': alertas
+        'alertas': alertas,
+        'labels_ismart': json.dumps(labels_ismart),
+        'data_ismart': json.dumps(data_ismart),
+        'labels_printer': json.dumps(labels_printer),
+        'data_printer': json.dumps(data_printer),
     }
     return render(request, 'dashboard.html', context)
 
@@ -224,8 +296,7 @@ def lista_dispositivos(request):
 
     query = request.GET.get('buscar')
     dispositivos = Dispositivo.objects.all()
-    firmwares_disponibles = VersionFirmware.objects.all().order_by('-fecha_subida')
-
+    proyectos_disponibles = ProyectoFirmware.objects.prefetch_related('versiones').all()
     if query:
         dispositivos = dispositivos.filter(
             Q(serial__icontains=query) | Q(modelo__icontains=query)
@@ -248,7 +319,7 @@ def lista_dispositivos(request):
         'form': form,
         'grupos': grupos,
         'modelos': modelos,
-        'firmwares_disponibles': firmwares_disponibles,
+        'proyectos_disponibles': proyectos_disponibles,
     }
     return render(request, 'lista_dispositivos.html', context)
 

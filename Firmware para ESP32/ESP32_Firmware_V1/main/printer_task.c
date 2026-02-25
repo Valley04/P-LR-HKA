@@ -21,6 +21,7 @@ SemaphoreHandle_t mqtt_data_mutex = NULL;
 static TaskHandle_t printer_task_handle = NULL;
 static bool uart_initialized = false;
 const uint8_t CMD_STATUS_S1[] = {0x53, 0x31};
+const uint8_t CMD_STATUS_S3[] = {'S', '3'};
 static uint8_t rx_buffer[UART_BUFFER_SIZE];
 
 // Contexto de la tarea
@@ -41,6 +42,39 @@ static printer_task_context_t task_ctx = {
 };
 
 // FUNCIONES AUXILIARES (static para optimización)
+
+bool printer_get_fw_version(void) {
+    
+    uart_flush(UART_PORT);
+
+    if (!uart_send_frame(CMD_STATUS_S3, sizeof(CMD_STATUS_S3))) {
+        LOG_E(TAG_PRINTER, "Error enviando comando de versión");
+        strcpy(mqtt_data.fw_ismart, "Desconocido");
+        return false;
+    }
+
+    int bytes_leidos = receive_response(rx_buffer, sizeof(rx_buffer), 1500);
+
+    if (bytes_leidos > 0 && validate_frame(rx_buffer, bytes_leidos)) {
+        int etx_pos = bytes_leidos - 2;
+
+        if (etx_pos >= 5) {
+            int fw_len = 5;
+            int start_idx = etx_pos - fw_len;
+
+            memset(mqtt_data.fw_printer, 0, sizeof(mqtt_data.fw_printer));
+            strncpy(mqtt_data.fw_printer, (char*)&rx_buffer[start_idx], fw_len);
+
+            ESP_LOGI(TAG_PRINTER, "✅ FW Impresora Validado: %s", mqtt_data.fw_printer);
+            return true;
+        }
+    } else {
+        ESP_LOGE(TAG_PRINTER, "❌ Trama S3 inválida o error de Checksum (LRC)");
+    }
+
+    strcpy(mqtt_data.fw_printer, "0.0.0");
+    return false;
+}
 
 // Función para enviar comando por UART
 static bool uart_send_command(uint8_t command) {

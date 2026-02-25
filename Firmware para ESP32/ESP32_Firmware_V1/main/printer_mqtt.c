@@ -283,13 +283,15 @@ void format_mqtt_json(char* buffer, size_t max_len, const mqtt_data_t* data) {
         "\"ser\":\"%s\","
         "\"time\":\"%s\","
         "\"date\":\"%s\","
+        "\"fw_ismart\":\"%s\","
+        "\"fw_printer\":\"%s\","
         "\"ts\":%lu"
         "}",
         data->sts1, data->sts2, data->error_count, data->reconnect_attempts,
         data->atm_number, data->ventas, data->last_bill_number, data->bill_issue,
         data->number_last_debit, data->amount_debit, data->number_last_credit, data->amount_credit,
         data->number_last_notfiscal, data->amount_notfiscal, data->counter_daily_z, data->counter_report_fiscal,
-        data->rif_cliente, data->register_number, data->hour_machine, data->date_machine,
+        data->rif_cliente, data->register_number, data->hour_machine, data->date_machine, data ->fw_ismart, data->fw_printer,
         data->timestamp
     );
 }

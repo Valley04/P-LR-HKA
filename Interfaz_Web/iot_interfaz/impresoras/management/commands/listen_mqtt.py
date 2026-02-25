@@ -45,6 +45,9 @@ class Command(BaseCommand):
             nuevo_sts1 = int(payload.get('sts1', 0))
             nuevo_sts2 = int(payload.get('sts2', 0))
 
+            ismart_ver = payload.get('fw_ismart')
+            printer_ver = payload.get('fw_printer')
+
             # Buscar equipo y guardar log
             equipo = Dispositivo.objects.filter(serial=serial_msg).first()
 
@@ -53,6 +56,11 @@ class Command(BaseCommand):
                 evento_tipo = None
                 equipo.ultima_conexion = timezone.now()
                 equipo.save(update_fields=['ultima_conexion'])
+
+                if ismart_ver:
+                    equipo.fw_ismart_instalado = str(ismart_ver)
+                if printer_ver:
+                    equipo.fw_printer_instalado = str(printer_ver)
 
                 if nuevo_sts2 != equipo.ultimo_sts2:
                     evento_tipo = "Cambio de Error"

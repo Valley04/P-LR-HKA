@@ -21,7 +21,7 @@
         </li>
         <li><a href="/dispositivos/" class="nav-link text-dark">Gestión de Dispositivos</a></li>
         <li><a href="/firmware/" class="nav-link text-dark">Gestión de Firmware</a></li>
-        <li><a href="#" class="nav-link text-dark">Reportes</a></li>
+        <li><a href="#" class="nav-link text-dark">Reportes (Proximamente)</a></li>
     </ul>
     
     <hr>
@@ -136,12 +136,36 @@
             </div>
         </div>
     </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white fw-bold text-secondary">
+                    <i class="bi bi-cpu text-primary me-2"></i>Distribución Versiones iSmart
+                </div>
+                <div class="card-body d-flex justify-content-center align-items-center" style="position: relative; height: 250px;">
+                    <canvas id="chartIsmart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white fw-bold text-secondary">
+                    <i class="bi bi-printer text-secondary me-2"></i>Distribución Versiones Impresora
+                </div>
+                <div class="card-body d-flex justify-content-center align-items-center" style="position: relative; height: 250px;">
+                    <canvas id="chartPrinter"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-    // Gráfica de Línea (Tiempo)
+// Gráfica de Línea (Tiempo)
     new Chart(document.getElementById("graficaTiempo"), {
         type: 'line',
         data: {
@@ -173,6 +197,64 @@
             indexAxis: 'y',
             plugins: { legend: { display: false } }
         }
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // 1. Inyectamos los datos de Django usando el filtro 'safe' para evitar problemas de comillas
+        const labelsIsmart = {{ labels_ismart|safe }};
+        const dataIsmart = {{ data_ismart|safe }};
+        
+        const labelsPrinter = {{ labels_printer|safe }};
+        const dataPrinter = {{ data_printer|safe }};
+
+        // Paleta de colores atractiva para ingeniería
+        const backgroundColors = [
+            '#0d6efd', '#198754', '#ffc107', '#dc3545', '#0dcaf0', '#6c757d'
+        ];
+
+        // 2. Gráfica iSmart
+        const ctxIsmart = document.getElementById('chartIsmart').getContext('2d');
+        new Chart(ctxIsmart, {
+            type: 'doughnut',
+            data: {
+                labels: labelsIsmart,
+                datasets: [{
+                    data: dataIsmart,
+                    backgroundColor: backgroundColors,
+                    borderWidth: 2,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right' }
+                }
+            }
+        });
+
+        // 3. Gráfica Printer
+        const ctxPrinter = document.getElementById('chartPrinter').getContext('2d');
+        new Chart(ctxPrinter, {
+            type: 'doughnut',
+            data: {
+                labels: labelsPrinter,
+                datasets: [{
+                    data: dataPrinter,
+                    backgroundColor: backgroundColors.slice().reverse(), // Invertimos colores para variar
+                    borderWidth: 2,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right' }
+                }
+            }
+        });
     });
 </script>
 {% endblock %}

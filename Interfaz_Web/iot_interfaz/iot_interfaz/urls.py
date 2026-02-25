@@ -6,7 +6,7 @@ from django.conf.urls.static import static
 from impresoras.views import MiLogin, dashboard_view, lista_dispositivos, editar_dispositivo, eliminar_dispositivo  #Importamos views
 from impresoras.views import grupos_modelos, eliminar_grupo, eliminar_modelo, exportar_dispositivos_excel, log_capture_view
 from impresoras.views import log_capture_view, descargar_logs_dispositivos, gestion_firmware_view, api_ultimo_firmware
-from impresoras.views import eliminar_firmware, disparar_ota_mqtt
+from impresoras.views import eliminar_version_firmware, disparar_ota_mqtt, eliminar_proyecto_firmware
 from django.contrib.auth.views import LogoutView
 
 urlpatterns = [
@@ -33,10 +33,11 @@ urlpatterns = [
 
     # Rutas para Firmware
     path('firmware/', gestion_firmware_view, name='gestion_firmware'),
-    path('firmware/<int:fw_id>/', gestion_firmware_view, name='gestion_firmware_detalle'),
+    path('firmware/proyecto/<int:proyecto_id>/', gestion_firmware_view, name='gestion_firmware_detalle'),
     path('api/firmware/latest/', api_ultimo_firmware, name='api_ultimo_firmware'),
-    path('firmware/eliminar/<int:fw_id>', eliminar_firmware, name='eliminar_firmware'),
+    path('firmware/version/eliminar/<int:v_id>/', eliminar_version_firmware, name='eliminar_version'),
     path('dispositivos/ota/<int:dispositivo_id>/', disparar_ota_mqtt, name='disparar_ota'),
+    path('firmware/proyecto/eliminar/<int:p_id>/', eliminar_proyecto_firmware, name='eliminar_proyecto'),
 ]
 
 if settings.DEBUG:

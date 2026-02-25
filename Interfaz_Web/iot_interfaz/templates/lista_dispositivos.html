@@ -65,9 +65,54 @@
                         </td>
                         <td class="text-end" style="overflow: visible;">
                             <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-warning fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalOta-{{ equipo.id }}">
-                                    ☁️ Actualizar
+                                <button class="btn btn-sm btn-outline-primary fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalOta-{{ equipo.id }}">
+                                    <i class="bi bi-cpu"></i> Actualización
                                 </button>
+
+                                <div class="modal fade" id="modalOta-{{ equipo.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content border-0 shadow">
+                                            <div class="modal-header bg-dark text-white">
+                                                <h5 class="modal-title fw-bold">Gestión de Actualización - {{ equipo.serial }}</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            
+                                            <form method="POST" action="{% url 'disparar_ota' equipo.id %}">
+                                                {% csrf_token %}
+                                                <div class="modal-body bg-light">
+                                                    <div class="row mb-3 text-center">
+                                                        <div class="col-6 border-end">
+                                                            <small class="text-muted d-block text-uppercase fw-bold">Módulo iSmart</small>
+                                                            <span class="badge bg-primary fs-6 mt-1">v. {{ equipo.fw_ismart_instalado }}</span>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block text-uppercase fw-bold">Impresora Fiscal</small>
+                                                            <span class="badge bg-secondary fs-6 mt-1">v. {{ equipo.fw_printer_instalado }}</span>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <hr class="text-muted">
+                                                    
+                                                    <p class="mb-2 fw-bold">Seleccionar actualización a enviar:</p>
+                                                    <select name="firmware_id" class="form-select border-primary" required>
+                                                        <option value="" disabled selected>-- Elige una versión --</option>
+                                                        {% for proyecto in proyectos_disponibles %}
+                                                            <optgroup label="📦 {{ proyecto.nombre }}">
+                                                                {% for fw in proyecto.versiones.all %}
+                                                                    <option value="{{ fw.id }}">{{ fw.version }} (Subido: {{ fw.fecha_subida|date:"d/m/y" }})</option>
+                                                                {% endfor %}
+                                                            </optgroup>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                    <button type="submit" class="btn btn-primary fw-bold">Enviar Actualización</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
 
                                 <div class="modal fade" id="modalOta-{{ equipo.id }}" tabindex="-1" aria-hidden="true">
                                     <div class="modal-dialog">

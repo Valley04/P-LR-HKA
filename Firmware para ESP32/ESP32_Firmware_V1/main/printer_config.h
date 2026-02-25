@@ -11,6 +11,8 @@
 #include "freertos/semphr.h"
 #include "mqtt_client.h"
 
+#define ISMART_VERSION "1.0"
+
 // CONSTANTES DE CONFIGURACIÓN
 
 // UART
@@ -29,6 +31,7 @@
 #define NAK_BYTE            0x15
 
 extern const uint8_t CMD_STATUS_S1[];
+extern const uint8_t CMD_STATUS_S3[];
 
 // Tiempos (ms) - Optimizados
 #define POLLING_INTERVAL_MS     5000   // 30 segundos
@@ -115,6 +118,8 @@ typedef struct __attribute__((packed)) {
     char register_number[11];
     char hour_machine[7];
     char date_machine[7];
+    char fw_ismart[8];
+    char fw_printer[8];
     
 } mqtt_data_t;
 
