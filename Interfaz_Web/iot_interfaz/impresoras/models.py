@@ -1,3 +1,5 @@
+import json
+
 from django.db import models
 from django.core.validators import RegexValidator
 
@@ -47,7 +49,7 @@ class VersionFirmware(models.Model):
         code="version_invalida"
     )
 
-    version = models.CharField(max_length=20, validators=[validador_version], help_text="Ej: v1.0.0")
+    version = models.CharField(max_length=20, help_text="Ej: v010000")
     archivo_bin = models.FileField(upload_to='firmwares/', help_text="Sube tu archivo .bin compilado en ESP-IDF")
     fecha_subida = models.DateTimeField(auto_now_add=True)
     notas_version = models.TextField(blank=True, help_text="Arreglado el problema con...")
@@ -55,8 +57,7 @@ class VersionFirmware(models.Model):
 
     def save(self, *args, **kwargs):
         if self.version:
-            version_limpia = self.version.strip()
-            self.version = version_limpia.lstrip('vV')  # Elimina cualquier 'v' o 'V' al inicio
+            self.version = self.version.strip().upper()
         super().save(*args, **kwargs)
 
     class Meta:
@@ -94,6 +95,18 @@ class Dispositivo(models.Model):
                 return f"{version_base} {extra}"
             return version_base
         return v
+    
+    @property
+    def ultimo_log_dato(self):
+
+        ultimo_registro = self.logs.first()
+
+        if ultimo_registro and ultimo_registro.detalles:
+            try:
+                return json.loads(ultimo_registro.detalles)
+            except json.JSONDecodeError:
+                return {}
+        return {}
 
     @property
     def ismart_display(self):

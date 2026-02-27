@@ -1,3 +1,4 @@
+# listen_mqtt.c
 import json
 import ssl
 from datetime import timedelta
@@ -42,54 +43,69 @@ class Command(BaseCommand):
             serial_msg = topic_parts[2]
             payload = json.loads(msg.payload.decode('utf-8'))
 
-            nuevo_sts1 = int(payload.get('sts1', 0))
-            nuevo_sts2 = int(payload.get('sts2', 0))
-
-            ismart_ver = payload.get('fw_ismart')
-            printer_ver = payload.get('fw_printer')
-
-            # Buscar equipo y guardar log
+            # Buscar equipo
             equipo = Dispositivo.objects.filter(serial=serial_msg).first()
 
             if equipo:
+                # 1. Actualizamos los datos vitales del equipo
+                equipo.ultima_conexion = timezone.now()
+                if payload.get('fw_ismart'):
+                    equipo.fw_ismart_instalado = str(payload.get('fw_ismart'))
+                if payload.get('fw_printer'):
+                    equipo.fw_printer_instalado = str(payload.get('fw_printer'))
+                equipo.save()                
+
+                # 2. Obtenemos el diccionario con el último historial guardado
+                datos_viejos = equipo.ultimo_log_datos 
+
+                # 3. Comparamos los valores (usamos str() para asegurar que "60" coincida con "60")
+                nuevo_sts1 = str(payload.get('sts1', ''))
+                viejo_sts1 = str(datos_viejos.get('sts1', ''))
+
+                nuevo_sts2 = str(payload.get('sts2', ''))
+                viejo_sts2 = str(datos_viejos.get('sts2', ''))
+
+                nuevo_vts = str(payload.get('vts', ''))
+                viejo_vts = str(datos_viejos.get('vts', ''))
 
                 evento_tipo = None
-                equipo.ultima_conexion = timezone.now()
-                equipo.save(update_fields=['ultima_conexion'])
 
-                if ismart_ver:
-                    equipo.fw_ismart_instalado = str(ismart_ver)
-                if printer_ver:
-                    equipo.fw_printer_instalado = str(printer_ver)
-
-                if nuevo_sts2 != equipo.ultimo_sts2:
+                # 4. Lógica de detección de cambios
+                if nuevo_sts2 != viejo_sts2 and viejo_sts2 != '':
                     evento_tipo = "Cambio de Error"
-                elif nuevo_sts1 != equipo.ultimo_sts1:
+                elif nuevo_sts1 != viejo_sts1 and viejo_sts1 != '':
                     evento_tipo = "Cambio de Estado"
+                elif nuevo_vts != viejo_vts:
+                    evento_tipo = "Actualización de Contadores"
+                elif not datos_viejos:
+                    evento_tipo = "Primer Registro Inicial" # Si es un equipo nuevo
 
+                # 5. Si hubo algún cambio, guardamos el JSON en el historial
                 if evento_tipo:
+                    # Limpiamos las versiones de FW del JSON para ahorrar espacio en la BD
+                    payload_limpio = payload.copy()
+                    payload_limpio.pop('fw_ismart', None)
+                    payload_limpio.pop('fw_printer', None)
 
                     LogDispositivo.objects.create(
-                            dispositivo=equipo,
-                            evento=evento_tipo,
-                            detalles=json.dumps(payload)
-                        )
+                        dispositivo=equipo,
+                        evento=evento_tipo,
+                        detalles=json.dumps(payload_limpio)
+                    )
 
-                    equipo.ultimo_sts1 = nuevo_sts1
-                    equipo.ultimo_sts2 = nuevo_sts2
-                    equipo.save()
+                    self.stdout.write(self.style.SUCCESS(f"📝 [NUEVO LOG] {evento_tipo} en {serial_msg}"))
 
-                    fecha_limite = timezone.now() - timedelta(days=90)
-                    logs_viejos = LogDispositivo.objects.filter(fecha__lt=fecha_limite)
-                    cantidad_borrada = logs_viejos.count()
+                # 6. Limpieza de logs antiguos (se mantiene igual)
+                fecha_limite = timezone.now() - timedelta(days=90)
+                logs_viejos = LogDispositivo.objects.filter(fecha__lt=fecha_limite)
+                cantidad_borrada = logs_viejos.count()
 
-                    if cantidad_borrada > 0:
-                        logs_viejos.delete()
-                        self.stdout.write(self.style.WARNING(f"🧹 Eliminados {cantidad_borrada} logs antiguos."))
+                if cantidad_borrada > 0:
+                    logs_viejos.delete()
+                    self.stdout.write(self.style.WARNING(f"🧹 Eliminados {cantidad_borrada} logs antiguos."))
 
-                    self.stdout.write(f"📝 [NUEVO LOG] Serial: {serial_msg}")
             else:
-                self.stdout.write(self.style.WARNING(f"⚠️ Equipo con serial '{serial_msg}' no encontrado en la base de datos."))
+                self.stdout.write(self.style.WARNING(f"⚠️ Equipo con serial '{serial_msg}' no encontrado."))
 
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"❌ Error procesando mensaje: {e}"))

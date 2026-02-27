@@ -612,12 +612,6 @@ static void printer_task_main(void* pvParameters) {
 
         // Procesar el estado recibido
         guardar_estado(rx_buffer[1], rx_buffer[2]);
-            
-        if (rx_buffer[1] != 0x60) {  // Modo fiscal y en espera
-            ESP_LOGI(TAG_PRINTER, "Modo no permitido para solicitar S1");
-            printer_reset_errors();
-            continue;            
-        }
 
         int bytes_leidos = ejecutar_solicitud_s1(rx_buffer, received);
 

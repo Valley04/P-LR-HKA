@@ -7,9 +7,9 @@
 #define OTA_MAX_TARGET_LEN   16
 #define OTA_MAX_VERSION_LEN  16
 
-typedef stuct {
+typedef struct {
     char url[OTA_MAX_URL_LEN];
-    char objetivo[OTA_MAX_TARGET_LEN];
+    char objetivo[OTA_MAX_TARGET_LEN];  // "ismart" o "printer"
     char version[OTA_MAX_VERSION_LEN];
 } ota_config_t;
 

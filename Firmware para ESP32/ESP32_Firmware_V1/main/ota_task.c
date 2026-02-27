@@ -4,6 +4,7 @@
 #include "esp_http_client.h"
 #include "esp_https_ota.h"
 #include "cJSON.h"
+#include "esp_crt_bundle.h"
 #include <string.h>
 
 static const char* TAG_OTA = "OTA_MANAGER";
@@ -14,17 +15,22 @@ static void tarea_ota_esp32(void *pvParameters) {
 
     ESP_LOGI(TAG_OTA, "Iniciando proceso OTA para iSmart con version: %s y url: %s", ota_info->version, ota_info->url);
 
-    esp_http_client_config_t config = {
+    esp_http_client_config_t http_config = {
         .url = ota_info->url,
-        .cert_pem = NULL, // Para pruebas, no verificamos el certificado
+        .crt_bundle_attach = esp_crt_bundle_attach,
+        .cert_pem = NULL,
         .skip_cert_common_name_check = true,
         .timeout_ms = 10000,
         .keep_alive_enable = true
     };
 
+    esp_https_ota_config_t ota_config = {
+        .http_config = &http_config,
+    };
+
     ESP_LOGI(TAG_OTA, "Conectando al servidor y descargando firmware...");
 
-    esp_err_t ret = esp_https_ota(&config);
+    esp_err_t ret = esp_https_ota(&ota_config);
 
     if (ret == ESP_OK) {
         ESP_LOGI(TAG_OTA, "OTA completada con éxito. Reiniciando...");

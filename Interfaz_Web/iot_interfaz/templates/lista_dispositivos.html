@@ -50,10 +50,35 @@
                 {% for equipo in dispositivos %}
                     <tr>
                         <td>
-                            <a href="#" class="text-decoration-none fw-bold" 
-                            data-bs-toggle="modal" 
-                            data-bs-target="#modalMonitor" 
-                            data-serial="{{ equipo.serial }}">
+                            <a href="#" 
+                                class="fw-bold text-decoration-none"
+                                data-bs-toggle="modal" 
+                                data-bs-target="#modalMonitor"
+                                
+                                data-serial="{{ equipo.serial }}"
+                                data-rif="{{ equipo.rif|default:'--' }}"
+                                
+                                data-sts1="{{ equipo.ultimo_log_datos.sts1|default:'--' }}"
+                                data-sts2="{{ equipo.ultimo_log_datos.sts2|default:'--' }}"
+                                data-err_cnt="{{ equipo.ultimo_log_datos.err_cnt|default:'0' }}"
+                                data-rec_att="{{ equipo.ultimo_log_datos.rec_att|default:'0' }}"
+                                data-atm="{{ equipo.ultimo_log_datos.atm|default:'--' }}"
+                                data-vts="{{ equipo.ultimo_log_datos.vts|default:'0' }}"
+                                data-last_b="{{ equipo.ultimo_log_datos.last_b|default:'--' }}"
+                                data-b_iss="{{ equipo.ultimo_log_datos.b_iss|default:'0' }}"
+                                data-db_n="{{ equipo.ultimo_log_datos.db_n|default:'--' }}"
+                                data-db_a="{{ equipo.ultimo_log_datos.db_a|default:'0' }}"
+                                data-cr_n="{{ equipo.ultimo_log_datos.cr_n|default:'--' }}"
+                                data-cr_a="{{ equipo.ultimo_log_datos.cr_a|default:'0' }}"
+                                data-nf_n="{{ equipo.ultimo_log_datos.nf_n|default:'--' }}"
+                                data-nf_a="{{ equipo.ultimo_log_datos.nf_a|default:'0' }}"
+                                data-z_cnt="{{ equipo.ultimo_log_datos.z_cnt|default:'--' }}"
+                                data-f_cnt="{{ equipo.ultimo_log_datos.f_cnt|default:'--' }}"
+                                data-date="{{ equipo.ultimo_log_datos.date|default:'--' }}"
+                                data-time="{{ equipo.ultimo_log_datos.time|default:'--' }}"
+                                
+                                onclick="preLlenarModal(this)">
+                                
                                 {{ equipo.serial }}
                             </a>
                         </td>
@@ -114,38 +139,6 @@
                                     </div>
                                 </div>
 
-                                <div class="modal fade" id="modalOta-{{ equipo.id }}" tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content border-0 shadow">
-                                            <div class="modal-header bg-warning text-dark">
-                                                <h5 class="modal-title fw-bold">Actualizar Firmware OTA</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            
-                                            <form method="POST" action="{% url 'disparar_ota' equipo.id %}">
-                                                {% csrf_token %}
-                                                <div class="modal-body bg-light">
-                                                    <p>Selecciona la versión de firmware a enviar al equipo <strong>{{ equipo.serial }}</strong>:</p>
-                                                    
-                                                    <select name="firmware_id" class="form-select border-warning mb-3" required>
-                                                        <option value="" disabled selected>-- Elegir Versión --</option>
-                                                        {% for fw in firmwares_disponibles %}
-                                                            <option value="{{ fw.id }}">{{ fw.version }} (Subido el {{ fw.fecha_subida|date:"d/m/Y" }})</option>
-                                                        {% endfor %}
-                                                    </select>
-                                                    
-                                                    <div class="alert alert-info small mb-0">
-                                                        <i class="bi bi-info-circle"></i> Esto enviará un mensaje MQTT al topic <code>comandos/{{ equipo.serial }}/ota</code>.
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                                    <button type="submit" class="btn btn-warning fw-bold">Enviar Comando</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
                                 <button class="btn btn-sm btn-light border dropdown-toggle" 
                                         type="button" 
                                         data-bs-toggle="dropdown" 
@@ -323,6 +316,56 @@
 </div>
 
 <script>
+
+    function preLlenarModal(boton) {        
+        let sts1 = boton.getAttribute('data-sts1');
+        let sts2 = boton.getAttribute('data-sts2');
+        let err_cnt = boton.getAttribute('data-err_cnt');
+        let rec_att = boton.getAttribute('data-rec_att');
+        let atm = boton.getAttribute('data-atm');
+        let vts = boton.getAttribute('data-vts');
+        let last_b = boton.getAttribute('data-last_b');
+        let b_iss = boton.getAttribute('data-b_iss');
+        let db_n = boton.getAttribute('data-db_n');
+        let db_a = boton.getAttribute('data-db_a');
+        let cr_n = boton.getAttribute('data-cr_n');
+        let cr_a = boton.getAttribute('data-cr_a');
+        let nf_n = boton.getAttribute('data-nf_n');
+        let nf_a = boton.getAttribute('data-nf_a');
+        let z_cnt = boton.getAttribute('data-z_cnt');
+        let f_cnt = boton.getAttribute('data-f_cnt');
+        let rif = boton.getAttribute('data-rif');
+        let serial = boton.getAttribute('data-serial');
+        let date = boton.getAttribute('data-date');
+        let time = boton.getAttribute('data-time');
+
+        const setElementText = (id, value) => {
+            let el = document.getElementById(id);
+            if (el) el.innerText = value !== null ? value : '--';
+        };
+
+        setElementText('val-sts1', sts1);
+        setElementText('val-sts2', sts2);
+        setElementText('val-err_cnt', err_cnt);
+        setElementText('val-rec_att', rec_att);
+        setElementText('val-atm', atm);
+        setElementText('val-vts', vts);
+        setElementText('val-last_b', last_b);
+        setElementText('val-b_iss', b_iss);
+        setElementText('val-db_n', db_n);
+        setElementText('val-db_a', db_a);
+        setElementText('val-cr_n', cr_n);
+        setElementText('val-cr_a', cr_a);
+        setElementText('val-nf_n', nf_n);
+        setElementText('val-nf_a', nf_a);
+        setElementText('val-z_cnt', z_cnt);
+        setElementText('val-f_cnt', f_cnt);
+        setElementText('val-rif', rif);
+        setElementText('serial-display', serial); // El título del modal
+        setElementText('val-ser', serial);        // El serial dentro del modal
+        setElementText('val-date', date);
+        setElementText('val-time', time);
+    }
     // CONFIGURACIÓN GLOBAL
     const urlBroker = "wss://832b8689599f4045be005c116bc416f0.s1.eu.hivemq.cloud:8884/mqtt";
     const opciones = {

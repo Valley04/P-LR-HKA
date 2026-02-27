@@ -206,10 +206,10 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold">Versión</label>
                         <input type="text" name="version" class="form-control" 
-                            placeholder="Ej: v1.0.5 o 1.0" 
+                            placeholder="Ej: 010000 o 020507GD00" 
                             required 
-                            pattern="^[vV]?\d+(\.\d+)+$" 
-                            title="Formato inválido. Escribe algo como 1.0, v1.0 o 2.1.5 (sin espacios).">
+                            pattern="[A-Za-z0-9]+" 
+                            title="Formato inválido. Usa solo números y letras, sin espacios ni puntos (ej. 020507GD00).">
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold">Archivo Binario (.bin)</label>
