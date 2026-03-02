@@ -124,7 +124,7 @@ typedef struct __attribute__((packed)) {
 } mqtt_data_t;
 
 // Bandera global
-volatile bool ota_en_progreso = false;
+extern volatile bool ota_en_progreso;
 
 // DECLARACIONES EXTERNAS
 
@@ -176,6 +176,8 @@ const char* printer_state_to_string(printer_state_t state);
 // Validación
 bool validate_frame(const uint8_t* data, size_t len);
 bool is_valid_response(const uint8_t* data, size_t len);
+
+void iniciar_spi_impresora();
 
 // Utilidades
 uint32_t get_timestamp_ms(void);

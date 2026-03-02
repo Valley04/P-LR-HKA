@@ -33,6 +33,8 @@ void app_main(void) {
 
         return;
     }
+
+    iniciar_spi_impresora();
     
     // Lanzar tareas de forma independiente mejora el uso de IRAM y DRAM
     start_mqtt_system();

@@ -47,18 +47,27 @@ class Command(BaseCommand):
             equipo = Dispositivo.objects.filter(serial=serial_msg).first()
 
             if equipo:
-                # 1. Actualizamos los datos vitales del equipo
+
+                viejo_fw_ismart = equipo.fw_ismart_instalado
+                viejo_fw_printer = equipo.fw_printer_instalado
+
+                # Actualizamos los datos vitales del equipo
                 equipo.ultima_conexion = timezone.now()
+
+                nuevo_fw_ismart = payload.get('fw_ismart')
+                nuevo_fw_printer = payload.get('fw_printer')
+
                 if payload.get('fw_ismart'):
-                    equipo.fw_ismart_instalado = str(payload.get('fw_ismart'))
+                    equipo.fw_ismart_instalado = str(nuevo_fw_ismart)
                 if payload.get('fw_printer'):
-                    equipo.fw_printer_instalado = str(payload.get('fw_printer'))
+                    equipo.fw_printer_instalado = str(nuevo_fw_printer)
+
                 equipo.save()                
 
-                # 2. Obtenemos el diccionario con el último historial guardado
-                datos_viejos = equipo.ultimo_log_datos 
+                # Obtenemos el diccionario con el último historial guardado
+                datos_viejos = equipo.ultimo_log_dato
 
-                # 3. Comparamos los valores (usamos str() para asegurar que "60" coincida con "60")
+                # Comparamos los valores (usamos str() para asegurar que "60" coincida con "60")
                 nuevo_sts1 = str(payload.get('sts1', ''))
                 viejo_sts1 = str(datos_viejos.get('sts1', ''))
 
@@ -70,8 +79,11 @@ class Command(BaseCommand):
 
                 evento_tipo = None
 
-                # 4. Lógica de detección de cambios
-                if nuevo_sts2 != viejo_sts2 and viejo_sts2 != '':
+                if nuevo_fw_ismart and str(nuevo_fw_ismart) != viejo_fw_ismart and viejo_fw_ismart != "Desconocida":
+                    evento_tipo = "Actualización Firmware iSmart"
+                elif nuevo_fw_printer and str(nuevo_fw_printer) != viejo_fw_printer and viejo_fw_printer != "Desconocida":
+                    evento_tipo = "Actualización Firmware Impresora"
+                elif nuevo_sts2 != viejo_sts2 and viejo_sts2 != '':
                     evento_tipo = "Cambio de Error"
                 elif nuevo_sts1 != viejo_sts1 and viejo_sts1 != '':
                     evento_tipo = "Cambio de Estado"

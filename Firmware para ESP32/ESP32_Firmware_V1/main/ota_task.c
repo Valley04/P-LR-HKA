@@ -3,12 +3,13 @@
 #include "esp_system.h"
 #include "esp_http_client.h"
 #include "esp_https_ota.h"
+#include "esp_wifi.h"
 #include "cJSON.h"
 #include "esp_crt_bundle.h"
 #include <string.h>
 
 static const char* TAG_OTA = "OTA_MANAGER";
-extern volatile bool ota_en_progreso;
+volatile bool ota_en_progreso = false;
 extern esp_mqtt_client_handle_t mqtt_client;
 
 static void tarea_ota_esp32(void *pvParameters) {
@@ -44,8 +45,8 @@ static void tarea_ota_esp32(void *pvParameters) {
 
     if (ret == ESP_OK) {
         ESP_LOGI(TAG_OTA, "OTA completada con éxito. Reiniciando...");
-        ESP_LOGI(TAG_OTA, "El equipo se reiniciará en 3 segundos para aplicar los cambios...");
-        vTaskDelay(pdMS_TO_TICKS(3000));
+        esp_wifi_stop();
+        vTaskDelay(pdMS_TO_TICKS(500));
         esp_restart();
     } else {
         ESP_LOGE(TAG_OTA, "Error en OTA: %s", esp_err_to_name(ret));

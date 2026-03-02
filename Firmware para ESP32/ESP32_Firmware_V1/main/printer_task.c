@@ -41,8 +41,6 @@ static printer_task_context_t task_ctx = {
     .initialized = false
 };
 
-extern volatile bool ota_en_progreso;
-
 // FUNCIONES AUXILIARES (static para optimización)
 
 bool esperar_ack_impresora(uint32_t timeout_ms) {
