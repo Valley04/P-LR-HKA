@@ -1,8 +1,24 @@
-.vscode/
+# ESP-IDF / C / Firmware
 build/
+managed_components/
+sdkconfig.old
 **/components/Espressif/
+
+# Python / Django / Backend
+env/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+db.sqlite3
+media/
+
+# Entorno de Desarrollo y SO
+.vscode/
 *.zip
 *.exe
 *.dll
-*.pdf
-# Si quieres subir el PDF de avances, quita la línea de arriba.
+.DS_Store
+Thumbs.db
