@@ -11,7 +11,7 @@
 #include "freertos/semphr.h"
 #include "mqtt_client.h"
 
-#define ISMART_VERSION "010000"
+#define ISMART_VERSION "020000"
 
 // CONSTANTES DE CONFIGURACIÓN
 
@@ -122,6 +122,9 @@ typedef struct __attribute__((packed)) {
     char fw_printer[11];
     
 } mqtt_data_t;
+
+// Bandera global
+volatile bool ota_en_progreso = false;
 
 // DECLARACIONES EXTERNAS
 

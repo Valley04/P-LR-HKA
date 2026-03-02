@@ -8,6 +8,8 @@
 #include <string.h>
 
 static const char* TAG_OTA = "OTA_MANAGER";
+extern volatile bool ota_en_progreso;
+extern esp_mqtt_client_handle_t mqtt_client;
 
 static void tarea_ota_esp32(void *pvParameters) {
 
@@ -29,6 +31,14 @@ static void tarea_ota_esp32(void *pvParameters) {
     };
 
     ESP_LOGI(TAG_OTA, "Conectando al servidor y descargando firmware...");
+
+    ota_en_progreso = true;
+    LOG_W(TAG_OTA, "Freno de mano activado: Impresora en reposo.");
+
+    if (mqtt_client != NULL) {
+        esp_mqtt_client_stop(mqtt_client);
+        LOG_W(TAG_OTA, "Servicio MQTT detenido. Todo el WiFi dedicado al OTA.");
+    }
 
     esp_err_t ret = esp_https_ota(&ota_config);
 

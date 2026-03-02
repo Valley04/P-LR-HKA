@@ -41,6 +41,8 @@ static printer_task_context_t task_ctx = {
     .initialized = false
 };
 
+extern volatile bool ota_en_progreso;
+
 // FUNCIONES AUXILIARES (static para optimización)
 
 bool esperar_ack_impresora(uint32_t timeout_ms) {
@@ -565,6 +567,12 @@ static void printer_task_main(void* pvParameters) {
     while (1) {
         
         vTaskDelay(pdMS_TO_TICKS(POLLING_INTERVAL_MS));
+
+        if (ota_en_progreso) {
+            LOG_W(TAG_PRINTER, "OTA en progreso. Tarea UART en reposo hasta que se actualice el equipo...");
+            vTaskDelay(pdMS_TO_TICKS(3000));
+            continue;
+        }
 
         // Verificar si necesitamos reconexión
         if (printer_needs_reconnection()) {            
