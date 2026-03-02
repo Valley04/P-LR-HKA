@@ -1,0 +1,9 @@
+asgiref==3.11.1
+Django==6.0.2
+et_xmlfile==2.0.0
+openpyxl==3.1.5
+paho-mqtt==2.1.0
+pillow==12.1.1
+sqlparse==0.5.5
+timedelta==2020.12.3
+tzdata==2025.3
