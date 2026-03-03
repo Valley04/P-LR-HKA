@@ -57,6 +57,11 @@ extern const uint8_t CMD_STATUS_S3[];
 #define MQTT_QOS_LEVEL     1
 #define MQTT_RETAIN        0
 
+// Comandos de control para actualización de impresora
+#define SPI_CMD_START       0x01
+#define SPI_CMD_INFO        0x02
+#define SPI_CMD_PACKET      0x03
+#define SPI_CMD_END         0x04
 // TIPOS DE DATOS OPTIMIZADOS
 
 // Estados de la comunicación

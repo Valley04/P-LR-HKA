@@ -1,3 +1,4 @@
+#include "printer_config.h"
 #include "ota_task.h"
 #include "esp_log.h"
 #include "esp_system.h"
@@ -15,7 +16,7 @@ extern esp_mqtt_client_handle_t mqtt_client;
 extern esp_err_t enviar_chunk_spi(uint8_t *data, int len);
 
 void actualizar_impresora_por_spi(const char *url_descarga) {
-    LOG_I(TAG_SPI, "Iniciando descarga para la impresora desde: %s", url_descarga);
+    LOG_I(TAG_OTA, "Iniciando descarga para la impresora desde: %s", url_descarga);
 
     esp_http_client_config_t config = {
         .url = url_descarga,
@@ -24,17 +25,20 @@ void actualizar_impresora_por_spi(const char *url_descarga) {
     esp_http_client_handle_t client = esp_http_client_init(&config);
 
     if (esp_http_client_open(client, 0) != ESP_OK) {
-        LOG_E(TAG_SPI, "Error abriendo conexion HTTP con el servidor");
+        LOG_E(TAG_OTA, "Error abriendo conexion HTTP con el servidor");
         esp_http_client_cleanup(client);
         return;
     }
 
     int content_length = esp_http_client_fetch_headers(client);
-    LOG_I(TAG_SPI, "Tamaño del firmware de la impresora: %d bytes", content_length);
+    int total_paquetes = (content_length + 1023) / 1024;
+
+    uint8_t respuesta = transaccionar_byte_spi(SPI_CMD_START);
+    LOG_I(TAG_OTA, "Tamaño del firmware de la impresora: %d bytes", content_length);
 
     uint8_t *buffer = malloc(1024);
     if (buffer == NULL) {
-        LOG_E(TAG_SPI, "No hay memoria RAM suficiente para el buffer");
+        LOG_E(TAG_OTA, "No hay memoria RAM suficiente para el buffer");
         esp_http_client_cleanup(client);
         return;
     }
@@ -46,20 +50,20 @@ void actualizar_impresora_por_spi(const char *url_descarga) {
         bytes_leidos = esp_http_client_read(client, (char*)buffer, 1024);
 
         if (bytes_leidos < 0) {
-            LOG_E(TAG_SPI, "Error de red durante la descarga");
+            LOG_E(TAG_OTA, "Error de red durante la descarga");
             break;
         } else if (bytes_leidos == 0) {
-            LOG_I(TAG_SPI, "Descarga y transmision completada al 100%%");
+            LOG_I(TAG_OTA, "Descarga y transmision completada al 100%%");
             break;
         }
 
         if (enviar_chunk_spi(buffer, bytes_leidos) != ESP_OK) {
-            LOG_E(TAG_SPI, "Error trasmitido chunk por SPI");
+            LOG_E(TAG_OTA, "Error trasmitido chunk por SPI");
             break;
         }
 
         total_leidos += bytes_leidos;
-        LOG_I(TAG_SPI, "Progreso: %d / %d bytes enviados...", total_leidos, content_length);
+        LOG_I(TAG_OTA, "Progreso: %d / %d bytes enviados...", total_leidos, content_length);
     }
 
     free(buffer);
@@ -111,10 +115,10 @@ static void tarea_ota_esp32(void *pvParameters) {
         actualizar_impresora_por_spi(ota_info->url);
 
         ota_en_progreso = false;
-        ESP_LOGI("OTA_MANAGER", "✅ OTA de impresora finalizado. Reanudando UART normal...");
+        ESP_LOGI(TAG_OTA, "✅ OTA de impresora finalizado. Reanudando UART normal...");
     }
     else {
-        ESP_LOGE("OTA_MANAGER", "Objetivo OTA desconocido: %s", objetivo->valuestring);
+        ESP_LOGE(TAG_OTA, "Objetivo OTA desconocido: %s", ota_info->objetivo);
         ota_en_progreso = false; // Cancelamos el freno de mano
     }
     

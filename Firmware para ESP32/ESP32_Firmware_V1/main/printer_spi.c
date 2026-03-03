@@ -11,18 +11,17 @@
 #define PIN_NUM_CLK 18
 #define PIN_NUM_CS 22
 
-extern spi_device_handle_t spi_printer;
+spi_device_handle_t spi_printer;
 
-esp_err_t enviar_chunk_spi(uint8_t *data, int len) {
-    if (len == 0) ESP_OK;
-
+uint8_t transaccionar_byte_spi(uint8_t data) {
+    uint8_t rx_data = 0;
     spi_transaction_t t = {
-        .length = len * 8,
-        .tx_buffer = data,
-        .rx_buffer = NULL
+        .length = 8,
+        .tx_buffer = &data,
+        .rx_buffer = &rx_data
     };
-
-    return spi_device_polling_transmit(spi_printer, &t);
+    spi_device_polling_transmit(spi_printer, &t);
+    return rx_data;
 }
 
 esp_err_t enviar_chunk_spi(uint8_t *data, int len) {
