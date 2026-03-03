@@ -65,7 +65,7 @@ class Command(BaseCommand):
                 equipo.save()                
 
                 # Obtenemos el diccionario con el último historial guardado
-                datos_viejos = equipo.ultimo_log_dato
+                datos_viejos = equipo.ultimo_log_datos
 
                 # Comparamos los valores (usamos str() para asegurar que "60" coincida con "60")
                 nuevo_sts1 = str(payload.get('sts1', ''))
@@ -94,15 +94,11 @@ class Command(BaseCommand):
 
                 # 5. Si hubo algún cambio, guardamos el JSON en el historial
                 if evento_tipo:
-                    # Limpiamos las versiones de FW del JSON para ahorrar espacio en la BD
-                    payload_limpio = payload.copy()
-                    payload_limpio.pop('fw_ismart', None)
-                    payload_limpio.pop('fw_printer', None)
 
                     LogDispositivo.objects.create(
                         dispositivo=equipo,
                         evento=evento_tipo,
-                        detalles=json.dumps(payload_limpio)
+                        detalles=json.dumps(payload)
                     )
 
                     self.stdout.write(self.style.SUCCESS(f"📝 [NUEVO LOG] {evento_tipo} en {serial_msg}"))

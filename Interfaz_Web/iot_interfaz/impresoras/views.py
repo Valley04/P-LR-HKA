@@ -145,13 +145,23 @@ def gestion_firmware_view(request, proyecto_id=None):
             proyecto_padre = get_object_or_404(ProyectoFirmware, id=p_id)
 
             if version and archivo:
+                version_limpia = version.strip().upper()
+
+                if VersionFirmware.objects.filter(proyecto=proyecto_padre, version=version_limpia).exists():
+                    messages.error(request, f"⚠️ ¡Error! La versión '{version_limpia}' ya existe en este proyecto.")
+                    return redirect('gestion_firmware_detalle', proyecto_id=p_id)
+                
+                tipo_modulo = request.POST.get('tipo_modulo')
+                
                 VersionFirmware.objects.create(
                     proyecto = proyecto_padre,
+                    tipo_modulo = tipo_modulo,
                     version=version,
                     archivo_bin=archivo,
                     notas_version=notas,
                     es_obligatoria=es_obligatoria
                 )
+                messages.success(request, f"✅ Versión '{version_limpia}' subida exitosamente.")
                 return redirect('gestion_firmware_detalle', proyecto_id=p_id)
 
     query = request.GET.get('buscar', '')

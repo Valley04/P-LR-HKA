@@ -108,13 +108,37 @@
                                                     <div class="row mb-3 text-center">
                                                         <div class="col-6 border-end">
                                                             <small class="text-muted d-block text-uppercase fw-bold">Módulo iSmart</small>
-                                                            <span class="badge bg-primary fs-6 mt-1">v. {{ equipo.fw_ismart_instalado }}</span>
+                                                            <span class="badge bg-primary fs-6 mt-1">v. {{ equipo.ultimo_log_datos.fw_ismart|default:"Desconocida" }}</span>
                                                         </div>
                                                         <div class="col-6">
                                                             <small class="text-muted d-block text-uppercase fw-bold">Impresora Fiscal</small>
-                                                            <span class="badge bg-secondary fs-6 mt-1">v. {{ equipo.fw_printer_instalado }}</span>
+                                                            <span class="badge bg-secondary fs-6 mt-1">v. {{ equipo.ultimo_log_datos.fw_printer|default:"Desconocida" }}</span>
                                                         </div>
                                                     </div>
+
+                                                    {% if equipo.alertas_ota %}
+                                                        {% for alerta in equipo.alertas_ota %}
+                                                            {% if alerta.tipo == 'obligatoria' %}
+                                                                <div class="alert alert-danger border-danger shadow-sm py-2 px-3 mb-2" role="alert">
+                                                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                                                    <strong>¡Actualización Crítica para {{ alerta.modulo }}!</strong><br>
+                                                                    <small>Se requiere instalar la versión <strong>{{ alerta.version_nueva }}</strong>.</small>
+                                                                </div>
+                                                            {% else %}
+                                                                <div class="alert alert-warning border-warning shadow-sm py-2 px-3 mb-2" role="alert">
+                                                                    <i class="bi bi-info-circle-fill me-2 text-warning"></i>
+                                                                    <strong>Actualización Opcional para {{ alerta.modulo }}</strong><br>
+                                                                    <small>La versión <strong>{{ alerta.version_nueva }}</strong> está disponible en el servidor.</small>
+                                                                </div>
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        <div class="alert alert-success border-success shadow-sm py-2 px-3 mb-3" role="alert">
+                                                            <i class="bi bi-check-circle-fill me-2 text-success"></i>
+                                                            <strong>Equipo al día</strong><br>
+                                                            <small>Tanto el iSmart como la Impresora cuentan con las últimas versiones.</small>
+                                                        </div>
+                                                    {% endif %}
                                                     
                                                     <hr class="text-muted">
                                                     

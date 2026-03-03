@@ -41,7 +41,13 @@ class ProyectoFirmware(models.Model):
     
 class VersionFirmware(models.Model):
 
+    OPCIONES_MODULO = [
+        ('ismart', 'Módulo iSmart'),
+        ('impresora', 'Impresora Fiscal')
+    ]
+
     proyecto = models.ForeignKey(ProyectoFirmware, on_delete=models.CASCADE, related_name='versiones', null=True)
+    tipo_modulo = models.CharField(max_length=20, choices=OPCIONES_MODULO, default='ismart', help_text="¿Para qué hardware es este archivo?")
 
     validador_version = RegexValidator(
         regex=r'^[A-Za-z0-9]+$', 
@@ -97,7 +103,41 @@ class Dispositivo(models.Model):
         return v
     
     @property
-    def ultimo_log_dato(self):
+    def alertas_ota(self):
+        from .models import VersionFirmware
+        alertas = []
+        
+        # 1. Leemos los datos directamente del JSON crudo
+        datos = self.ultimo_log_datos
+        fw_ismart_json = datos.get('fw_ismart', 'Desconocida')
+        fw_printer_json = datos.get('fw_printer', 'Desconocida')
+
+        # 2. Evaluamos el iSmart (Buscamos el último .bin etiquetado como 'ismart')
+        ultima_v_ismart = VersionFirmware.objects.filter(tipo_modulo='ismart').order_by('-id').first()
+        
+        if ultima_v_ismart and fw_ismart_json != ultima_v_ismart.version and fw_ismart_json != "Desconocida":
+            es_obligatoria = getattr(ultima_v_ismart, 'es_obligatoria', False)
+            alertas.append({
+                'modulo': 'iSmart',
+                'version_nueva': ultima_v_ismart.version,
+                'tipo': 'obligatoria' if es_obligatoria else 'opcional'
+            })
+
+        # 3. Evaluamos la Impresora (Buscamos el último .bin etiquetado como 'impresora')
+        ultima_v_printer = VersionFirmware.objects.filter(tipo_modulo='impresora').order_by('-id').first()
+        
+        if ultima_v_printer and fw_printer_json != ultima_v_printer.version and fw_printer_json != "Desconocida":
+            es_obligatoria = getattr(ultima_v_printer, 'es_obligatoria', False)
+            alertas.append({
+                'modulo': 'Impresora Fiscal',
+                'version_nueva': ultima_v_printer.version,
+                'tipo': 'obligatoria' if es_obligatoria else 'opcional'
+            })
+            
+        return alertas
+    
+    @property
+    def ultimo_log_datos(self):
 
         ultimo_registro = self.logs.first()
 

@@ -52,9 +52,9 @@
             {% empty %}
                 <div class="p-4 text-center text-muted small">No hay proyectos creados.</div>
             {% endfor %}
-            <div class="p-3 mt-auto border-top bg-light">
-                <a href="{% url 'dashboard' %}" class="btn btn-sm btn-white border w-100 text-center shadow-sm text-secondary fw-bold">
-                    <i class="bi bi-arrow-left me-1"></i> Volver a Dashboard
+            <div class="p-3 mt-auto">
+                <hr class="text-muted mb-3"> <a href="{% url 'dashboard' %}" class="btn btn-sm btn-light border w-100 text-center shadow-sm text-secondary fw-bold">
+                    Volver a Dashboard
                 </a>
             </div>
         </div>
@@ -214,6 +214,14 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold">Archivo Binario (.bin)</label>
                         <input type="file" name="archivo_bin" class="form-control" accept=".bin" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">¿Para qué componente es esta actualización?</label>
+                        <select name="tipo_modulo" class="form-select" required>
+                            <option value="" disabled selected>-- Elige el destino del .bin --</option>
+                            <option value="ismart">Módulo iSmart (ESP32)</option>
+                            <option value="impresora">Impresora Fiscal</option>
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold">Notas de la versión</label>
