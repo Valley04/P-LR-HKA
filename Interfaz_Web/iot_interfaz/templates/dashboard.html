@@ -2,60 +2,6 @@
 
 {% block title %}Dashboard Principal{% endblock %}
 
-{% block sidebar %}
-<style>
-    .sidebar .nav-link:not(.active):hover {
-        background-color: #e9ecef;
-        color: #0d6efd !important;
-        transition: background-color 0.2s ease-in-out;
-        border-radius: 0.25rem;
-    }
-</style>
-
-<div class="sidebar d-flex flex-column p-3 bg-light border-end" style="min-height: 100vh;">
-    <h4 class="text-center mb-4 text-primary fw-bold">Monitor IoT</h4>
-    <hr>
-    <ul class="nav nav-pills flex-column mb-auto">
-        <li class="nav-item">
-            <a href="{% url 'dashboard' %}" class="nav-link active">Dashboard</a>
-        </li>
-        <li><a href="/dispositivos/" class="nav-link text-dark">Gestión de Dispositivos</a></li>
-        <li><a href="/firmware/" class="nav-link text-dark">Gestión de Firmware</a></li>
-        <li><a href="#" class="nav-link text-dark">Reportes (Proximamente)</a></li>
-    </ul>
-    
-    <hr>
-    <ul class="nav nav-pills flex-column">
-        {% if user.is_superuser %}
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle text-dark" href="#" id="navbarScrollingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    Admin
-                </a>
-                <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarScrollingDropdown">
-                    <li><a class="dropdown-item" href="{% url 'admin:index' %}">Gestión de Usuarios</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <form method="post" action="{% url 'logout' %}">
-                            {% csrf_token %}
-                            <button type="submit" class="dropdown-item">Cerrar sesión</button>
-                        </form>
-                    </li>
-                </ul>
-            </li>
-        {% else %}
-            <li class="nav-item">
-                <form method="post" action="{% url 'logout' %}">
-                    {% csrf_token %}
-                    <button type="submit" class="nav-link text-danger fw-bold">
-                        Cerrar sesión
-                    </button>
-                </form>
-            </li>
-        {% endif %}
-    </ul>
-</div>
-{% endblock %}
-
 {% block content %}
 <div class="container-fluid p-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -162,59 +108,66 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
-// Gráfica de Línea (Tiempo)
-    new Chart(document.getElementById("graficaTiempo"), {
-        type: 'line',
-        data: {
-            labels: {{ labels_meses|safe }},
-            datasets: [{
-                label: "Nuevos Registros",
-                data: {{ data_meses|safe }},
-                borderColor: "#0d6efd",
-                backgroundColor: "rgba(13, 110, 253, 0.05)",
-                fill: true,
-                tension: 0.3
-            }]
-        },
-        options: { plugins: { legend: { display: false } } }
-    });
 
-    // Gráfica de Barras (Modelos)
-    new Chart(document.getElementById("graficaModelos"), {
-        type: 'bar',
-        data: {
-            labels: {{ labels_modelos|safe }},
-            datasets: [{
-                label: 'Equipos',
-                data: {{ counts_modelos|safe }},
-                backgroundColor: '#198754'
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            plugins: { legend: { display: false } }
-        }
-    });
+(function() {
 
-    document.addEventListener("DOMContentLoaded", function() {
-        // 1. Inyectamos los datos de Django usando el filtro 'safe' para evitar problemas de comillas
-        const labelsIsmart = {{ labels_ismart|safe }};
-        const dataIsmart = {{ data_ismart|safe }};
-        
-        const labelsPrinter = {{ labels_printer|safe }};
-        const dataPrinter = {{ data_printer|safe }};
+    if (window.misGraficosDashboard) {
+        window.misGraficosDashboard.forEach(grafico => grafico.destroy());
+    }
 
-        // Paleta de colores atractiva para ingeniería
-        const backgroundColors = [
-            '#0d6efd', '#198754', '#ffc107', '#dc3545', '#0dcaf0', '#6c757d'
-        ];
+    window.misGraficosDashboard = [];
 
-        // 2. Gráfica iSmart
-        const ctxIsmart = document.getElementById('chartIsmart').getContext('2d');
-        new Chart(ctxIsmart, {
+    const labelsIsmart = {{ labels_ismart|safe }};
+    const dataIsmart = {{ data_ismart|safe }};
+    const labelsPrinter = {{ labels_printer|safe }};
+    const dataPrinter = {{ data_printer|safe }};
+    const backgroundColors = ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#0dcaf0', '#6c757d'];
+
+    const ctxTiempo = document.getElementById("graficaTiempo");
+    // 1. Gráfica de Línea (Tiempo)
+    if (ctxTiempo) {
+        const chartTiempo = new Chart(ctxTiempo, {
+            type: 'line',
+            data: {
+                labels: {{ labels_meses|safe }},
+                datasets: [{
+                    label: "Nuevos Registros",
+                    data: {{ data_meses|safe }},
+                    borderColor: "#0d6efd",
+                    backgroundColor: "rgba(13, 110, 253, 0.05)",
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: { plugins: { legend: { display: false } } }
+        });
+        window.misGraficosDashboard.push(chartTiempo); // Lo guardamos en el registro
+    }
+
+    const ctxModelos = document.getElementById("graficaModelos");
+    if (ctxModelos) {
+        const chartModelos = new Chart(ctxModelos, {
+            type: 'bar',
+            data: {
+                labels: {{ labels_modelos|safe }},
+                datasets: [{
+                    label: 'Equipos',
+                    data: {{ counts_modelos|safe }},
+                    backgroundColor: '#198754'
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                plugins: { legend: { display: false } }
+            }
+        });
+        window.misGraficosDashboard.push(chartModelos);
+    }
+
+    const ctxIsmart = document.getElementById('chartIsmart');
+    if (ctxIsmart) {
+        const chartIsmart = new Chart(ctxIsmart, {
             type: 'doughnut',
             data: {
                 labels: labelsIsmart,
@@ -228,21 +181,21 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'right' }
-                }
+                plugins: { legend: { position: 'right' } }
             }
         });
+        window.misGraficosDashboard.push(chartIsmart);
+    }
 
-        // 3. Gráfica Printer
-        const ctxPrinter = document.getElementById('chartPrinter').getContext('2d');
-        new Chart(ctxPrinter, {
+    const ctxPrinter = document.getElementById('chartPrinter');
+    if (ctxPrinter) {
+        const chartPrinter = new Chart(ctxPrinter, {
             type: 'doughnut',
             data: {
                 labels: labelsPrinter,
                 datasets: [{
                     data: dataPrinter,
-                    backgroundColor: backgroundColors.slice().reverse(), // Invertimos colores para variar
+                    backgroundColor: backgroundColors.slice().reverse(),
                     borderWidth: 2,
                     hoverOffset: 4
                 }]
@@ -250,11 +203,12 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'right' }
-                }
+                plugins: { legend: { position: 'right' } }
             }
         });
-    });
+        window.misGraficosDashboard.push(chartPrinter);
+    }
+
+})();
 </script>
 {% endblock %}

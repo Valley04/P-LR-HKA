@@ -16,7 +16,10 @@
         <div class="p-3 border-bottom">
             <h6 class="text-muted text-uppercase fw-bold mb-3" style="font-size: 0.8rem;">Gestión de Firmware</h6>
             <div class="d-flex gap-2 mb-2">
-                <form method="GET" class="flex-grow-1">
+                <form hx-get="{{ request.path }}" 
+                      hx-target="#contenido-principal" 
+                      hx-select="#contenido-principal"
+                      class="flex-grow-1">
                     <div class="input-group input-group-sm">
                         <input type="text" name="buscar" class="form-control" placeholder="Buscar proyecto..." value="{{ query }}">
                         <button class="btn btn-outline-secondary" type="submit">🔍</button>
@@ -30,8 +33,12 @@
 
         <div class="list-group list-group-flush overflow-auto flex-grow-1">
             {% for p in proyectos %}
-                <a href="{% url 'gestion_firmware_detalle' p.id %}" 
-                   class="list-group-item list-group-item-action fw-list-item py-3 {% if proyecto_seleccionado and proyecto_seleccionado.id == p.id %}active bg-primary text-white border-primary{% endif %}">
+                <a hx-get="{% url 'gestion_firmware_detalle' p.id %}" 
+                   hx-target="#contenido-principal"
+                   hx-select="#contenido-principal"
+                   hx-push-url="true"
+                   class="list-group-item list-group-item-action fw-list-item py-3 {% if proyecto_seleccionado and proyecto_seleccionado.id == p.id %}active bg-primary text-white border-primary{% endif %}"
+                   style="cursor: pointer;">
                     <div class="d-flex align-items-center gap-3">
                         {% if p.icono %}
                             <img src="{{ p.icono.url }}" class="icono-proyecto shadow-sm bg-white">
@@ -129,9 +136,14 @@
                                             </div>
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                                                <form method="POST" action="{% url 'eliminar_version' v.id %}">
+                                                <form hx-post="{% url 'eliminar_version' v.id %}"
+                                                    hx-target="#contenido-principal"
+                                                    hx-select="#contenido-principal"
+                                                    hx-push-url="true">
                                                     {% csrf_token %}
-                                                    <button type="submit" class="btn btn-danger">Sí, eliminar versión</button>
+                                                    <button type="submit" class="btn btn-danger" data-bs-dismiss="modal" onclick="this.innerHTML='Eliminando...';">
+                                                        Sí, eliminar versión
+                                                    </button>
                                                 </form>
                                             </div>
                                         </div>
@@ -164,7 +176,11 @@
                 <h5 class="modal-title">Crear Proyecto Firmware</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST" enctype="multipart/form-data">
+            <form hx-post="{{ request.path }}" 
+                  hx-encoding="multipart/form-data"
+                  hx-target="#contenido-principal"
+                  hx-select="#contenido-principal"
+                  hx-push-url="true">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="nuevo_proyecto">
                 <div class="modal-body">
@@ -257,9 +273,14 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                <form method="POST" action="{% url 'eliminar_proyecto' proyecto_seleccionado.id %}">
+                <form hx-post="{% url 'eliminar_proyecto' proyecto_seleccionado.id %}"
+                      hx-target="#contenido-principal"
+                      hx-select="#contenido-principal"
+                      hx-push-url="true">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">Sí, destruir proyecto</button>
+                    <button type="submit" class="btn btn-danger" data-bs-dismiss="modal" onclick="this.innerHTML='Destruyendo...';">
+                        Sí, destruir proyecto
+                    </button>
                 </form>
             </div>
         </div>

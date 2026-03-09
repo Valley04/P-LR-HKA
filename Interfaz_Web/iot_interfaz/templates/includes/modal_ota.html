@@ -1,0 +1,71 @@
+<div class="modal fade" id="modalOta-{{ equipo.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold">Gestión de Actualización - {{ equipo.serial }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <form hx-post="{% url 'disparar_ota' equipo.id %}"
+                  hx-target="#contenido-principal"
+                  hx-select="#contenido-principal"
+                  hx-push-url="true">
+                {% csrf_token %}
+                <div class="modal-body bg-light">
+                    <div class="row mb-3 text-center">
+                        <div class="col-6 border-end">
+                            <small class="text-muted d-block text-uppercase fw-bold">Módulo iSmart</small>
+                            <span class="badge bg-primary fs-6 mt-1">v. {{ equipo.ultimo_log_datos.fw_ismart|default:"Desconocida" }}</span>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block text-uppercase fw-bold">Impresora Fiscal</small>
+                            <span class="badge bg-secondary fs-6 mt-1">v. {{ equipo.ultimo_log_datos.fw_printer|default:"Desconocida" }}</span>
+                        </div>
+                    </div>
+
+                    {% if equipo.alertas_ota %}
+                        {% for alerta in equipo.alertas_ota %}
+                            {% if alerta.tipo == 'obligatoria' %}
+                                <div class="alert alert-danger border-danger shadow-sm py-2 px-3 mb-2" role="alert">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                    <strong>¡Actualización Crítica para {{ alerta.modulo }}!</strong><br>
+                                    <small>Se requiere instalar la versión <strong>{{ alerta.version_nueva }}</strong>.</small>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning border-warning shadow-sm py-2 px-3 mb-2" role="alert">
+                                    <i class="bi bi-info-circle-fill me-2 text-warning"></i>
+                                    <strong>Actualización Opcional para {{ alerta.modulo }}</strong><br>
+                                    <small>La versión <strong>{{ alerta.version_nueva }}</strong> está disponible en el servidor.</small>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-success border-success shadow-sm py-2 px-3 mb-3" role="alert">
+                            <i class="bi bi-check-circle-fill me-2 text-success"></i>
+                            <strong>Equipo al día</strong><br>
+                            <small>Tanto el iSmart como la Impresora cuentan con las últimas versiones.</small>
+                        </div>
+                    {% endif %}
+                    
+                    <hr class="text-muted">
+                    
+                    <p class="mb-2 fw-bold">Seleccionar actualización a enviar:</p>
+                    <select name="firmware_id" class="form-select border-primary" required>
+                        <option value="" disabled selected>-- Elige una versión --</option>
+                        {% for proyecto in proyectos_disponibles %}
+                            <optgroup label="📦 {{ proyecto.nombre }}">
+                                {% for fw in proyecto.versiones.all %}
+                                    <option value="{{ fw.id }}">{{ fw.version }} (Subido: {{ fw.fecha_subida|date:"d/m/y" }})</option>
+                                {% endfor %}
+                            </optgroup>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary fw-bold" data-bs-dismiss="modal" onclick="this.innerHTML='Enviando...'; this.disabled=true;">Enviar Actualización</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

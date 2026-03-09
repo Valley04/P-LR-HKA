@@ -121,3 +121,7 @@ MESSAGE_TAGS = {
     messages.WARNING: 'warning',
     messages.ERROR: 'danger', # ¡Aquí está la magia! Traduce 'error' a 'danger'
 }
+
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+LOGIN_URL = 'login' 

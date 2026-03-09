@@ -38,7 +38,10 @@ void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event
 // Formateo de datos
 void prepare_mqtt_topic(char* topic, size_t size, const char* serial, const char* data_type);
 void format_mqtt_json(char* buffer, size_t size, const mqtt_data_t* data);
-bool mqtt_publish(const char* topic, const char* payload);
+bool mqtt_publish(const char* topic, const char* payload, const char* tipo_dato);
 void update_printer_serial(const char* serial);
+
+// Evento OTA
+void notificar_evento_ota(const char* serial, const char* estado, const char* objetivo, int progreso);
 
 #endif // PRINTER_MQTT_H

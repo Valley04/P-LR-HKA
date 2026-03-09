@@ -65,6 +65,8 @@ def enviar_respuesta_s1(ser):
     ser.write(frame)
     ser.flush()
 
+    ser.read(len(frame))
+
     print(f"➡ Respuesta S1 enviada ({len(frame)} bytes)")
     print(f"   Hex: {frame.hex(' ').upper()}")
 

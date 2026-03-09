@@ -22,6 +22,22 @@ esp_mqtt_client_handle_t mqtt_client = NULL;
 volatile bool wifi_connected = false;
 volatile bool mqtt_connected = false;
 
+//Funciones OTA
+
+void notificar_evento_ota(const char* serial, const char* estado, const char* objetivo, int progreso) {
+    char topic[64];
+    char payload[128];
+
+    prepare_mqtt_topic(topic, sizeof(topic), serial, "ota");
+
+    // Formato JSON compacto: st (estado), tg (target), pr (progreso)
+    snprintf(payload, sizeof(payload), 
+             "{\"st\":\"%s\",\"tg\":\"%s\",\"pr\":%d}", 
+             estado, objetivo, progreso);
+    
+    mqtt_publish(topic, payload, "status_ota");
+}
+
 // FUNCIONES PARA CONEXIÓN WIFI
 
 void wifi_event_handler(void* arg, esp_event_base_t event_base,
@@ -30,9 +46,7 @@ void wifi_event_handler(void* arg, esp_event_base_t event_base,
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        // --- ESTO ES LO QUE NECESITAMOS VER ---
         wifi_event_sta_disconnected_t* event = (wifi_event_sta_disconnected_t*) event_data;
-
         LOG_E(TAG_WIFI, "❌ Error de conexión WiFi. Razón: %d", event->reason);
 
         wifi_connected = false;
@@ -47,10 +61,7 @@ void wifi_event_handler(void* arg, esp_event_base_t event_base,
         // Lanzamos MQTT aquí mismo, ahora que sabemos que hay internet
         if (mqtt_client == NULL) {
             mqtt_app_start();
-        } else {
-            LOG_I(TAG_MQTT, "Re-iniciando cliente MQTT existente...");
-            esp_mqtt_client_start(mqtt_client);
-        }  
+        } 
     }
 }
 
@@ -210,22 +221,29 @@ void mqtt_data_init(void) {
 }
 
 // publicación MQTT
-bool mqtt_publish(const char* topic, const char* payload) {
+bool mqtt_publish(const char* topic, const char* payload, const char* tipo_dato) {
     if (!mqtt_connected || mqtt_client == NULL) {
         LOG_W(TAG_MQTT, "Publiación cancelada: MQTT Offline");
         return false;
     }
 
     // Validación de seguridad para el Serial
-    if (strcmp(mqtt_data.register_number, "DESCONOCIDO") == 0) {
+    char serial_seguro[MAX_SERIAL_LENGTH + 1] = "DESCONOCIDO";
+    if (xSemaphoreTake(mqtt_data_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        strncpy(serial_seguro, mqtt_data.register_number, MAX_SERIAL_LENGTH);
+        serial_seguro[MAX_SERIAL_LENGTH] = '\0';
+        xSemaphoreGive(mqtt_data_mutex);
+    }
+
+    if (strcmp(serial_seguro, "DESCONOCIDO") == 0) {
         return false; // No publicamos si no tenemos serial
     }
 
     esp_mqtt5_user_property_item_t user_prop_items[] = {
         {"modelo_dispositivo", "HKA80"},
-        {"firmware_version", "V1.0"},
-        {"serial", mqtt_data.register_number},
-        {"tipo_dato", "status_s1"}
+        {"firmware_version", "V2.0"},
+        {"serial", serial_seguro},
+        {"tipo_dato", tipo_dato}
     };
 
     mqtt5_user_property_handle_t user_prop_handle = NULL;
@@ -236,10 +254,6 @@ bool mqtt_publish(const char* topic, const char* payload) {
     };   
 
     esp_mqtt5_client_set_publish_property(mqtt_client, &publish_prop_cfg);
-
-    if (strcmp(mqtt_data.register_number, "DESCONOCIDO") == 0) {
-        return false;
-    }
     
     int msg_id = esp_mqtt_client_publish(mqtt_client, topic, payload, 
                                          0, MQTT_QOS_LEVEL, 0);
@@ -271,7 +285,7 @@ void prepare_mqtt_topic(char* buffer, size_t size, const char* serial, const cha
 void update_printer_serial(const char* serial) {
     if (serial != NULL && strlen(serial) > 0) {
 
-        if (strcmp(mqtt_data.register_number, serial) == 0) {
+        if (strcmp(mqtt_data.register_number, serial) != 0) {
 
             strncpy(mqtt_data.register_number, serial, MAX_SERIAL_LENGTH);
             mqtt_data.register_number[MAX_SERIAL_LENGTH] = '\0';
@@ -357,7 +371,7 @@ void mqtt_task(void* pvParameters) {
                     char discovery_topic[128];
                     snprintf(discovery_topic, sizeof(discovery_topic), 
                             "%s/%s/discovery", MQTT_TOPIC_BASE, last_serial);
-                    mqtt_publish(discovery_topic, "online");
+                    mqtt_publish(discovery_topic, "online", "conexión");
                 }
 
                 // Formateamos el JSON mientras tenemos la llave
@@ -370,7 +384,7 @@ void mqtt_task(void* pvParameters) {
                 // PUBLICACIÓN (Fuera del Mutex para no bloquear a la impresora)
                 char topic[64];                
                 prepare_mqtt_topic(topic, sizeof(topic), last_serial, "json_completo");
-                mqtt_publish(topic, json_buffer);
+                mqtt_publish(topic, json_buffer, "status_s1");
                 
                 LOG_I(TAG_MQTT, "Sincronización completada (%d)", sync_count);
             } else {

@@ -11,7 +11,7 @@
 #include "freertos/semphr.h"
 #include "mqtt_client.h"
 
-#define ISMART_VERSION "020000"
+#define ISMART_VERSION "020100"
 
 // CONSTANTES DE CONFIGURACIÓN
 
@@ -59,9 +59,8 @@ extern const uint8_t CMD_STATUS_S3[];
 
 // Comandos de control para actualización de impresora
 #define SPI_CMD_START       0x01
-#define SPI_CMD_INFO        0x02
-#define SPI_CMD_PACKET      0x03
-#define SPI_CMD_END         0x04
+#define SPI_CMD_PACKET      0x02
+#define SPI_CMD_END         0x03
 // TIPOS DE DATOS OPTIMIZADOS
 
 // Estados de la comunicación

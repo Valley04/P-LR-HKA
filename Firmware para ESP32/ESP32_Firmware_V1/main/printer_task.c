@@ -67,19 +67,28 @@ bool esperar_ack_impresora(uint32_t timeout_ms) {
 bool printer_get_fw_version(void) {
 
     //Version para iSmart
-    strncpy(mqtt_data.fw_ismart, ISMART_VERSION, sizeof(mqtt_data.fw_ismart) - 1);
-    mqtt_data.fw_ismart[sizeof(mqtt_data.fw_ismart) - 1] = '\0';
+    if (xSemaphoreTake(mqtt_data_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        strncpy(mqtt_data.fw_ismart, ISMART_VERSION, sizeof(mqtt_data.fw_ismart) - 1);
+        mqtt_data.fw_ismart[sizeof(mqtt_data.fw_ismart) - 1] = '\0';
+        xSemaphoreGive(mqtt_data_mutex);
+    }
     
     uart_flush(UART_PORT);
 
     if (!uart_send_frame(CMD_STATUS_SV2, sizeof(CMD_STATUS_SV2))) {
         LOG_E(TAG_PRINTER, "Error enviando comando de versión");
-        strcpy(mqtt_data.fw_ismart, "0000000000");
+        if (xSemaphoreTake(mqtt_data_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+            strcpy(mqtt_data.fw_ismart, "0000000000");
+            xSemaphoreGive(mqtt_data_mutex);
+        }
         return false;
     }
 
     if (!esperar_ack_impresora(500)) {
-        strcpy(mqtt_data.fw_printer, "0000000000");
+        if (xSemaphoreTake(mqtt_data_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+            strcpy(mqtt_data.fw_printer, "0000000000");
+            xSemaphoreGive(mqtt_data_mutex);
+        }
         return false; // Abortamos temprano
     }
 
@@ -94,18 +103,24 @@ bool printer_get_fw_version(void) {
         if (etx_pos >= fw_len) {
             int start_idx = etx_pos - fw_len;
             
-            // Version para Impresora
-            memset(mqtt_data.fw_printer, 0, sizeof(mqtt_data.fw_printer));
-            strncpy(mqtt_data.fw_printer, (char*)&rx_buffer[start_idx], fw_len);
+            if (xSemaphoreTake(mqtt_data_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+                // Version para Impresora
+                memset(mqtt_data.fw_printer, 0, sizeof(mqtt_data.fw_printer));
+                strncpy(mqtt_data.fw_printer, (char*)&rx_buffer[start_idx], fw_len);
+                ESP_LOGI(TAG_PRINTER, "✅ Versión detectada vía SV2: %s", mqtt_data.fw_printer);
+                xSemaphoreGive(mqtt_data_mutex);
+            }
 
-            ESP_LOGI(TAG_PRINTER, "✅ Versión detectada vía SV2: %s", mqtt_data.fw_printer);
             return true;
         }
     } else {
         ESP_LOGE(TAG_PRINTER, "❌ Trama SV2 inválida o error de Checksum (LRC)");
     }
 
-    strcpy(mqtt_data.fw_printer, "0000000000");
+    if (xSemaphoreTake(mqtt_data_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        strcpy(mqtt_data.fw_printer, "0000000000");
+        xSemaphoreGive(mqtt_data_mutex);
+    }
     return false;
 }
 
@@ -197,8 +212,10 @@ static int recibir_trama_generica(uint8_t* buffer, size_t longitud_maxima, uint3
                 uint8_t lrc;
                 leidos = uart_read_bytes(UART_PORT, &lrc, 1, pdMS_TO_TICKS(100));
                 if (leidos > 0) {
-                    buffer[total_bytes_recibidos] = lrc;
-                    total_bytes_recibidos++;
+                    if (total_bytes_recibidos < longitud_maxima) { 
+                        buffer[total_bytes_recibidos] = lrc;
+                        total_bytes_recibidos++;
+                    }
                     ESP_LOGI(TAG_PRINTER, "Trama completa recibida (%d bytes)", total_bytes_recibidos);
                     return total_bytes_recibidos; 
                 }
@@ -353,10 +370,12 @@ const char* printer_state_to_string(printer_state_t state) {
 
 // Interpretar estado (versión optimizada)
 void guardar_estado(uint8_t sts1, uint8_t sts2) {
-    mqtt_data.sts1 = sts1;
-    mqtt_data.sts2 = sts2;
-
-    mqtt_data.needs_sync = 1;
+    if (xSemaphoreTake(mqtt_data_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        mqtt_data.sts1 = sts1;
+        mqtt_data.sts2 = sts2;
+        mqtt_data.needs_sync = 1;
+        xSemaphoreGive(mqtt_data_mutex);
+    }
 }
 
 // Procesar STATUS S1 (manteniendo TODOS los campos)
@@ -551,7 +570,7 @@ int ejecutar_solicitud_s1(uint8_t* buffer, int bytes_maximos) {
     }
 
     ESP_LOGI(TAG_PRINTER, "ACK recibido, esperando STATUS S1...");
-    return receive_response(buffer, UART_BUFFER_SIZE, 3000); // 3 segundos
+    return receive_response(buffer, bytes_maximos, 3000); // 3 segundos
 }
 
 // TAREA PRINCIPAL DE LA IMPRESORA
@@ -607,6 +626,9 @@ static void printer_task_main(void* pvParameters) {
             continue;
         } 
 
+        // Procesar el estado recibido
+        guardar_estado(rx_buffer[1], rx_buffer[2]);
+
         if (rx_buffer[1] == 0x60 && !fw_version_obtained) { // Modo fiscal
             ESP_LOGI(TAG_PRINTER, "Intentando obtener versiones del sistema");
             if (printer_get_fw_version()) {
@@ -616,10 +638,7 @@ static void printer_task_main(void* pvParameters) {
             }
         }
 
-        // Procesar el estado recibido
-        guardar_estado(rx_buffer[1], rx_buffer[2]);
-
-        int bytes_leidos = ejecutar_solicitud_s1(rx_buffer, received);
+        int bytes_leidos = ejecutar_solicitud_s1(rx_buffer, UART_BUFFER_SIZE);
 
         if (bytes_leidos <= 0) {
             ESP_LOGW(TAG_PRINTER, "No se recibió respuesta S1 (timeout)");

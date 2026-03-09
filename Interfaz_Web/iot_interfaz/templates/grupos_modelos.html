@@ -25,9 +25,13 @@
                             <td><strong>{{ grupo.nombre }}</strong></td>
                             <td class="text-muted small">{{ grupo.descripcion|default:"-" }}</td>
                             <td class="text-end">
-                                <form method="POST" action="{% url 'eliminar_grupo' grupo.id %}" onsubmit="return confirm('¿Seguro que deseas eliminar este grupo?');">
+                                <form hx-post="{% url 'eliminar_grupo' grupo.id %}" 
+                                      hx-target="#contenido-principal" 
+                                      hx-select="#contenido-principal" 
+                                      hx-push-url="true" 
+                                      onsubmit="return confirm('¿Seguro que deseas eliminar este grupo?');">
                                     {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0">🗑️</button>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Eliminar">🗑️</button>
                                 </form>
                             </td>
                         </tr>
@@ -60,9 +64,13 @@
                             <td><strong>{{ modelo.nombre }}</strong></td>
                             <td class="text-muted small">{{ modelo.marca|default:"-" }}</td>
                             <td class="text-end">
-                                <form method="POST" action="{% url 'eliminar_modelo' modelo.id %}" onsubmit="return confirm('¿Seguro que deseas eliminar este modelo?');">
+                                <form hx-post="{% url 'eliminar_modelo' modelo.id %}" 
+                                      hx-target="#contenido-principal" 
+                                      hx-select="#contenido-principal" 
+                                      hx-push-url="true" 
+                                      onsubmit="return confirm('¿Seguro que deseas eliminar este modelo?');">
                                     {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0">🗑️</button>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Eliminar">🗑️</button>
                                 </form>
                             </td>
                         </tr>
@@ -84,7 +92,10 @@
                 <h5 class="modal-title">Nuevo Grupo</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST" action="{% url 'grupos_modelos' %}">
+            <form hx-post="{% url 'grupos_modelos' %}"
+                  hx-target="#contenido-principal"
+                  hx-select="#contenido-principal"
+                  hx-push-url="true">
                 {% csrf_token %}
                 <input type="hidden" name="tipo" value="grupo">
                 <div class="modal-body">
@@ -99,7 +110,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="submit" class="btn btn-primary" data-bs-dismiss="modal" onclick="this.innerHTML='Guardando...';">Guardar</button>
                 </div>
             </form>
         </div>
@@ -113,13 +124,16 @@
                 <h5 class="modal-title">Nuevo Modelo</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST" action="{% url 'grupos_modelos' %}">
+            <form hx-post="{% url 'grupos_modelos' %}"
+                  hx-target="#contenido-principal"
+                  hx-select="#contenido-principal"
+                  hx-push-url="true">
                 {% csrf_token %}
                 <input type="hidden" name="tipo" value="modelo">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label fw-bold small">Nombre del Modelo</label>
-                        <input type="text" name="nombre" class="form-control" placeholder="Ej. PP-8100" required>
+                        <input type="text" name="nombre" class="form-control" placeholder="Ej. HKA80" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold small">Marca (Opcional)</label>
@@ -128,7 +142,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="submit" class="btn btn-primary" data-bs-dismiss="modal" onclick="this.innerHTML='Guardando...';">Guardar</button>
                 </div>
             </form>
         </div>

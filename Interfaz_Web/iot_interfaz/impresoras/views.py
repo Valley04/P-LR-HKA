@@ -1,9 +1,10 @@
 from django.contrib.auth.views import LoginView
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate, login, logout
 from impresoras.forms import DispositivoForm
 from .models import Dispositivo, Grupo, ModeloEquipo, LogDispositivo, VersionFirmware, ProyectoFirmware
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Prefetch
 from django.db.models.functions import TruncMonth
 import openpyxl
 from datetime import timedelta, datetime
@@ -16,6 +17,18 @@ from django.contrib import messages
 
 class MiLogin(LoginView):
     template_name = "login.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+                logout(request)
+        
+        return super().dispatch(request, *args, **kwargs)
+    
+def landing_view(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    
+    return render(request, 'landing.html')
 
 @login_required
 def eliminar_proyecto_firmware(request, p_id):
@@ -105,6 +118,7 @@ def eliminar_version_firmware(request, v_id):
             
     return redirect('gestion_firmware')
 
+@login_required
 def api_ultimo_firmware(request):
     ultimo_fw = VersionFirmware.objects.order_by('-fecha_subida').first()
 
@@ -193,13 +207,15 @@ def gestion_firmware_view(request, proyecto_id=None):
 def log_capture_view(request):
     query = request.GET.get('buscar')
     
-    dispositivos = Dispositivo.objects.all()
+    logs_recientes = Prefetch('logs', queryset=LogDispositivo.objects.order_by('-fecha'))
+    dispositivos = Dispositivo.objects.select_related('modelo', 'grupo').prefetch_related(logs_recientes).all()
     
     if query:
         dispositivos = dispositivos.filter(serial__icontains=query)
         
     return render(request, 'log_capture.html', {'dispositivos': dispositivos})
 
+@login_required
 def descargar_logs_dispositivos(request, dispositivo_id):
     equipo = Dispositivo.objects.get(id=dispositivo_id)
     fecha_limite = timezone.now() - timedelta(days=90)
@@ -303,13 +319,15 @@ def dashboard_view(request):
 
 @login_required
 def lista_dispositivos(request):
-
     query = request.GET.get('buscar')
-    dispositivos = Dispositivo.objects.all()
+
+    dispositivos = Dispositivo.objects.select_related('modelo', 'grupo').all()
     proyectos_disponibles = ProyectoFirmware.objects.prefetch_related('versiones').all()
+    
     if query:
         dispositivos = dispositivos.filter(
-            Q(serial__icontains=query) | Q(modelo__icontains=query)
+            # CORRECCIÓN: Agregamos __nombre__ para que no crashee
+            Q(serial__icontains=query) | Q(modelo__nombre__icontains=query)
         )
 
     if request.method == 'POST':

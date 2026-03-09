@@ -3,26 +3,43 @@
 {% block title %}Iniciar Sesión{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-4">
-        <div class="card shadow">
-            <div class="card-body">
-                <h3 class="text-center mb-4">Acceso al Monitor</h3>
+<div class="row justify-content-center align-items-center" style="min-height: 85vh;">
+    <div class="col-md-5 col-lg-4 col-sm-8 col-11">
+        <div class="card shadow-lg border-0 border-top border-primary border-4 rounded-3">
+            <div class="card-body p-4 p-md-5">
+                
+                <div class="text-center mb-4">
+                    <i class="bi bi-shield-lock text-primary" style="font-size: 3rem;"></i>
+                    <h3 class="mt-2 fw-bold text-dark">Acceso al Monitor</h3>
+                </div>
                 
                 <form method="post">
                     {% csrf_token %}
+
+                    {% if next %}
+                        <input type="hidden" name="next" value="{{ next }}">
+                    {% endif %}
+
+                    {% if form.errors %}
+                        <div class="alert alert-danger shadow-sm border-danger py-2 px-3 mb-4" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <small><strong>Usuario o contraseña incorrectos.</strong> Por favor, verifica tus datos e intenta de nuevo.</small>
+                        </div>
+                    {% endif %}
                     
                     <div class="mb-3">
-                        <label for="username" class="form-label">Usuario</label>
-                        <input type="text" name="username" class="form-control" placeholder="Ingresa tu usuario" required>
+                        <label for="username" class="form-label fw-bold small text-muted text-uppercase">Usuario</label>
+                        <input type="text" name="username" class="form-control form-control-lg bg-light border-0" placeholder="Ingresa tu usuario" required autofocus>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Contraseña</label>
-                        <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                    <div class="mb-4">
+                        <label for="password" class="form-label fw-bold small text-muted text-uppercase">Contraseña</label>
+                        <input type="password" name="password" class="form-control form-control-lg bg-light border-0" placeholder="••••••••" required>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100">Entrar</button>
+                    <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold shadow-sm">
+                        Entrar al Sistema
+                    </button>
                 </form>
 
             </div>

@@ -6,10 +6,11 @@ from django.conf.urls.static import static
 from impresoras.views import MiLogin, dashboard_view, lista_dispositivos, editar_dispositivo, eliminar_dispositivo  #Importamos views
 from impresoras.views import grupos_modelos, eliminar_grupo, eliminar_modelo, exportar_dispositivos_excel, log_capture_view
 from impresoras.views import log_capture_view, descargar_logs_dispositivos, gestion_firmware_view, api_ultimo_firmware
-from impresoras.views import eliminar_version_firmware, disparar_ota_mqtt, eliminar_proyecto_firmware
+from impresoras.views import eliminar_version_firmware, disparar_ota_mqtt, eliminar_proyecto_firmware, landing_view
 from django.contrib.auth.views import LogoutView
 
 urlpatterns = [
+    path('', landing_view, name='landing'),
     path('admin/', admin.site.urls),
     path('login/', MiLogin.as_view(), name='login'),
     path('dashboard/', dashboard_view, name='dashboard'),

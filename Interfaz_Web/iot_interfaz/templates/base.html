@@ -1,56 +1,392 @@
 <!DOCTYPE html>
 <html lang="es">
-
-<div class="container mt-3">
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        {% endfor %}
-    {% endif %}
-</div>
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Mi Proyecto IoT{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <style>
-        .sidebar {
-            min-height: 100vh;
-            width: 170px;
-            background-color: #212529;
-            color: white;
-        }
-        .sidebar .nav-link {
-            color: rgba(255,255,255,.75);
-            margin-bottom: 5px;
-        }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active {
-            color: white;
-            background-color: rgba(255,255,255,.1);
-        }
-        .main-content {
-            flex: 1;
-            padding: 20px;
-        }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
 </head>
 <body class="bg-light">
 
-    <div class="d-flex">
-        {% block sidebar %}
-        {% endblock %}
+    {% if request.user.is_authenticated %}
 
-        <div class="main-content">
-            {% block content %}
-            {% endblock %}
-        </div>
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;" id="contenedor-toasts">
     </div>
 
+        <div class="d-flex">
+            <style>
+                .sidebar .nav-link:not(.active):hover {
+                    background-color: #e9ecef;
+                    color: #0d6efd !important;
+                    transition: background-color 0.2s ease-in-out;
+                    border-radius: 0.25rem;
+                }
+            </style>
+
+            <div class="sidebar d-flex flex-column p-2 bg-light border-end" style="height: 100vh; position: sticky; top: 0; overflow-y: auto; width: 177px; flex-shrink: 0;">
+                <h4 class="text-center mb-4 text-primary fw-bold">Monitor IoT</h4>
+                <hr>
+                    <ul class="nav nav-pills flex-column mb-auto">
+
+                        <li><a hx-get="/dashboard/" 
+                            hx-target="#contenido-principal"
+                            hx-select="#contenido-principal"
+                            hx-push-url="true"
+                            class="nav-link text-dark" style="cursor: pointer"
+                            onclick="marcarActivo(this)">
+                            Dashboard
+                            </a>
+                        </li>
+                        <li><a hx-get="/dispositivos/" 
+                            hx-target="#contenido-principal"
+                            hx-select="#contenido-principal"
+                            hx-push-url="true"
+                            class="nav-link text-dark" style="cursor: pointer"
+                            onclick="marcarActivo(this)">
+                            Gestión de Dispositivos
+                            </a>
+                        </li>
+                        <li><a hx-get="/firmware/"
+                            hx-target="#contenido-principal"
+                            hx-select="#contenido-principal"
+                            hx-push-url="true"
+                            class="nav-link text-dark" style="cursor: pointer"
+                            onclick="marcarActivo(this)">
+                            Gestión de Firmware
+                            </a>
+                        </li>
+                        <li><a hx-get="#"
+                            hx-target="#contenido-principal"
+                            hx-select="#contenido-principal"
+                            hx-push-url="true"
+                            class="nav-link text-dark" style="cursor: pointer"
+                            onclick="marcarActivo(this)">
+                            Reportes (Proximamente)
+                            </a>
+                        </li>
+                    </ul>
+                    
+                <hr>
+                <ul class="nav nav-pills flex-column">
+                    {% if request.user.is_superuser %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-dark" href="#" id="navbarScrollingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Admin
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarScrollingDropdown">
+                                <li><a class="dropdown-item" href="{% url 'admin:index' %}">Gestión de Usuarios</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="post" action="{% url 'logout' %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item">Cerrar sesión</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <form method="post" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="nav-link text-danger fw-bold">
+                                    Cerrar sesión
+                                </button>
+                            </form>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+
+        <div id="contenido-principal" style="flex: 1;">
+        
+    {% else %}
+        <div class="w-100 d-flex flex-column" style="min-height: 100vh;">
+            <div>
+    {% endif %}
+
+                <div class="container-fluid mt-3">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                    {% block content %}
+                    {% endblock %}
+    {% if request.user.is_authenticated %}
+
+            </div> 
+        </div> 
+        
+        <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+        <script>
+            function marcarActivo(botonClickeado) {
+                let botones = document.querySelectorAll('.sidebar .nav-link');
+            
+                // A todos les quitamos el estilo de presionado (los "apagamos")
+                botones.forEach(boton => {
+                    boton.classList.remove('active', 'text-white');
+                    boton.classList.add('text-dark');
+                });
+
+                // Al botón que acabas de clickear, lo "encendemos"
+                botonClickeado.classList.remove('text-dark');
+                botonClickeado.classList.add('active', 'text-white');
+            }
+
+            // FUNCIÓN PARA CREAR NOTIFICACIONES FLOTANTES
+            function mostrarToast(titulo, mensaje, tipo = 'danger') {
+                const contenedor = document.getElementById('contenedor-toasts');
+                const toastId = 'toast-' + Date.now(); // Un ID único
+                
+                let bgClass = tipo === 'success' ? 'bg-success text-white' : 
+                              tipo === 'warning' ? 'bg-warning text-dark' : 'bg-danger text-white';
+                let icono = tipo === 'success' ? '✅' : tipo === 'warning' ? '⚠️' : '❗';
+                let btnCloseClass = tipo === 'warning' ? '' : 'btn-close-white';
+
+                // Armamos el HTML de la notificación
+                const toastHTML = `
+                    <div id="${toastId}" class="toast align-items-center ${bgClass} border-0 mb-2 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body fw-bold">
+                                ${icono} ${titulo}: <span class="fw-normal">${mensaje}</span>
+                            </div>
+                            <button type="button" class="btn-close ${btnCloseClass} me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                `;
+                
+                // Lo inyectamos en la pantalla
+                contenedor.insertAdjacentHTML('beforeend', toastHTML);
+                
+                // Le decimos a Bootstrap que lo muestre y que dure 6 segundos (6000ms)
+                const toastElement = document.getElementById(toastId);
+                const toast = new bootstrap.Toast(toastElement, { delay: 6000 });
+                toast.show();
+                
+                // Limpieza: Cuando desaparezca, lo borramos del código para no saturar el navegador
+                toastElement.addEventListener('hidden.bs.toast', () => {
+                    toastElement.remove();
+                });
+            }
+
+            // CONFIGURACIÓN GLOBAL
+            const urlBroker = "wss://832b8689599f4045be005c116bc416f0.s1.eu.hivemq.cloud:8884/mqtt";
+            const opciones = {
+                clientId: "web_" + Math.random().toString(16).substring(2, 8),
+                username: "djangochannels", 
+                password: "Channels12345",
+            };
+
+            const cliente = mqtt.connect(urlBroker, opciones);
+            let topicoActual = null;
+            const memoriaEquipos = {}; 
+
+            // EL VIGILANTE (Heartbeat)
+            setInterval(() => {
+                const ahora = Date.now();
+                for (const serial in memoriaEquipos) {
+                    const equipo = memoriaEquipos[serial];
+                    const celdaIndicador = document.getElementById(`indicador-${serial}`);
+                    
+                    if (celdaIndicador) {
+                        if (equipo.actualizando) {
+                            if (!celdaIndicador.innerHTML.includes('🟡')) {
+                                celdaIndicador.innerHTML = `<span title="Actualizando (Freno de mano activado)">🟡</span>`;
+                            }
+                        } else if (ahora - equipo.ultimoLatido > equipo.limiteSilencio) {
+                            if (!celdaIndicador.innerHTML.includes('🔴')) {
+                                celdaIndicador.innerHTML = `<span title="Desconectado (Sin señal)">🔴</span>`;
+                            }
+                        }
+                    }
+                }
+            }, 1000);
+
+            // CONEXIÓN Y SUSCRIPCIÓN GLOBAL
+            cliente.on('connect', () => {
+                console.log("✅ Conectado al Broker Permanentemente");
+                cliente.subscribe("v1/fiscal/+/json_completo");
+                cliente.subscribe("v1/fiscal/+/ota");
+            });
+
+            // PROCESAMIENTO DE MENSAJES (Seguro contra HTMX)
+            cliente.on('message', function (topic, message) {
+                try {
+                    const partesTopico = topic.split('/');
+                    const serialEntrante = partesTopico[2];
+                    const tipoMensaje = partesTopico[3];
+                    const data = JSON.parse(message.toString());
+                    const ahora = Date.now();
+                    
+                    // Lógica de memoria y silencio...
+                    if (!memoriaEquipos[serialEntrante]) {
+                        memoriaEquipos[serialEntrante] = { 
+                            ultimoLatido: ahora, 
+                            ultimoTS: data.ts || 0, 
+                            limiteSilencio: 35000,
+                            actualizando: false,
+                            porcentaje: 0
+                        };
+                    }
+
+                    // Actualizar íconos en la tabla (si la tabla existe en la pantalla actual)
+                    const celdaIndicador = document.getElementById(`indicador-${serialEntrante}`);
+
+                    if (tipoMensaje === "ota") {
+                        const badgeProgreso = document.getElementById(`progreso-ota-${serialEntrante}`);
+
+                        if (data.st === "iniciado" || data.st === "actualizando") {
+                            memoriaEquipos[serialEntrante].actualizando = true;
+                            memoriaEquipos[serialEntrante].porcentaje = data.pr;
+                            memoriaEquipos[serialEntrante].ultimoLatido = ahora;
+
+                            if (celdaIndicador) {
+                                celdaIndicador.innerHTML = `<span title="Actualizando ${data.tg} (${data.pr}%)">🟡</span>`;
+                            }
+
+                            // Mostramos el porcentaje al lado del botón
+                            if (badgeProgreso) {
+                                badgeProgreso.classList.remove('d-none');
+                                badgeProgreso.innerText = `⏳ ${data.pr}%`;
+                            }
+                        } 
+                        else if (data.st === "exito") {
+                            memoriaEquipos[serialEntrante].actualizando = false;
+                            memoriaEquipos[serialEntrante].porcentaje = 0;
+                            memoriaEquipos[serialEntrante].ultimoLatido = ahora;
+
+                            if (celdaIndicador) {
+                                celdaIndicador.innerHTML = `<span title="En línea (Recién actualizado)">🟢</span>`
+                            }
+                            if (badgeProgreso) {
+                                badgeProgreso.classList.add('d-none');
+                            }
+
+                            mostrarToast("Actualización Completada", `El equipo ${serialEntrante} actualizó ${data.tg} con éxito.`, "success")
+                        }
+                        else if (data.st === "error") {
+                            memoriaEquipos[serialEntrante].actualizando = false; // Soltamos al vigilante
+                            memoriaEquipos[serialEntrante].porcentaje = 0;
+                            
+                            if (celdaIndicador) {
+                                celdaIndicador.innerHTML = `<span title="¡Error en actualización de ${data.tg}! (Falló al ${data.pr}%)">❗</span>`;
+                            }
+                            if (badgeProgreso) {
+                                badgeProgreso.classList.add('d-none');
+                            }
+
+                            mostrarToast("Alerta OTA", `El equipo ${serialEntrante} falló al actualizar ${data.tg} (${data.pr}%).`, "danger");
+                        }
+                    }
+
+                    else if (tipoMensaje === "json_completo") {
+                        
+                        // Si por alguna razón envía telemetría normal, asumimos que ya no está actualizando
+                        if (memoriaEquipos[serialEntrante].actualizando) {
+                            memoriaEquipos[serialEntrante].actualizando = false;
+                        }
+
+                        const tiempoTranscurrido = data.ts - memoriaEquipos[serialEntrante].ultimoTS;
+                        if (tiempoTranscurrido > 0) {
+                            memoriaEquipos[serialEntrante].limiteSilencio = tiempoTranscurrido + 10000; 
+                        }
+                        memoriaEquipos[serialEntrante].ultimoLatido = ahora;
+                        memoriaEquipos[serialEntrante].ultimoTS = data.ts;
+
+                        if (celdaIndicador) {
+                            let htmlIconos = `<span title="En línea">🟢</span>`;
+                            if (data.sts2 && data.sts2 !== "40") htmlIconos += ` <span title="¡Error en impresora!">⚠️</span>`;
+                            celdaIndicador.innerHTML = htmlIconos;
+                        }
+
+                        // Actualizar modal (si es el equipo seleccionado y el modal está abierto)
+                        if (topic === topicoActual) {
+                            const diccEstado = {"40": "Modo Entrenamiento y en Espera", 
+                                                "41": "Modo Entrenamiento y en medio de una Transacción Fiscal", 
+                                                "42": "Modo Entrenamiento y en medio de una Transacción No Fiscal",
+                                                "60": "Modo Fiscal y en Espera", 
+                                                "68": "Modo Fiscal con la MF llena y en Espera", 
+                                                "61": "Modo Fiscal y en medio de una Transacción Fiscal", 
+                                                "69": "Modo Fiscal con la MF llena y en medio de una Transacción Fiscal",
+                                                "62": "Modo Fiscal y en medio de una Transacción No Fiscal",
+                                                "6A": "Modo Fiscal con la MF llena y en Transacción No Fiscal"
+                                            };
+                            const diccError = { "40": "Ningún error", 
+                                                "48": "Error gaveta",
+                                                "41": "Error sin papel",
+                                                "42": "Error mecánico de la impresora / papel",
+                                                "43": "Error mecánico de la impresora y fin de papel",
+                                                "60": "Error fiscal",
+                                                "64": "Error en la memoria fiscal",
+                                                "6C": "Error memoria fiscal llena"
+                                            };
+                            
+                            const llavesJSON = ['sts1', 'sts2', 'atm', 'vts', 'last_b', 'b_iss', 'db_n', 'db_a', 'cr_n', 'cr_a', 'nf_n', 'nf_a', 'z_cnt', 'f_cnt', 'rif', 'ser', 'time', 'date'];
+                            
+                            llavesJSON.forEach(llave => {
+                                const elemento = document.getElementById(`val-${llave}`);
+                                if (elemento && data[llave] !== undefined) {
+                                    if (llave === 'sts1') { elemento.innerText = diccEstado[data[llave]] || `Desconocido (${data[llave]})`; } 
+                                    else if (llave === 'sts2') { 
+                                        elemento.innerText = diccError[data[llave]] || `Desconocido (${data[llave]})`;
+                                        elemento.className = data[llave] === "40" ? "text-success fw-bold" : "text-danger fw-bold";
+                                    }
+                                    else if (llave === 'date' && data[llave].length === 6) { elemento.innerText = `${data[llave].substring(0,2)}/${data[llave].substring(2,4)}/20${data[llave].substring(4,6)}`; } 
+                                    else if (llave === 'time' && data[llave].length === 6) { elemento.innerText = `${data[llave].substring(0,2)}:${data[llave].substring(2,4)}:${data[llave].substring(4,6)}`; } 
+                                    else if (llave === 'vts') { elemento.innerText = new Intl.NumberFormat('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(parseInt(data[llave], 10) / 100); } 
+                                    else { elemento.innerText = data[llave]; }
+                                }
+                            });
+                        }
+                    }
+
+                } catch (error) { console.log("Falló el procesamiento:", error); }
+            });
+            
+            // Se ejecuta automáticamente cada vez que HTMX cambia de pestaña o recarga la tabla
+            document.body.addEventListener('htmx:afterSwap', function() {
+                // Limpieza del Modal
+                const sombras = document.querySelectorAll('.modal-backdrop');
+                sombras.forEach(sombra => sombra.remove());
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+
+                // Restauración inmediata de la Interfaz
+                const ahora = Date.now();
+                for (const serial in memoriaEquipos) {
+                    const equipo = memoriaEquipos[serial];
+                    const celdaIndicador = document.getElementById(`indicador-${serial}`);
+                    const badgeProgreso = document.getElementById(`progreso-ota-${serial}`);
+
+                    if (equipo.actualizando) {
+                        if (celdaIndicador) celdaIndicador.innerHTML = `<span title="Actualizando (Freno de mano activado)">🟡</span>`;
+                        if (badgeProgreso) {
+                            badgeProgreso.classList.remove('d-none');
+                            badgeProgreso.innerText = `⏳ ${equipo.porcentaje || 0}%`;
+                        }
+                    } else if (ahora - equipo.ultimoLatido > equipo.limiteSilencio) {
+                        if (celdaIndicador) celdaIndicador.innerHTML = `<span title="Desconectado (Sin señal)">🔴</span>`;
+                    }
+                }
+            });
+        </script>
+
+    {% else %}
+                </div> 
+            </div>
+    {% endif %}
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
 </body>
 </html>

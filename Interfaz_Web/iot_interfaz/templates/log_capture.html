@@ -1,4 +1,5 @@
 {% extends 'dispositivos_base.html' %}
+{% load json_filters %}
 
 {% block dispositivos_content %}
 <div class="p-4">
@@ -8,7 +9,11 @@
     </div>
 
     <div class="mb-4">
-        <form method="GET" class="d-flex" style="max-width: 400px;">
+        <form hx-get="{% url 'log_capture' %}" 
+              hx-target="#contenido-principal" 
+              hx-select="#contenido-principal" 
+              hx-push-url="true"
+              class="d-flex" style="max-width: 400px;">
             <input type="text" name="buscar" class="form-control form-control-sm me-2" placeholder="Buscar por serial..." value="{{ request.GET.buscar }}">
             <button class="btn btn-sm btn-primary" type="submit">🔍</button>
         </form>
@@ -41,9 +46,7 @@
                         <span class="badge bg-secondary">{{ equipo.ultimo_sts2 }}</span>
                     </td>
                     <td class="text-end">
-                        <a href="{% url 'descargar_logs_equipo' equipo.id %}" class="btn btn-sm btn-outline-success">
-                            📥
-                        </a>
+                        <a href="{% url 'descargar_logs_equipo' equipo.id %}" class="btn btn-sm btn-outline-success">📥</a>
                     </td>
                 </tr>
 
@@ -65,24 +68,25 @@
                                             </span>
                                         </div>
                                         
+                                        {% with log_json=log.detalles|parse_json %}
                                         <div class="bg-white p-3 border rounded shadow-sm">
                                             <div class="row g-2 text-center">
                                                 <div class="col-4">
                                                     <div class="border rounded p-1 bg-light">
                                                         <small class="d-block text-muted" style="font-size: 0.6rem;">STS1</small>
-                                                        <strong class="text-dark" id="val-sts1-{{ log.id }}">--</strong>
+                                                        <strong class="text-dark">{{ log_json.sts1|default:"0" }}</strong>
                                                     </div>
                                                 </div>
                                                 <div class="col-4">
                                                     <div class="border rounded p-1 bg-light">
                                                         <small class="d-block text-muted" style="font-size: 0.6rem;">STS2</small>
-                                                        <strong class="text-danger" id="val-sts2-{{ log.id }}">--</strong>
+                                                        <strong class="text-danger">{{ log_json.sts2|default:"0" }}</strong>
                                                     </div>
                                                 </div>
                                                 <div class="col-4">
                                                     <div class="border rounded p-1 bg-light">
                                                         <small class="d-block text-muted" style="font-size: 0.6rem;">Reportes Z</small>
-                                                        <strong class="text-primary" id="val-j1-{{ log.id }}">--</strong>
+                                                        <strong class="text-primary">{{ log_json.z_cnt|default:"0" }}</strong>
                                                     </div>
                                                 </div>
                                             </div>
@@ -92,28 +96,22 @@
                                                     ver json completo ↓
                                                 </button>
                                                 <div class="collapse mt-2" id="raw-{{ log.id }}">
-                                                    <pre class="mb-0 bg-dark text-success p-2 rounded" style="font-size: 0.65rem;">{{ log.detalles }}</pre>
+                                                    <pre class="mb-0 bg-dark text-success p-2 rounded text-start" style="font-size: 0.65rem;">{{ log.detalles }}</pre>
                                                 </div>
                                             </div>
                                         </div>
+                                        {% endwith %}
                                     </li>
-                                    
-                                    <script>
-                                        (function() {
-                                            const data = JSON.parse('{{ log.detalles|escapejs }}');
-                                            document.getElementById('val-sts1-{{ log.id }}').innerText = data.sts1 || 0;
-                                            document.getElementById('val-sts2-{{ log.id }}').innerText = data.sts2 || 0;
-                                            document.getElementById('val-j1-{{ log.id }}').innerText = data.z_cnt || 0;
-                                        })();
-                                    </script>
                                     {% empty %}
-                                    <li class="text-center py-4 text-muted">No hay registros para este equipo.</li>
+                                        <li class="text-center py-4 text-muted">No hay registros para este equipo.</li>
                                     {% endfor %}
                                 </ul>
                             </div>
                         </div>
                     </div>
                 </div>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted p-4">No se encontraron dispositivos en el sistema.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

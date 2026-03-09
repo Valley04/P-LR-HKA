@@ -49,13 +49,17 @@ class VersionFirmware(models.Model):
     proyecto = models.ForeignKey(ProyectoFirmware, on_delete=models.CASCADE, related_name='versiones', null=True)
     tipo_modulo = models.CharField(max_length=20, choices=OPCIONES_MODULO, default='ismart', help_text="¿Para qué hardware es este archivo?")
 
-    validador_version = RegexValidator(
-        regex=r'^[A-Za-z0-9]+$', 
-        message="La versión solo puede contener letras y números sin espacios (ej. 010000 o 020507GD00).",
-        code="version_invalida"
+    validador_hka_flexible = RegexValidator(
+        regex=r'^\d{6}([A-Z0-9]{4})?$', 
+        message="Formato inválido. Use 6 números (iSmart) o 6 números + 4 caracteres de Micro (Impresora). Ej: 020507 o 020507GD00",
+        code="version_hka_invalida"
     )
 
-    version = models.CharField(max_length=20, help_text="Ej: v010000")
+    version = models.CharField(
+        max_length=15, 
+        validators=[validador_hka_flexible], 
+        help_text="iSmart: 020100 | Impresora: 020507GD00"
+    )
     archivo_bin = models.FileField(upload_to='firmwares/', help_text="Sube tu archivo .bin compilado en ESP-IDF")
     fecha_subida = models.DateTimeField(auto_now_add=True)
     notas_version = models.TextField(blank=True, help_text="Arreglado el problema con...")
@@ -94,11 +98,12 @@ class Dispositivo(models.Model):
     firmware_actual = models.ForeignKey(VersionFirmware, on_delete=models.SET_NULL, null=True, blank=True, related_name='equipos_instalados')
 
     def formatear_version_hka(self, v):
+        # v = "020507GD00"
         if v and len(v) >= 6 and v[:6].isdigit():
-            version_base = f"{v[0:2]}.{v[2:4]}.{v[4:6]}"
-            extra = v[6:]
+            version_base = f"{v[0:2]}.{v[2:4]}.{v[4:6]}" # Resultado: "02.05.07"
+            extra = v[6:]                               # Resultado: "GD00"
             if extra:
-                return f"{version_base} {extra}"
+                return f"{version_base} {extra}"        # Resultado Final: "02.05.07 GD00"
             return version_base
         return v
     
@@ -138,14 +143,16 @@ class Dispositivo(models.Model):
     
     @property
     def ultimo_log_datos(self):
-
-        ultimo_registro = self.logs.first()
-
-        if ultimo_registro and ultimo_registro.detalles:
-            try:
-                return json.loads(ultimo_registro.detalles)
-            except json.JSONDecodeError:
-                return {}
+        # Usamos .all() en lugar de .first() para aprovechar el prefetch_related de las vistas
+        logs_cacheados = self.logs.all()
+        
+        if logs_cacheados:
+            ultimo_registro = logs_cacheados[0] # Tomamos el primero de la memoria
+            if ultimo_registro.detalles:
+                try:
+                    return json.loads(ultimo_registro.detalles)
+                except json.JSONDecodeError:
+                    return {}
         return {}
 
     @property
