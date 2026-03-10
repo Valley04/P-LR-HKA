@@ -74,9 +74,6 @@ class Command(BaseCommand):
                 nuevo_sts2 = str(payload.get('sts2', ''))
                 viejo_sts2 = str(datos_viejos.get('sts2', ''))
 
-                nuevo_vts = str(payload.get('vts', ''))
-                viejo_vts = str(datos_viejos.get('vts', ''))
-
                 evento_tipo = None
 
                 if nuevo_fw_ismart and str(nuevo_fw_ismart) != viejo_fw_ismart and viejo_fw_ismart != "Desconocida":
@@ -87,8 +84,6 @@ class Command(BaseCommand):
                     evento_tipo = "Cambio de Error"
                 elif nuevo_sts1 != viejo_sts1 and viejo_sts1 != '':
                     evento_tipo = "Cambio de Estado"
-                elif nuevo_vts != viejo_vts:
-                    evento_tipo = "Actualización de Contadores"
                 elif not datos_viejos:
                     evento_tipo = "Primer Registro Inicial" # Si es un equipo nuevo
 

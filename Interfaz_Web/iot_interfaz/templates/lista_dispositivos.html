@@ -6,11 +6,9 @@
     .table-responsive {
         overflow: visible !important;
     }
-
     .dropdown-menu {
         z-index: 9999 !important;
     }
-
     .table {
         margin-bottom: 100px !important; /* Espacio extra al final de la tabla */
     }
@@ -21,10 +19,10 @@
         <h4>Listado de Dispositivos</h4>
         <div class="btn-group shadow-sm">
             <form hx-get="{% url 'dispositivos_lista' %}" 
-                hx-target="#contenido-principal" 
-                hx-select="#contenido-principal" 
-                hx-push-url="true"
-                class="d-flex me-2">
+                  hx-target="#contenido-principal" 
+                  hx-select="#contenido-principal" 
+                  hx-push-url="true"
+                  class="d-flex me-2">
                 
                 <div class="input-group input-group-sm">
                     <input type="text" name="buscar" class="form-control" placeholder="Serial o modelo..." value="{{ request.GET.buscar }}">
@@ -46,7 +44,7 @@
                     <th>Modelo</th>
                     <th>Grupo</th>
                     <th>Estado</th>
-                    <th class="text-end">Acciones</th> </tr>
+                    <th class="text-end">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -91,86 +89,15 @@
                         <td id="indicador-{{ equipo.serial }}">
                             <span class="text-muted" title="Esperando conexión...">⚪</span>
                         </td>
+                        
                         <td class="text-end" style="overflow: visible;">
-                            <div class="dropdown">
+                            <div class="dropdown d-inline-block">
                                 <span id="progreso-ota-{{ equipo.serial }}" class="badge bg-warning text-dark ms-2 d-none fs-6 shadow-sm">
                                     0%
                                 </span>
                                 <button class="btn btn-sm btn-outline-primary fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalOta-{{ equipo.id }}">
                                     <i class="bi bi-cpu"></i> Actualización
                                 </button>
-
-                                <div class="modal fade" id="modalOta-{{ equipo.id }}" tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content border-0 shadow">
-                                            <div class="modal-header bg-dark text-white">
-                                                <h5 class="modal-title fw-bold">Gestión de Actualización - {{ equipo.serial }}</h5>
-                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            
-                                            <form hx-post="{% url 'disparar_ota' equipo.id %}"
-                                                  hx-target="#contenido-principal"
-                                                  hx-select="#contenido-principal"
-                                                  hx-push-url="true">
-                                                {% csrf_token %}
-                                                <div class="modal-body bg-light">
-                                                    <div class="row mb-3 text-center">
-                                                        <div class="col-6 border-end">
-                                                            <small class="text-muted d-block text-uppercase fw-bold">Módulo iSmart</small>
-                                                            <span class="badge bg-primary fs-6 mt-1">v. {{ equipo.ultimo_log_datos.fw_ismart|default:"Desconocida" }}</span>
-                                                        </div>
-                                                        <div class="col-6">
-                                                            <small class="text-muted d-block text-uppercase fw-bold">Impresora Fiscal</small>
-                                                            <span class="badge bg-secondary fs-6 mt-1">v. {{ equipo.ultimo_log_datos.fw_printer|default:"Desconocida" }}</span>
-                                                        </div>
-                                                    </div>
-
-                                                    {% if equipo.alertas_ota %}
-                                                        {% for alerta in equipo.alertas_ota %}
-                                                            {% if alerta.tipo == 'obligatoria' %}
-                                                                <div class="alert alert-danger border-danger shadow-sm py-2 px-3 mb-2" role="alert">
-                                                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                                                    <strong>¡Actualización Crítica para {{ alerta.modulo }}!</strong><br>
-                                                                    <small>Se requiere instalar la versión <strong>{{ alerta.version_nueva }}</strong>.</small>
-                                                                </div>
-                                                            {% else %}
-                                                                <div class="alert alert-warning border-warning shadow-sm py-2 px-3 mb-2" role="alert">
-                                                                    <i class="bi bi-info-circle-fill me-2 text-warning"></i>
-                                                                    <strong>Actualización Opcional para {{ alerta.modulo }}</strong><br>
-                                                                    <small>La versión <strong>{{ alerta.version_nueva }}</strong> está disponible en el servidor.</small>
-                                                                </div>
-                                                            {% endif %}
-                                                        {% endfor %}
-                                                    {% else %}
-                                                        <div class="alert alert-success border-success shadow-sm py-2 px-3 mb-3" role="alert">
-                                                            <i class="bi bi-check-circle-fill me-2 text-success"></i>
-                                                            <strong>Equipo al día</strong><br>
-                                                            <small>Tanto el iSmart como la Impresora cuentan con las últimas versiones.</small>
-                                                        </div>
-                                                    {% endif %}
-                                                    
-                                                    <hr class="text-muted">
-                                                    
-                                                    <p class="mb-2 fw-bold">Seleccionar actualización a enviar:</p>
-                                                    <select name="firmware_id" class="form-select border-primary" required>
-                                                        <option value="" disabled selected>-- Elige una versión --</option>
-                                                        {% for proyecto in proyectos_disponibles %}
-                                                            <optgroup label="📦 {{ proyecto.nombre }}">
-                                                                {% for fw in proyecto.versiones.all %}
-                                                                    <option value="{{ fw.id }}">{{ fw.version }} (Subido: {{ fw.fecha_subida|date:"d/m/y" }})</option>
-                                                                {% endfor %}
-                                                            </optgroup>
-                                                        {% endfor %}
-                                                    </select>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                                    <button type="submit" class="btn btn-primary fw-bold">Enviar Actualización</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
 
                                 <button class="btn btn-sm btn-light border dropdown-toggle" 
                                         type="button" 
@@ -191,89 +118,11 @@
                                     </li>
                                 </ul>
                             </div>
-                        </td>
-                    </tr>
-
-                    <div class="modal fade" id="modalEliminar-{{ equipo.id }}" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content border-0 shadow">
-                                <div class="modal-body text-center p-5">
-                                    <div class="text-danger mb-3">
-                                        <i class="bi bi-exclamation-triangle-fill" style="font-size: 3rem;"></i>
-                                        <h1 class="display-4">⚠️</h1>
-                                    </div>
-                                    <h5 class="fw-bold">¿Eliminar el equipo?</h5>
-                                    <p class="text-muted">Estás a punto de borrar el serial:<br><strong class="text-dark">{{ equipo.serial }}</strong></p>
-                                    <p class="small text-danger">Esta acción no se puede deshacer.</p>
-                                    
-                                    <form hx-post="{% url 'eliminar_dispositivo' equipo.id %}"
-                                          hx-target="#contenido-principal"
-                                          hx-select="#contenido-principal"
-                                          hx-push-url="true">
-                                        {% csrf_token %}
-                                        <div class="d-flex justify-content-center gap-2 mt-4">
-                                            <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancelar</button>
-                                            <button type="submit" class="btn btn-danger px-4">Sí, eliminar</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="modal fade" id="modalEditar-{{ equipo.id }}" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content border-0 shadow">
-                                <div class="modal-header bg-primary text-white">
-                                    <h5 class="modal-title">✏️ Editar Dispositivo</h5>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <form hx-post="{% url 'editar_dispositivo' equipo.id %}"
-                                      hx-target="#contenido-principal"
-                                      hx-select="#contenido-principal"
-                                      hx-push-url="true">
-                                    {% csrf_token %}
-                                    <div class="modal-body p-4">
-                                        <div class="mb-3">
-                                            <label class="form-label text-muted small fw-bold">Número de Serial</label>
-                                            <input type="text" name="serial" class="form-control bg-light" value="{{ equipo.serial }}" required>
-                                        </div>
-                                        
-                                        <div class="mb-3">
-                                            <label class="form-label text-muted small fw-bold">Modelo</label>
-                                            <select name="modelo_id" class="form-select" required>
-                                                <option value="">Seleccione un modelo...</option>
-                                                {% for m in modelos %}
-                                                    <option value="{{ m.id }}" {% if equipo.modelo.id == m.id %}selected{% endif %}>
-                                                        {{ m.nombre }}
-                                                    </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label text-muted small fw-bold">Grupo</label>
-                                            <select name="grupo_id" class="form-select">
-                                                <option value="">Sin grupo</option>
-                                                {% for g in grupos %}
-                                                    <option value="{{ g.id }}" {% if equipo.grupo.id == g.id %}selected{% endif %}>
-                                                        {{ g.nombre }}
-                                                    </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer bg-light border-0">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                        <button type="submit" class="btn btn-primary px-4">Guardar Cambios</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
+                        </td> 
+                    </tr> 
                 {% empty %}
                     <tr>
-                        <td colspan="4" class="text-center text-muted">
+                        <td colspan="5" class="text-center text-muted py-4">
                             No se encontraron dispositivos que coincidan con la búsqueda...
                         </td>
                     </tr>
@@ -283,7 +132,149 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalAñadir" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+{% for equipo in dispositivos %}
+
+    <div class="modal fade" id="modalEliminar-{{ equipo.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-body text-center p-5">
+                    <div class="text-danger mb-3">
+                        <h1 class="display-4">⚠️</h1>
+                    </div>
+                    <h5 class="fw-bold">¿Eliminar el equipo?</h5>
+                    <p class="text-muted">Estás a punto de borrar el serial:<br><strong class="text-dark">{{ equipo.serial }}</strong></p>
+                    <p class="small text-danger">Esta acción no se puede deshacer.</p>
+                    
+                    <form hx-post="{% url 'eliminar_dispositivo' equipo.id %}">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-center gap-2 mt-4">
+                            <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-danger px-4" data-bs-dismiss="modal">Sí, eliminar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade text-start" id="modalEditar-{{ equipo.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">✏️ Editar Dispositivo</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form hx-post="{% url 'editar_dispositivo' equipo.id %}"
+                        hx-target="#contenido-principal"
+                        hx-select="#contenido-principal"
+                        hx-push-url="true">
+                    {% csrf_token %}
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold">Número de Serial</label>
+                            <input type="text" name="serial" class="form-control bg-light" value="{{ equipo.serial }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold">Modelo</label>
+                            <select name="modelo_id" class="form-select" required>
+                                <option value="">Seleccione un modelo...</option>
+                                {% for m in modelos %}
+                                    <option value="{{ m.id }}" {% if equipo.modelo.id == m.id %}selected{% endif %}>
+                                        {{ m.nombre }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold">Grupo</label>
+                            <select name="grupo_id" class="form-select">
+                                <option value="">Sin grupo</option>
+                                {% for g in grupos %}
+                                    <option value="{{ g.id }}" {% if equipo.grupo.id == g.id %}selected{% endif %}>
+                                        {{ g.nombre }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light border-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary px-4" data-bs-dismiss="modal">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade text-start" id="modalOta-{{ equipo.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold">Gestión de Actualización - {{ equipo.serial }}</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form hx-post="{% url 'disparar_ota' equipo.id %}"
+                        hx-target="#contenido-principal"
+                        hx-select="#contenido-principal"
+                        hx-push-url="true">
+                    {% csrf_token %}
+                    <div class="modal-body bg-light">
+                        <div class="row mb-3 text-center">
+                            <div class="col-6 border-end">
+                                <small class="text-muted d-block text-uppercase fw-bold">Módulo iSmart</small>
+                                <span class="badge bg-primary fs-6 mt-1">v. {{ equipo.ultimo_log_datos.fw_ismart|default:"Desconocida" }}</span>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block text-uppercase fw-bold">Impresora Fiscal</small>
+                                <span class="badge bg-secondary fs-6 mt-1">v. {{ equipo.ultimo_log_datos.fw_printer|default:"Desconocida" }}</span>
+                            </div>
+                        </div>
+
+                        {% if equipo.alertas_ota %}
+                            {% for alerta in equipo.alertas_ota %}
+                                {% if alerta.tipo == 'obligatoria' %}
+                                    <div class="alert alert-danger shadow-sm py-2 px-3 mb-2" role="alert">
+                                        <strong>¡Actualización Crítica para {{ alerta.modulo }}!</strong><br>
+                                        <small>Instalar la versión <strong>{{ alerta.version_nueva }}</strong>.</small>
+                                    </div>
+                                {% else %}
+                                    <div class="alert alert-warning shadow-sm py-2 px-3 mb-2" role="alert">
+                                        <strong>Actualización para {{ alerta.modulo }}</strong><br>
+                                        <small>Versión <strong>{{ alerta.version_nueva }}</strong> disponible.</small>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <div class="alert alert-success shadow-sm py-2 px-3 mb-3" role="alert">
+                                <strong>Equipo al día</strong>
+                            </div>
+                        {% endif %}
+                        
+                        <hr class="text-muted">
+                        <p class="mb-2 fw-bold">Seleccionar actualización a enviar:</p>
+                        <select name="firmware_id" class="form-select border-primary" required>
+                            <option value="" disabled selected>-- Elige una versión --</option>
+                            {% for proyecto in proyectos_disponibles %}
+                                <optgroup label="📦 {{ proyecto.nombre }}">
+                                    {% for fw in proyecto.versiones.all %}
+                                        <option value="{{ fw.id }}">{{ fw.version }} (Subido: {{ fw.fecha_subida|date:"d/m/y" }})</option>
+                                    {% endfor %}
+                                </optgroup>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary fw-bold" data-bs-dismiss="modal">Enviar Actualización</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+{% endfor %}
+
+<div class="modal fade" id="modalAñadir" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">
@@ -296,26 +287,22 @@
             hx-push-url="true">
         {% csrf_token %}
         <div class="modal-body p-4">
-            
             <div class="mb-3">
                 <label class="form-label fw-bold text-muted small">Serial del Equipo</label>
                 {{ form.serial }}
             </div>
-
             <div class="mb-3">
                 <label class="form-label fw-bold text-muted small">Modelo</label>
                 {{ form.modelo }}
             </div>
-
             <div class="mb-3">
                 <label class="form-label fw-bold text-muted small">Grupo Asignado</label>
                 {{ form.grupo }}
             </div>
-
         </div>
         <div class="modal-footer bg-light">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-primary">Guardar Dispositivo</button>
+          <button type="submit" class="btn btn-primary" data-bs-dismiss="modal">Guardar Dispositivo</button>
         </div>
       </form>
     </div>
@@ -428,3 +415,9 @@
     });
 </script>
 {% endblock %}
+
+
+
+
+
+
