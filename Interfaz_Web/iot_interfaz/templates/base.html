@@ -13,8 +13,9 @@
 
     {% if request.user.is_authenticated %}
 
-    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;" id="contenedor-toasts">
-    </div>
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" 
+     style="z-index: 1055; pointer-events: none;" id="contenedor-toasts">
+     </div>
 
         <div class="d-flex">
             <style>
@@ -153,7 +154,7 @@
 
                 // Armamos el HTML de la notificación
                 const toastHTML = `
-                    <div id="${toastId}" class="toast align-items-center ${bgClass} border-0 mb-2 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div id="${toastId}" class="toast align-items-center ${bgClass} border-0 mb-2 shadow-lg" style="pointer-events: auto;" role="alert" aria-live="assertive" aria-atomic="true">
                         <div class="d-flex">
                             <div class="toast-body fw-bold">
                                 ${icono} ${titulo}: <span class="fw-normal">${mensaje}</span>
@@ -226,7 +227,7 @@
                     const data = JSON.parse(message.toString());
                     const ahora = Date.now();
                     
-                    // Lógica de memoria y silencio...
+                    // 1. ACTUALIZACIÓN DE MEMORIA
                     if (!memoriaEquipos[serialEntrante]) {
                         memoriaEquipos[serialEntrante] = { 
                             ultimoLatido: ahora, 
@@ -237,8 +238,11 @@
                         };
                     }
 
-                    // Actualizar íconos en la tabla (si la tabla existe en la pantalla actual)
+                    memoriaEquipos[serialEntrante].ultimoLatido = ahora;
+
+                    // 2. BUSCAR ELEMENTOS EN EL DOM
                     const celdaIndicador = document.getElementById(`indicador-${serialEntrante}`);
+                    const badgeProgreso = document.getElementById(`progreso-ota-${serialEntrante}`);
 
                     if (tipoMensaje === "ota") {
                         const badgeProgreso = document.getElementById(`progreso-ota-${serialEntrante}`);
@@ -246,13 +250,11 @@
                         if (data.st === "iniciado" || data.st === "actualizando") {
                             memoriaEquipos[serialEntrante].actualizando = true;
                             memoriaEquipos[serialEntrante].porcentaje = data.pr;
-                            memoriaEquipos[serialEntrante].ultimoLatido = ahora;
 
-                            if (celdaIndicador) {
-                                celdaIndicador.innerHTML = `<span title="Actualizando ${data.tg} (${data.pr}%)">🟡</span>`;
+                            let htmlOta = `<span title="Actualizando ${data.tg} (${data.pr}%)">🟡</span>`;
+                            if (celdaIndicador && celdaIndicador.innerHTML !== htmlOta) {
+                                celdaIndicador.innerHTML = htmlOta;
                             }
-
-                            // Mostramos el porcentaje al lado del botón
                             if (badgeProgreso) {
                                 badgeProgreso.classList.remove('d-none');
                                 badgeProgreso.innerText = `⏳ ${data.pr}%`;
@@ -260,51 +262,37 @@
                         } 
                         else if (data.st === "exito") {
                             memoriaEquipos[serialEntrante].actualizando = false;
-                            memoriaEquipos[serialEntrante].porcentaje = 0;
-                            memoriaEquipos[serialEntrante].ultimoLatido = ahora;
-
-                            if (celdaIndicador) {
-                                celdaIndicador.innerHTML = `<span title="En línea (Recién actualizado)">🟢</span>`
-                            }
-                            if (badgeProgreso) {
-                                badgeProgreso.classList.add('d-none');
-                            }
-
-                            mostrarToast("Actualización Completada", `El equipo ${serialEntrante} actualizó ${data.tg} con éxito.`, "success")
+                            if (celdaIndicador) celdaIndicador.innerHTML = `<span title="En línea (Actualizado)">🟢</span>`;
+                            if (badgeProgreso) badgeProgreso.classList.add('d-none');
+                            mostrarToast("Actualización Completada", `El equipo ${serialEntrante} actualizó con éxito.`, "success");
                         }
                         else if (data.st === "error") {
-                            memoriaEquipos[serialEntrante].actualizando = false; // Soltamos al vigilante
-                            memoriaEquipos[serialEntrante].porcentaje = 0;
-                            
-                            if (celdaIndicador) {
-                                celdaIndicador.innerHTML = `<span title="¡Error en actualización de ${data.tg}! (Falló al ${data.pr}%)">❗</span>`;
-                            }
-                            if (badgeProgreso) {
-                                badgeProgreso.classList.add('d-none');
-                            }
-
-                            mostrarToast("Alerta OTA", `El equipo ${serialEntrante} falló al actualizar ${data.tg} (${data.pr}%).`, "danger");
+                            memoriaEquipos[serialEntrante].actualizando = false;
+                            if (celdaIndicador) celdaIndicador.innerHTML = `<span title="¡Error en actualización!">❗</span>`;
+                            if (badgeProgreso) badgeProgreso.classList.add('d-none');
+                            mostrarToast("Alerta OTA", `El equipo ${serialEntrante} falló (${data.pr}%).`, "danger");
                         }
                     }
 
                     else if (tipoMensaje === "json_completo") {
                         
-                        // Si por alguna razón envía telemetría normal, asumimos que ya no está actualizando
-                        if (memoriaEquipos[serialEntrante].actualizando) {
-                            memoriaEquipos[serialEntrante].actualizando = false;
-                        }
+                        if (memoriaEquipos[serialEntrante].actualizando) memoriaEquipos[serialEntrante].actualizando = false;
 
+                        // Cálculo de silencio para el vigilante
                         const tiempoTranscurrido = data.ts - memoriaEquipos[serialEntrante].ultimoTS;
                         if (tiempoTranscurrido > 0) {
                             memoriaEquipos[serialEntrante].limiteSilencio = tiempoTranscurrido + 10000; 
                         }
-                        memoriaEquipos[serialEntrante].ultimoLatido = ahora;
                         memoriaEquipos[serialEntrante].ultimoTS = data.ts;
 
+                        // ESTABILIZADOR: Solo reescribir si el icono cambia
                         if (celdaIndicador) {
                             let htmlIconos = `<span title="En línea">🟢</span>`;
                             if (data.sts2 && data.sts2 !== "40") htmlIconos += ` <span title="¡Error en impresora!">⚠️</span>`;
-                            celdaIndicador.innerHTML = htmlIconos;
+                            
+                            if (celdaIndicador.innerHTML !== htmlIconos) {
+                                celdaIndicador.innerHTML = htmlIconos;
+                            }
                         }
 
                         // Actualizar modal (si es el equipo seleccionado y el modal está abierto)
@@ -332,17 +320,15 @@
                             const llavesJSON = ['sts1', 'sts2', 'atm', 'vts', 'last_b', 'b_iss', 'db_n', 'db_a', 'cr_n', 'cr_a', 'nf_n', 'nf_a', 'z_cnt', 'f_cnt', 'rif', 'ser', 'time', 'date'];
                             
                             llavesJSON.forEach(llave => {
-                                const elemento = document.getElementById(`val-${llave}`);
-                                if (elemento && data[llave] !== undefined) {
-                                    if (llave === 'sts1') { elemento.innerText = diccEstado[data[llave]] || `Desconocido (${data[llave]})`; } 
+                                const el = document.getElementById(`val-${llave}`);
+                                if (el && data[llave] !== undefined) {
+                                    if (llave === 'sts1') el.innerText = diccEstado[data[llave]] || `(${data[llave]})`;
                                     else if (llave === 'sts2') { 
-                                        elemento.innerText = diccError[data[llave]] || `Desconocido (${data[llave]})`;
-                                        elemento.className = data[llave] === "40" ? "text-success fw-bold" : "text-danger fw-bold";
+                                        el.innerText = diccError[data[llave]] || `(${data[llave]})`;
+                                        el.className = data[llave] === "40" ? "text-success fw-bold" : "text-danger fw-bold";
                                     }
-                                    else if (llave === 'date' && data[llave].length === 6) { elemento.innerText = `${data[llave].substring(0,2)}/${data[llave].substring(2,4)}/20${data[llave].substring(4,6)}`; } 
-                                    else if (llave === 'time' && data[llave].length === 6) { elemento.innerText = `${data[llave].substring(0,2)}:${data[llave].substring(2,4)}:${data[llave].substring(4,6)}`; } 
-                                    else if (llave === 'vts') { elemento.innerText = new Intl.NumberFormat('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(parseInt(data[llave], 10) / 100); } 
-                                    else { elemento.innerText = data[llave]; }
+                                    else if (llave === 'vts') el.innerText = new Intl.NumberFormat('es-VE').format(parseInt(data[llave]) / 100);
+                                    else el.innerText = data[llave];
                                 }
                             });
                         }
@@ -352,15 +338,15 @@
             });
             
             // Se ejecuta automáticamente cada vez que HTMX cambia de pestaña o recarga la tabla
-            document.body.addEventListener('htmx:afterSwap', function() {
-                // Limpieza del Modal
+            document.body.addEventListener('htmx:afterRequest', function(evt) {
+                // 1. LIMPIEZA DE MODALES (Cazafantasmas)
                 const sombras = document.querySelectorAll('.modal-backdrop');
                 sombras.forEach(sombra => sombra.remove());
                 document.body.classList.remove('modal-open');
-                document.body.style.overflow = '';
+                document.body.style.overflow = 'auto'; // Forzamos que vuelva el scroll
                 document.body.style.paddingRight = '';
 
-                // Restauración inmediata de la Interfaz
+                // 2. RESTAURACIÓN DE ICONOS Y PROGRESO (Para que no se queden "pensando")
                 const ahora = Date.now();
                 for (const serial in memoriaEquipos) {
                     const equipo = memoriaEquipos[serial];

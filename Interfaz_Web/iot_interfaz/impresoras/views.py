@@ -82,11 +82,17 @@ def disparar_ota_mqtt(request, dispositivo_id):
             client.username_pw_set(USER, PASS)
 
             client.connect(BROKER, PORT, 10)
-
             client.loop_start()
 
             info_envio = client.publish(topic_comando, json.dumps(payload), qos=1)
-            info_envio.wait_for_publish()
+
+            try:
+                info_envio.wait_for_publish(timeout=5)
+            except RuntimeError:
+                print("❌ Error: El mensaje no se pudo publicar (Timeout)")
+                messages.error(request, "El broker MQTT no confirmó el envío. Inténtalo de nuevo.")
+                client.loop_stop()
+                return redirect('dispositivos_lista')
 
             client.loop_stop()
             client.disconnect()
@@ -379,6 +385,12 @@ def eliminar_dispositivo(request, id):
     equipo = get_object_or_404(Dispositivo, id=id)
     if request.method == 'POST':
         equipo.delete()
+
+        if request.headers.get('HX-Request'):
+            response = HttpResponse()
+            response['HX-Refresh'] = "true"
+            return response
+        
     return redirect('dispositivos_lista')
 
 @login_required

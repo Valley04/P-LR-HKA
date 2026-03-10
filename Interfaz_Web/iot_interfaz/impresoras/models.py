@@ -118,26 +118,26 @@ class Dispositivo(models.Model):
         fw_printer_json = datos.get('fw_printer', 'Desconocida')
 
         # 2. Evaluamos el iSmart (Buscamos el último .bin etiquetado como 'ismart')
-        ultima_v_ismart = VersionFirmware.objects.filter(tipo_modulo='ismart').order_by('-id').first()
+        ultima_v_ismart = VersionFirmware.objects.filter(tipo_modulo='ismart').order_by('-fecha_subida').first()
         
-        if ultima_v_ismart and fw_ismart_json != ultima_v_ismart.version and fw_ismart_json != "Desconocida":
-            es_obligatoria = getattr(ultima_v_ismart, 'es_obligatoria', False)
-            alertas.append({
-                'modulo': 'iSmart',
-                'version_nueva': ultima_v_ismart.version,
-                'tipo': 'obligatoria' if es_obligatoria else 'opcional'
-            })
+        if ultima_v_ismart and fw_ismart_json not in ['', 'None', 'Desconocida', '0']:
+            if fw_ismart_json != ultima_v_ismart.version:
+                alertas.append({
+                    'modulo': 'iSmart',
+                    'version_nueva': ultima_v_ismart.version,
+                    'tipo': 'obligatoria' if ultima_v_ismart.es_obligatoria else 'opcional'
+                })
 
         # 3. Evaluamos la Impresora (Buscamos el último .bin etiquetado como 'impresora')
-        ultima_v_printer = VersionFirmware.objects.filter(tipo_modulo='impresora').order_by('-id').first()
+        ultima_v_printer = VersionFirmware.objects.filter(tipo_modulo='impresora').order_by('-fecha_subida').first()
         
-        if ultima_v_printer and fw_printer_json != ultima_v_printer.version and fw_printer_json != "Desconocida":
-            es_obligatoria = getattr(ultima_v_printer, 'es_obligatoria', False)
-            alertas.append({
-                'modulo': 'Impresora Fiscal',
-                'version_nueva': ultima_v_printer.version,
-                'tipo': 'obligatoria' if es_obligatoria else 'opcional'
-            })
+        if ultima_v_printer and fw_printer_json not in ['', 'None', 'Desconocida', '0']:
+            if fw_printer_json != ultima_v_printer.version:
+                alertas.append({
+                    'modulo': 'Impresora Fiscal',
+                    'version_nueva': ultima_v_printer.version,
+                    'tipo': 'obligatoria' if ultima_v_printer.es_obligatoria else 'opcional'
+                })
             
         return alertas
     

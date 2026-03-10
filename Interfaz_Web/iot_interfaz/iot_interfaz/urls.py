@@ -1,13 +1,18 @@
 from django.contrib import admin
-from django.contrib.auth import views
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
-from impresoras.views import MiLogin, dashboard_view, lista_dispositivos, editar_dispositivo, eliminar_dispositivo  #Importamos views
-from impresoras.views import grupos_modelos, eliminar_grupo, eliminar_modelo, exportar_dispositivos_excel, log_capture_view
-from impresoras.views import log_capture_view, descargar_logs_dispositivos, gestion_firmware_view, api_ultimo_firmware
-from impresoras.views import eliminar_version_firmware, disparar_ota_mqtt, eliminar_proyecto_firmware, landing_view
 from django.contrib.auth.views import LogoutView
+
+# Agrupamos los imports para que sea más fácil de leer
+from impresoras.views import (
+    MiLogin, landing_view, dashboard_view, lista_dispositivos, 
+    editar_dispositivo, eliminar_dispositivo, grupos_modelos, 
+    eliminar_grupo, eliminar_modelo, exportar_dispositivos_excel, 
+    log_capture_view, descargar_logs_dispositivos, gestion_firmware_view, 
+    api_ultimo_firmware, eliminar_version_firmware, disparar_ota_mqtt, 
+    eliminar_proyecto_firmware
+)
 
 urlpatterns = [
     path('', landing_view, name='landing'),
@@ -15,6 +20,7 @@ urlpatterns = [
     path('login/', MiLogin.as_view(), name='login'),
     path('dashboard/', dashboard_view, name='dashboard'),
     path('logout/', LogoutView.as_view(), name='logout'),
+    path('logout/', LogoutView.as_view(next_page='landing'), name='logout'),
 
     # Rutas para administración de dispositivos
     path('dispositivos/', lista_dispositivos, name='dispositivos_lista'),
@@ -28,7 +34,6 @@ urlpatterns = [
     path('modelos/eliminar/<int:id>/', eliminar_modelo, name='eliminar_modelo'),
 
     # Ruta para log
-    path('log-capture/', log_capture_view, name='log_capture'),
     path('log-capture/', log_capture_view, name='log_capture'),
     path('log-capture/descargar/<int:dispositivo_id>/', descargar_logs_dispositivos, name='descargar_logs_equipo'),
 
