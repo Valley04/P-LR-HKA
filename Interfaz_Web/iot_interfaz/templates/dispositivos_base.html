@@ -12,11 +12,10 @@
 </style>
 
 <div class="d-flex flex-column flex-md-row h-100">
-    <div class="bg-white border-end shadow-sm flex-shrink-0" style="min-width: 220px; min-height: 80vh;">
+    <div class="bg-white border-end shadow-sm" style="width: 200px; min-height: 80vh;">
         <div class="p-3">
-            <h6 class="text-muted text-uppercase fw-bold mb-3" style="font-size: 0.8rem;">Gestión de Dispositivos</h6>
-
-            <ul class="nav nav-pills flex-column gap-1">
+            <h6 class="text-muted text-uppercase fw-bold" style="font-size: 0.8rem;">Gestión de Dispositivos</h6>
+            <ul class="nav nav-pills flex-column mt-2">
                 <li class="nav-item">
                     <a hx-get="{% url 'dispositivos_lista' %}" 
                        hx-target="#contenido-principal"
@@ -24,34 +23,34 @@
                        hx-push-url="true"
                        class="nav-link {% if request.resolver_match.url_name == 'dispositivos_lista' %}active bg-primary text-white{% else %}text-dark{% endif %}" 
                        style="cursor: pointer;">
-                       <i class="bi bi-activity me-2"></i>Monitor en Tiempo Real
+                       Monitor en Tiempo Real
                     </a>
                 </li>
                 <li class="nav-item">
                     <a hx-get="{% url 'grupos_modelos' %}" 
-                        hx-target="#contenido-principal"
-                        hx-select="#contenido-principal"
-                        hx-push-url="true"
-                        class="nav-link {% if request.resolver_match.url_name == 'grupos_modelos' %}active bg-primary text-white{% else %}text-dark{% endif %}" 
-                        style="cursor: pointer;">
-                        <i class="bi bi-tags me-2"></i>Grupos y Modelos
+                    hx-target="#contenido-principal"
+                    hx-select="#contenido-principal"
+                    hx-push-url="true"
+                    class="nav-link {% if request.resolver_match.url_name == 'grupos_modelos' %}active bg-primary text-white{% else %}text-dark{% endif %}" 
+                    style="cursor: pointer;">
+                    Grupos y Modelos
                     </a>
                 </li>
                 <li class="nav-item">
                     <a hx-get="{% url 'log_capture' %}" 
-                        hx-target="#contenido-principal"
-                        hx-select="#contenido-principal"
-                        hx-push-url="true"
-                        class="nav-link {% if request.resolver_match.url_name == 'log_capture' %}active bg-primary text-white{% else %}text-dark{% endif %}" 
-                        style="cursor: pointer;">
-                        <i class="bi bi-terminal me-2"></i>Log Capture
+                    hx-target="#contenido-principal"
+                    hx-select="#contenido-principal"
+                    hx-push-url="true"
+                    class="nav-link {% if request.resolver_match.url_name == 'log_capture' %}active bg-primary text-white{% else %}text-dark{% endif %}" 
+                    style="cursor: pointer;">
+                    Log Capture
                     </a>
                 </li>
             </ul>
         </div>
     </div>
 
-    <div class="flex-grow-1 bg-white w-100 overflow-auto">
+    <div class="flex-grow-1 bg-white">
         {% block dispositivos_content %}
         {% endblock %}
     </div>

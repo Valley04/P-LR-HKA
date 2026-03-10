@@ -3,9 +3,17 @@
 {% block dispositivos_content %}
 
 <style>
-    .table-responsive { overflow: visible !important; }
-    .dropdown-menu { z-index: 9999 !important; }
-    .table { margin-bottom: 100px !important; }
+    .table-responsive {
+        overflow: visible !important;
+    }
+
+    .dropdown-menu {
+        z-index: 9999 !important;
+    }
+
+    .table {
+        margin-bottom: 100px !important; /* Espacio extra al final de la tabla */
+    }
 </style>
 
 <div class="p-4">
@@ -13,10 +21,10 @@
         <h4>Listado de Dispositivos</h4>
         <div class="btn-group shadow-sm">
             <form hx-get="{% url 'dispositivos_lista' %}" 
-                  hx-target="#contenido-principal" 
-                  hx-select="#contenido-principal" 
-                  hx-push-url="true"
-                  class="d-flex me-2">
+                hx-target="#contenido-principal" 
+                hx-select="#contenido-principal" 
+                hx-push-url="true"
+                class="d-flex me-2">
                 
                 <div class="input-group input-group-sm">
                     <input type="text" name="buscar" class="form-control" placeholder="Serial o modelo..." value="{{ request.GET.buscar }}">
@@ -30,7 +38,7 @@
         </div>
     </div>
 
-    <div class="table-responsive shadow-sm border rounded bg-white">
+    <div class="table-responsive shadow-sm border rounded">
         <table class="table table-hover mb-0">
             <thead class="table-light">
                 <tr>
@@ -38,7 +46,7 @@
                     <th>Modelo</th>
                     <th>Grupo</th>
                     <th>Estado</th>
-                    <th class="text-end" style="position: relative; z-index: 10;">Acciones</th>
+                    <th class="text-end">Acciones</th> </tr>
                 </tr>
             </thead>
             <tbody>
@@ -85,36 +93,127 @@
                         </td>
                         <td class="text-end" style="overflow: visible;">
                             <div class="dropdown">
-                                <span id="progreso-ota-{{ equipo.serial }}" class="badge bg-warning text-dark ms-2 d-none fs-6 shadow-sm">0%</span>
+                                <span id="progreso-ota-{{ equipo.serial }}" class="badge bg-warning text-dark ms-2 d-none fs-6 shadow-sm">
+                                    0%
+                                </span>
                                 <button class="btn btn-sm btn-outline-primary fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalOta-{{ equipo.id }}">
                                     <i class="bi bi-cpu"></i> Actualización
                                 </button>
-                                
-                                <button class="btn btn-sm btn-light border dropdown-toggle" type="button" data-bs-toggle="dropdown"></button>
+
+                                <div class="modal fade" id="modalOta-{{ equipo.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content border-0 shadow">
+                                            <div class="modal-header bg-dark text-white">
+                                                <h5 class="modal-title fw-bold">Gestión de Actualización - {{ equipo.serial }}</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            
+                                            <form hx-post="{% url 'disparar_ota' equipo.id %}"
+                                                  hx-target="#contenido-principal"
+                                                  hx-select="#contenido-principal"
+                                                  hx-push-url="true">
+                                                {% csrf_token %}
+                                                <div class="modal-body bg-light">
+                                                    <div class="row mb-3 text-center">
+                                                        <div class="col-6 border-end">
+                                                            <small class="text-muted d-block text-uppercase fw-bold">Módulo iSmart</small>
+                                                            <span class="badge bg-primary fs-6 mt-1">v. {{ equipo.ultimo_log_datos.fw_ismart|default:"Desconocida" }}</span>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <small class="text-muted d-block text-uppercase fw-bold">Impresora Fiscal</small>
+                                                            <span class="badge bg-secondary fs-6 mt-1">v. {{ equipo.ultimo_log_datos.fw_printer|default:"Desconocida" }}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {% if equipo.alertas_ota %}
+                                                        {% for alerta in equipo.alertas_ota %}
+                                                            {% if alerta.tipo == 'obligatoria' %}
+                                                                <div class="alert alert-danger border-danger shadow-sm py-2 px-3 mb-2" role="alert">
+                                                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                                                    <strong>¡Actualización Crítica para {{ alerta.modulo }}!</strong><br>
+                                                                    <small>Se requiere instalar la versión <strong>{{ alerta.version_nueva }}</strong>.</small>
+                                                                </div>
+                                                            {% else %}
+                                                                <div class="alert alert-warning border-warning shadow-sm py-2 px-3 mb-2" role="alert">
+                                                                    <i class="bi bi-info-circle-fill me-2 text-warning"></i>
+                                                                    <strong>Actualización Opcional para {{ alerta.modulo }}</strong><br>
+                                                                    <small>La versión <strong>{{ alerta.version_nueva }}</strong> está disponible en el servidor.</small>
+                                                                </div>
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        <div class="alert alert-success border-success shadow-sm py-2 px-3 mb-3" role="alert">
+                                                            <i class="bi bi-check-circle-fill me-2 text-success"></i>
+                                                            <strong>Equipo al día</strong><br>
+                                                            <small>Tanto el iSmart como la Impresora cuentan con las últimas versiones.</small>
+                                                        </div>
+                                                    {% endif %}
+                                                    
+                                                    <hr class="text-muted">
+                                                    
+                                                    <p class="mb-2 fw-bold">Seleccionar actualización a enviar:</p>
+                                                    <select name="firmware_id" class="form-select border-primary" required>
+                                                        <option value="" disabled selected>-- Elige una versión --</option>
+                                                        {% for proyecto in proyectos_disponibles %}
+                                                            <optgroup label="📦 {{ proyecto.nombre }}">
+                                                                {% for fw in proyecto.versiones.all %}
+                                                                    <option value="{{ fw.id }}">{{ fw.version }} (Subido: {{ fw.fecha_subida|date:"d/m/y" }})</option>
+                                                                {% endfor %}
+                                                            </optgroup>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                    <button type="submit" class="btn btn-primary fw-bold">Enviar Actualización</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-sm btn-light border dropdown-toggle" 
+                                        type="button" 
+                                        data-bs-toggle="dropdown" 
+                                        aria-expanded="false">
+                                </button>
                                 <ul class="dropdown-menu dropdown-menu-end shadow-lg">
-                                    <li><button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#modalEditar-{{ equipo.id }}">✏️ Editar</button></li>
+                                    <li>
+                                        <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#modalEditar-{{ equipo.id }}">
+                                            ✏️ Editar
+                                        </button>
+                                    </li>
                                     <li><hr class="dropdown-divider"></li>
-                                    <li><button class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#modalEliminar-{{ equipo.id }}">🗑️ Eliminar</button></li>
+                                    <li>
+                                        <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#modalEliminar-{{ equipo.id }}">
+                                            🗑️ Eliminar
+                                        </button>
+                                    </li>
                                 </ul>
                             </div>
                         </td>
                     </tr>
 
-                    <div class="modal fade" id="modalEliminar-{{ equipo.id }}" tabindex="-1">
+                    <div class="modal fade" id="modalEliminar-{{ equipo.id }}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered">
                             <div class="modal-content border-0 shadow">
                                 <div class="modal-body text-center p-5">
-                                    <div class="text-danger mb-3"><h1 class="display-4">⚠️</h1></div>
+                                    <div class="text-danger mb-3">
+                                        <i class="bi bi-exclamation-triangle-fill" style="font-size: 3rem;"></i>
+                                        <h1 class="display-4">⚠️</h1>
+                                    </div>
                                     <h5 class="fw-bold">¿Eliminar el equipo?</h5>
-                                    <p class="text-muted">Serial: <strong class="text-dark">{{ equipo.serial }}</strong></p>
+                                    <p class="text-muted">Estás a punto de borrar el serial:<br><strong class="text-dark">{{ equipo.serial }}</strong></p>
+                                    <p class="small text-danger">Esta acción no se puede deshacer.</p>
                                     
-                                    <form hx-post="{% url 'eliminar_dispositivo' equipo.id %}">
+                                    <form hx-post="{% url 'eliminar_dispositivo' equipo.id %}"
+                                          hx-target="#contenido-principal"
+                                          hx-select="#contenido-principal"
+                                          hx-push-url="true">
                                         {% csrf_token %}
                                         <div class="d-flex justify-content-center gap-2 mt-4">
                                             <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancelar</button>
-                                            <button type="submit" class="btn btn-danger px-4" onclick="this.innerHTML='Borrando...';">
-                                                Sí, eliminar
-                                            </button>
+                                            <button type="submit" class="btn btn-danger px-4">Sí, eliminar</button>
                                         </div>
                                     </form>
                                 </div>
@@ -122,12 +221,12 @@
                         </div>
                     </div>
 
-                    <div class="modal fade" id="modalEditar-{{ equipo.id }}" tabindex="-1">
+                    <div class="modal fade" id="modalEditar-{{ equipo.id }}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog">
                             <div class="modal-content border-0 shadow">
                                 <div class="modal-header bg-primary text-white">
                                     <h5 class="modal-title">✏️ Editar Dispositivo</h5>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
                                 <form hx-post="{% url 'editar_dispositivo' equipo.id %}"
                                       hx-target="#contenido-principal"
@@ -139,48 +238,57 @@
                                             <label class="form-label text-muted small fw-bold">Número de Serial</label>
                                             <input type="text" name="serial" class="form-control bg-light" value="{{ equipo.serial }}" required>
                                         </div>
+                                        
                                         <div class="mb-3">
                                             <label class="form-label text-muted small fw-bold">Modelo</label>
                                             <select name="modelo_id" class="form-select" required>
+                                                <option value="">Seleccione un modelo...</option>
                                                 {% for m in modelos %}
-                                                    <option value="{{ m.id }}" {% if equipo.modelo.id == m.id %}selected{% endif %}>{{ m.nombre }}</option>
+                                                    <option value="{{ m.id }}" {% if equipo.modelo.id == m.id %}selected{% endif %}>
+                                                        {{ m.nombre }}
+                                                    </option>
                                                 {% endfor %}
                                             </select>
                                         </div>
+
                                         <div class="mb-3">
                                             <label class="form-label text-muted small fw-bold">Grupo</label>
                                             <select name="grupo_id" class="form-select">
                                                 <option value="">Sin grupo</option>
                                                 {% for g in grupos %}
-                                                    <option value="{{ g.id }}" {% if equipo.grupo.id == g.id %}selected{% endif %}>{{ g.nombre }}</option>
+                                                    <option value="{{ g.id }}" {% if equipo.grupo.id == g.id %}selected{% endif %}>
+                                                        {{ g.nombre }}
+                                                    </option>
                                                 {% endfor %}
                                             </select>
                                         </div>
                                     </div>
                                     <div class="modal-footer bg-light border-0">
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                        <button type="submit" class="btn btn-primary px-4" data-bs-dismiss="modal" onclick="this.innerHTML='Guardando...';">Guardar Cambios</button>
+                                        <button type="submit" class="btn btn-primary px-4">Guardar Cambios</button>
                                     </div>
                                 </form>
                             </div>
                         </div>
                     </div>
-
-                {% include 'includes/modal_ota.html' %}
                 {% empty %}
-                    <tr><td colspan="5" class="text-center text-muted">No se encontraron dispositivos...</td></tr>
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">
+                            No se encontraron dispositivos que coincidan con la búsqueda...
+                        </td>
+                    </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
 
-<div class="modal fade" id="modalAñadir" tabindex="-1">
+<div class="modal fade" id="modalAñadir" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">
         <h5 class="modal-title">Nuevo Dispositivo</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <form hx-post="{% url 'dispositivos_lista' %}"
             hx-target="#contenido-principal"
@@ -188,13 +296,26 @@
             hx-push-url="true">
         {% csrf_token %}
         <div class="modal-body p-4">
-            <div class="mb-3"><label class="form-label fw-bold text-muted small">Serial</label>{{ form.serial }}</div>
-            <div class="mb-3"><label class="form-label fw-bold text-muted small">Modelo</label>{{ form.modelo }}</div>
-            <div class="mb-3"><label class="form-label fw-bold text-muted small">Grupo</label>{{ form.grupo }}</div>
+            
+            <div class="mb-3">
+                <label class="form-label fw-bold text-muted small">Serial del Equipo</label>
+                {{ form.serial }}
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold text-muted small">Modelo</label>
+                {{ form.modelo }}
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold text-muted small">Grupo Asignado</label>
+                {{ form.grupo }}
+            </div>
+
         </div>
         <div class="modal-footer bg-light">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-primary" data-bs-dismiss="modal" onclick="this.innerHTML='Guardando...';">Guardar</button>
+          <button type="submit" class="btn btn-primary">Guardar Dispositivo</button>
         </div>
       </form>
     </div>
@@ -220,14 +341,15 @@
                         <p class="mb-1 small"><strong>Fecha:</strong> <span id="val-date">--</span></p>
                         <p class="mb-1 small"><strong>Hora:</strong> <span id="val-time">--</span></p>
                     </div>
+                    
                     <div class="col-md-7">
                         <h6 class="border-bottom pb-2 text-success">🧾 Facturación y Contadores</h6>
-                        <p class="mb-1 small"><strong>Cierres Z / Rep. Fisc.:</strong> <span id="val-z_cnt">--</span> / <span id="val-f_cnt">--</span></p>
+                        <p class="mb-1 small"><strong>Cierres Z / Reportes Fisc.:</strong> <span id="val-z_cnt">--</span> / <span id="val-f_cnt">--</span></p>
                         <p class="mb-1 small"><strong>Subtotal Ventas:</strong> <span id="val-vts">--</span></p>
-                        <p class="mb-1 small"><strong>Última Factura / Emit.:</strong> <span id="val-last_b">--</span> / <span id="val-b_iss">--</span></p>
-                        <p class="mb-1 small"><strong>Últ. N. Débito / Cant:</strong> <span id="val-db_n">--</span> / <span id="val-db_a">--</span></p>
-                        <p class="mb-1 small"><strong>Últ. N. Crédito / Cant:</strong> <span id="val-cr_n">--</span> / <span id="val-cr_a">--</span></p>
-                        <p class="mb-1 small"><strong>Últ. No Fiscal / Cant:</strong> <span id="val-nf_n">--</span> / <span id="val-nf_a">--</span></p>
+                        <p class="mb-1 small"><strong>Última Factura / Emitidas:</strong> <span id="val-last_b">--</span> / <span id="val-b_iss">--</span></p>
+                        <p class="mb-1 small"><strong>Última Nota Débito / Cant:</strong> <span id="val-db_n">--</span> / <span id="val-db_a">--</span></p>
+                        <p class="mb-1 small"><strong>Última Nota Crédito / Cant:</strong> <span id="val-cr_n">--</span> / <span id="val-cr_a">--</span></p>
+                        <p class="mb-1 small"><strong>Último No Fiscal / Cant:</strong> <span id="val-nf_n">--</span> / <span id="val-nf_a">--</span></p>
                     </div>
                 </div>
             </div>
@@ -238,78 +360,70 @@
 <script>
 
     function preLlenarModal(boton) {        
+        let sts1 = boton.getAttribute('data-sts1');
+        let sts2 = boton.getAttribute('data-sts2');
+        let err_cnt = boton.getAttribute('data-err_cnt');
+        let rec_att = boton.getAttribute('data-rec_att');
+        let atm = boton.getAttribute('data-atm');
+        let vts = boton.getAttribute('data-vts');
+        let last_b = boton.getAttribute('data-last_b');
+        let b_iss = boton.getAttribute('data-b_iss');
+        let db_n = boton.getAttribute('data-db_n');
+        let db_a = boton.getAttribute('data-db_a');
+        let cr_n = boton.getAttribute('data-cr_n');
+        let cr_a = boton.getAttribute('data-cr_a');
+        let nf_n = boton.getAttribute('data-nf_n');
+        let nf_a = boton.getAttribute('data-nf_a');
+        let z_cnt = boton.getAttribute('data-z_cnt');
+        let f_cnt = boton.getAttribute('data-f_cnt');
+        let rif = boton.getAttribute('data-rif');
         let serial = boton.getAttribute('data-serial');
-        
-        window.topicoActual = `v1/fiscal/${serial}/json_completo`;
+        let date = boton.getAttribute('data-date');
+        let time = boton.getAttribute('data-time');
 
-        // Función auxiliar para leer atributos, con lógica específica para diccionarios
-        const setElementText = (id, attr) => {
-            let val = boton.getAttribute(attr);
+        const setElementText = (id, value) => {
             let el = document.getElementById(id);
-            if (!el) return;
-
-            // Formateos especiales (igual a los que recibe por MQTT)
-            if (attr === 'data-sts1' && val !== '--') {
-                const diccEstado = {"40": "Modo Entrenamiento y en Espera", 
-                                    "41": "Modo Entrenamiento y en medio de una Transacción Fiscal", 
-                                    "42": "Modo Entrenamiento y en medio de una Transacción No Fiscal",
-                                    "60": "Modo Fiscal y en Espera", 
-                                    "68": "Modo Fiscal con la MF llena y en Espera", 
-                                    "61": "Modo Fiscal y en medio de una Transacción Fiscal", 
-                                    "69": "Modo Fiscal con la MF llena y en medio de una Transacción Fiscal",
-                                    "62": "Modo Fiscal y en medio de una Transacción No Fiscal",
-                                    "6A": "Modo Fiscal con la MF llena y en Transacción No Fiscal"
-                                };
-                el.innerText = diccEstado[val] || `Desconocido (${val})`;
-            } else if (attr === 'data-sts2' && val !== '--') {
-                const diccError = { "40": "Ningún error", 
-                                    "48": "Error gaveta",
-                                    "41": "Error sin papel",
-                                    "42": "Error mecánico de la impresora / papel",
-                                    "43": "Error mecánico de la impresora y fin de papel",
-                                    "60": "Error fiscal",
-                                    "64": "Error en la memoria fiscal",
-                                    "6C": "Error memoria fiscal llena"
-                                };
-                el.innerText = diccError[val] || `Desconocido (${val})`;
-                el.className = val === "40" ? "text-success fw-bold" : "text-danger fw-bold";
-            } else if (attr === 'data-date' && val.length === 6) {
-                el.innerText = `${val.substring(0,2)}/${val.substring(2,4)}/20${val.substring(4,6)}`;
-            } else if (attr === 'data-time' && val.length === 6) {
-                el.innerText = `${val.substring(0,2)}:${val.substring(2,4)}:${val.substring(4,6)}`;
-            } else if (attr === 'data-vts' && val !== '0') {
-                el.innerText = new Intl.NumberFormat('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(parseInt(val, 10) / 100);
-            } else {
-                el.innerText = val !== null ? val : '--';
-            }
+            if (el) el.innerText = value !== null ? value : '--';
         };
 
-        // Llenamos los datos visuales
-        setElementText('val-sts1', 'data-sts1');
-        setElementText('val-sts2', 'data-sts2');
-        setElementText('val-atm', 'data-atm');
-        setElementText('val-vts', 'data-vts');
-        setElementText('val-last_b', 'data-last_b');
-        setElementText('val-b_iss', 'data-b_iss');
-        setElementText('val-db_n', 'data-db_n');
-        setElementText('val-db_a', 'data-db_a');
-        setElementText('val-cr_n', 'data-cr_n');
-        setElementText('val-cr_a', 'data-cr_a');
-        setElementText('val-nf_n', 'data-nf_n');
-        setElementText('val-nf_a', 'data-nf_a');
-        setElementText('val-z_cnt', 'data-z_cnt');
-        setElementText('val-f_cnt', 'data-f_cnt');
-        setElementText('val-rif', 'data-rif');
-        setElementText('val-ser', 'data-serial'); 
-        setElementText('val-date', 'data-date');
-        setElementText('val-time', 'data-time');
-        
-        document.getElementById('serial-display').innerText = serial;
+        setElementText('val-sts1', sts1);
+        setElementText('val-sts2', sts2);
+        setElementText('val-err_cnt', err_cnt);
+        setElementText('val-rec_att', rec_att);
+        setElementText('val-atm', atm);
+        setElementText('val-vts', vts);
+        setElementText('val-last_b', last_b);
+        setElementText('val-b_iss', b_iss);
+        setElementText('val-db_n', db_n);
+        setElementText('val-db_a', db_a);
+        setElementText('val-cr_n', cr_n);
+        setElementText('val-cr_a', cr_a);
+        setElementText('val-nf_n', nf_n);
+        setElementText('val-nf_a', nf_a);
+        setElementText('val-z_cnt', z_cnt);
+        setElementText('val-f_cnt', f_cnt);
+        setElementText('val-rif', rif);
+        setElementText('serial-display', serial); // El título del modal
+        setElementText('val-ser', serial);        // El serial dentro del modal
+        setElementText('val-date', date);
+        setElementText('val-time', time);
     }
 
-    document.addEventListener('hidden.bs.modal', function (event) {
+    document.addEventListener('show.bs.modal', function (event) {
         if (event.target.id === 'modalMonitor') {
-            window.topicoActual = null; // Apagamos el interés del modal
+            const fila = event.relatedTarget;
+            const serial = fila.getAttribute('data-serial');
+            
+            // Usamos la variable global definida en base.html
+            topicoActual = `v1/fiscal/${serial}/json_completo`;
+            
+            document.getElementById('serial-display').innerText = serial;
+            
+            const llavesJSON = ['sts1', 'sts2', 'atm', 'vts', 'last_b', 'b_iss', 'db_n', 'db_a', 'cr_n', 'cr_a', 'nf_n', 'nf_a', 'z_cnt', 'f_cnt', 'rif', 'ser', 'time', 'date'];
+            llavesJSON.forEach(llave => {
+                const elemento = document.getElementById(`val-${llave}`);
+                if (elemento) elemento.innerText = "--";
+            });
         }
     });
 </script>

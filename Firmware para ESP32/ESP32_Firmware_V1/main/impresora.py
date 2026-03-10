@@ -39,7 +39,7 @@ def enviar_respuesta_s1(ser):
     # Serial simulado: Z1F9999988
     campos = [
         b"S100",                # 0: ATM (Cajero)
-        b"00000000017449029",   # 1: Ventas
+        b"00000000019849029",   # 1: Ventas
         b"00000000",            # 2: Última factura
         b"00000",               # 3: Emisión
         b"00000000",            # 4: Último ND
