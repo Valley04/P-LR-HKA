@@ -78,7 +78,7 @@ bool printer_get_fw_version(void) {
     if (!uart_send_frame(CMD_STATUS_SV2, sizeof(CMD_STATUS_SV2))) {
         LOG_E(TAG_PRINTER, "Error enviando comando de versión");
         if (xSemaphoreTake(mqtt_data_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-            strcpy(mqtt_data.fw_ismart, "0000000000");
+            strcpy(mqtt_data.fw_ismart, "000000");
             xSemaphoreGive(mqtt_data_mutex);
         }
         return false;

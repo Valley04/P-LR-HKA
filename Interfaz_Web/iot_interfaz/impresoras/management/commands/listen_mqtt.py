@@ -14,7 +14,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('🚀 Iniciando Worker MQTT...'))
 
         # Configuración del Cliente
-        client = mqtt.Client()
+        client = mqtt.Client(protocol=mqtt.MQTTv5)
         client.on_connect = self.on_connect
         client.on_message = self.on_message
         client.tls_set(cert_reqs=ssl.CERT_REQUIRED, tls_version=ssl.PROTOCOL_TLSv1_2)
@@ -33,6 +33,7 @@ class Command(BaseCommand):
         if rc == 0:
             self.stdout.write(self.style.SUCCESS('✅ Conectado al Broker MQTT'))
             client.subscribe("v1/fiscal/+/json_completo")
+            client.subscribe("v1/fiscal/+/alertas_conexion")
         else:
             self.stdout.write(self.style.ERROR(f"Error al conectar, código: {rc}"))
 
@@ -41,6 +42,8 @@ class Command(BaseCommand):
             # Extraer serial y parsear mensaje
             topic_parts = msg.topic.split('/')
             serial_msg = topic_parts[2]
+            tipo_mensaje = topic_parts[3]
+
             payload = json.loads(msg.payload.decode('utf-8'))
 
             # Buscar equipo
@@ -48,64 +51,77 @@ class Command(BaseCommand):
 
             if equipo:
 
-                viejo_fw_ismart = equipo.fw_ismart_instalado
-                viejo_fw_printer = equipo.fw_printer_instalado
+                if tipo_mensaje == "alertas_conexion":
+                    if payload.get("st") == "offline":
+                        evento_tipo = "Desconexión Abrupta (LWT)"
+                        LogDispositivo.objects.create(
+                            dispositivo=equipo,
+                            evento=evento_tipo,
+                            detalles=json.dumps(payload)
+                        )
+                        self.stdout.write(self.style.ERROR(f"🔴 [ALERTA] {serial_msg} se ha desconectado (LWT)"))
+                    return # Terminamos aquí, no hay contadores que actualizar
 
-                # Actualizamos los datos vitales del equipo
-                equipo.ultima_conexion = timezone.now()
+                elif tipo_mensaje == "json_completo":
 
-                nuevo_fw_ismart = payload.get('fw_ismart')
-                nuevo_fw_printer = payload.get('fw_printer')
+                    viejo_fw_ismart = equipo.fw_ismart_instalado
+                    viejo_fw_printer = equipo.fw_printer_instalado
 
-                if payload.get('fw_ismart'):
-                    equipo.fw_ismart_instalado = str(nuevo_fw_ismart)
-                if payload.get('fw_printer'):
-                    equipo.fw_printer_instalado = str(nuevo_fw_printer)
+                    # Actualizamos los datos vitales del equipo
+                    equipo.ultima_conexion = timezone.now()
 
-                equipo.save()                
+                    nuevo_fw_ismart = payload.get('fw_ismart')
+                    nuevo_fw_printer = payload.get('fw_printer')
 
-                # Obtenemos el diccionario con el último historial guardado
-                datos_viejos = equipo.ultimo_log_datos
+                    if payload.get('fw_ismart'):
+                        equipo.fw_ismart_instalado = str(nuevo_fw_ismart)
+                    if payload.get('fw_printer'):
+                        equipo.fw_printer_instalado = str(nuevo_fw_printer)
 
-                # Comparamos los valores (usamos str() para asegurar que "60" coincida con "60")
-                nuevo_sts1 = str(payload.get('sts1', ''))
-                viejo_sts1 = str(datos_viejos.get('sts1', ''))
+                    equipo.save()                
 
-                nuevo_sts2 = str(payload.get('sts2', ''))
-                viejo_sts2 = str(datos_viejos.get('sts2', ''))
+                    # Obtenemos el diccionario con el último historial guardado
+                    datos_viejos = equipo.ultimo_log_datos
 
-                evento_tipo = None
+                    # Comparamos los valores (usamos str() para asegurar que "60" coincida con "60")
+                    nuevo_sts1 = str(payload.get('sts1', ''))
+                    viejo_sts1 = str(datos_viejos.get('sts1', ''))
 
-                if nuevo_fw_ismart and str(nuevo_fw_ismart) != viejo_fw_ismart and viejo_fw_ismart != "Desconocida":
-                    evento_tipo = "Actualización Firmware iSmart"
-                elif nuevo_fw_printer and str(nuevo_fw_printer) != viejo_fw_printer and viejo_fw_printer != "Desconocida":
-                    evento_tipo = "Actualización Firmware Impresora"
-                elif nuevo_sts2 != viejo_sts2 and viejo_sts2 != '':
-                    evento_tipo = "Cambio de Error"
-                elif nuevo_sts1 != viejo_sts1 and viejo_sts1 != '':
-                    evento_tipo = "Cambio de Estado"
-                elif not datos_viejos:
-                    evento_tipo = "Primer Registro Inicial" # Si es un equipo nuevo
+                    nuevo_sts2 = str(payload.get('sts2', ''))
+                    viejo_sts2 = str(datos_viejos.get('sts2', ''))
 
-                # 5. Si hubo algún cambio, guardamos el JSON en el historial
-                if evento_tipo:
+                    evento_tipo = None
 
-                    LogDispositivo.objects.create(
-                        dispositivo=equipo,
-                        evento=evento_tipo,
-                        detalles=json.dumps(payload)
-                    )
+                    if nuevo_fw_ismart and str(nuevo_fw_ismart) != viejo_fw_ismart and viejo_fw_ismart != "Desconocida":
+                        evento_tipo = "Actualización Firmware iSmart"
+                    elif nuevo_fw_printer and str(nuevo_fw_printer) != viejo_fw_printer and viejo_fw_printer != "Desconocida":
+                        evento_tipo = "Actualización Firmware Impresora"
+                    elif nuevo_sts2 != viejo_sts2 and viejo_sts2 != '':
+                        evento_tipo = "Cambio de Error"
+                    elif nuevo_sts1 != viejo_sts1 and viejo_sts1 != '':
+                        evento_tipo = "Cambio de Estado"
+                    elif not datos_viejos:
+                        evento_tipo = "Primer Registro Inicial" # Si es un equipo nuevo
 
-                    self.stdout.write(self.style.SUCCESS(f"📝 [NUEVO LOG] {evento_tipo} en {serial_msg}"))
+                    # 5. Si hubo algún cambio, guardamos el JSON en el historial
+                    if evento_tipo:
 
-                # 6. Limpieza de logs antiguos (se mantiene igual)
-                fecha_limite = timezone.now() - timedelta(days=90)
-                logs_viejos = LogDispositivo.objects.filter(fecha__lt=fecha_limite)
-                cantidad_borrada = logs_viejos.count()
+                        LogDispositivo.objects.create(
+                            dispositivo=equipo,
+                            evento=evento_tipo,
+                            detalles=json.dumps(payload)
+                        )
 
-                if cantidad_borrada > 0:
-                    logs_viejos.delete()
-                    self.stdout.write(self.style.WARNING(f"🧹 Eliminados {cantidad_borrada} logs antiguos."))
+                        self.stdout.write(self.style.SUCCESS(f"📝 [NUEVO LOG] {evento_tipo} en {serial_msg}"))
+
+                    # 6. Limpieza de logs antiguos (se mantiene igual)
+                    fecha_limite = timezone.now() - timedelta(days=90)
+                    logs_viejos = LogDispositivo.objects.filter(fecha__lt=fecha_limite)
+                    cantidad_borrada = logs_viejos.count()
+
+                    if cantidad_borrada > 0:
+                        logs_viejos.delete()
+                        self.stdout.write(self.style.WARNING(f"🧹 Eliminados {cantidad_borrada} logs antiguos."))
 
             else:
                 self.stdout.write(self.style.WARNING(f"⚠️ Equipo con serial '{serial_msg}' no encontrado."))

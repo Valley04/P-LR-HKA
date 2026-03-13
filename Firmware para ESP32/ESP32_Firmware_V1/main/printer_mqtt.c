@@ -173,6 +173,10 @@ void wifi_init_sta(void)
 // Inicializar MQTT
 void mqtt_app_start(void) {
     LOG_I(TAG_MQTT, "Iniciando cliente MQTT...");
+
+    static char lwt_topic[64];
+    prepare_mqtt_topic(lwt_topic, sizeof(lwt_topic), mqtt_data.register_number, "alertas_conexion");
+    const char* lwt_msg = "{\"st\":\"offline\", \"alerta\":\"conexion_perdida_abruptamente\"}";
     
     // CONFIGURACIÓN CORRECTA para ESP-IDF v5.5.2
     esp_mqtt_client_config_t mqtt_cfg = {
@@ -184,6 +188,14 @@ void mqtt_app_start(void) {
         .credentials.authentication.password = "ESPhka32",
         .session.protocol_ver = MQTT_PROTOCOL_V_5,
         .buffer.size = 2048,
+        .session.keepalive = 20,
+
+        //Last Will and Testement
+        .session.last_will.topic = lwt_topic,
+        .session.last_will.msg = lwt_msg,
+        .session.last_will.msg_len = strlen(lwt_msg),
+        .session.last_will.qos = 1,
+        .session.last_will.retain = 1
     };
 
     if (strcmp(mqtt_data.register_number, "DESCONOCIDO") != 0) {
@@ -239,15 +251,23 @@ bool mqtt_publish(const char* topic, const char* payload, const char* tipo_dato)
         return false; // No publicamos si no tenemos serial
     }
 
+    wifi_ap_record_t ap_info;
+    char rssi_str[8] = "N/A";
+
+    if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
+        snprintf(rssi_str, sizeof(rssi_str), "%d", ap_info.rssi);
+    }
+
     esp_mqtt5_user_property_item_t user_prop_items[] = {
         {"modelo_dispositivo", "HKA80"},
         {"firmware_version", "V2.0"},
         {"serial", serial_seguro},
-        {"tipo_dato", tipo_dato}
+        {"tipo_dato", tipo_dato},
+        {"wifi_rssi", rssi_str}
     };
 
     mqtt5_user_property_handle_t user_prop_handle = NULL;
-    esp_mqtt5_client_set_user_property(&user_prop_handle, user_prop_items, 4);
+    esp_mqtt5_client_set_user_property(&user_prop_handle, user_prop_items, 5);
     
     esp_mqtt5_publish_property_config_t publish_prop_cfg = {
         .user_property = user_prop_handle,
