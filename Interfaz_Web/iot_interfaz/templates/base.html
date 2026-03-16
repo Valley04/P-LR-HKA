@@ -227,58 +227,66 @@
             });
 
             // PROCESAMIENTO DE MENSAJES (Seguro contra HTMX)
-            cliente.on('message', function (topic, message) {
+            cliente.on('message', function (topic, message, packet) {
                 try {
                     const partesTopico = topic.split('/');
                     const serialEntrante = partesTopico[2];
                     const tipoMensaje = partesTopico[3];
 
                     // 1. EXTRAER USER PROPERTIES (Sin importar si el mensaje es json o alerta)
-                    if (packet.properties && packet.properties.userProperties) {
-                        const props = packet.properties.userProperties;
-                        
-                        // Si el ESP32 envió el dato del Wi-Fi
-                        if (props.wifi_rssi) {
-                            const rssi = parseInt(props.wifi_rssi);
-                            let iconoWifi = "bi-wifi"; // Lleno
-                            let colorWifi = "text-success"; // Verde
-                            let colorBorde = "border-success";
+                    if (typeof packet !== 'undefined' && packet !== null) {
+                        if (packet.properties && packet.properties.userProperties) {
+                            const props = packet.properties.userProperties;
+                            
+                            // Si el ESP32 envió el dato del Wi-Fi
+                            if (props.wifi_rssi) {
+                                const rssi = parseInt(props.wifi_rssi);
+                                let iconoWifi = "bi-wifi"; // Lleno
+                                let colorWifi = "text-success"; // Verde
+                                let colorBorde = "border-success";
 
-                            // Lógica de fuerza de señal (dBm)
-                            if (rssi < -85) {
-                                iconoWifi = "bi-wifi-1"; // 1 rayita
-                                colorWifi = "text-danger"; // Rojo (Crítico)
-                                colorBorde = "border-danger";
-                            } else if (rssi < -70) {
-                                iconoWifi = "bi-wifi-2"; // 2 rayitas
-                                colorWifi = "text-warning"; // Amarillo (Medio)
-                                colorBorde = "border-warning";
-                            }
+                                // Lógica de fuerza de señal (dBm)
+                                if (rssi < -85) {
+                                    iconoWifi = "bi-wifi-1"; // 1 rayita
+                                    colorWifi = "text-danger"; // Rojo (Crítico)
+                                    colorBorde = "border-danger";
+                                } else if (rssi < -70) {
+                                    iconoWifi = "bi-wifi-2"; // 2 rayitas
+                                    colorWifi = "text-warning"; // Amarillo (Medio)
+                                    colorBorde = "border-warning";
+                                }
 
-                            const elRssiOta = document.getElementById(`val-rssi-ota-${serialS1}`);
-                            if (elRssiOta) {
-                                elRssiOta.innerHTML = `<i class="bi ${iconoWifi} me-1"></i> ${rssi} dBm`;
-                                // Actualizamos las clases para que el borde del badge coincida con el color
-                                elRssiOta.className = `badge bg-white px-3 py-2 fs-6 text-dark border border-2 shadow-sm ${colorBorde}`;
-                            }
+                                const elRssiOta = document.getElementById(`val-rssi-ota-${serialEntrante}`);
+                                if (elRssiOta) {
+                                    elRssiOta.innerHTML = `<i class="bi ${iconoWifi} me-1"></i> ${rssi} dBm`;
+                                    elRssiOta.className = `badge bg-white px-3 py-2 fs-6 text-dark border border-2 shadow-sm ${colorBorde}`;
+                                }
 
-                            // B. Actualizar en la lista general de la tabla (opcional pero genial)
-                            const indicadorTabla = document.getElementById(`wifi-${serialS1}`);
-                            if (indicadorTabla) {
-                                indicadorTabla.innerHTML = `<i class="bi ${iconoWifi} ${colorWifi} fs-5" title="${rssi} dBm"></i>`;
+                                // Actualizar en la lista general de la tabla (opcional pero genial)
+                                const indicadorTabla = document.getElementById(`wifi-${serialEntrante}`);
+                                if (indicadorTabla) {
+                                    indicadorTabla.innerHTML = `<i class="bi ${iconoWifi} ${colorWifi} fs-5" title="${rssi} dBm"></i>`;
+                                }
                             }
                         }
                     }
-                    const data = JSON.parse(message.toString());
+                    
+                    let data = {};
+
+                    if (message.length > 0) {
+                        data = JSON.parse(message.toString());
+                    }
+
                     const ahora = Date.now();
                     
                     // Lógica de memoria y silencio...
                     if (!memoriaEquipos[serialEntrante]) {
                         memoriaEquipos[serialEntrante] = { 
                             ultimoLatido: ahora, 
-                            ultimoTS: data.ts, 
+                            ultimoTS: data.ts || 0, 
                             limiteSilencio: 35000,
-                            actualizando: false 
+                            actualizando: false,
+                            offline: false 
                         };
                     }
 
@@ -286,23 +294,21 @@
                     const celdaIndicador = document.getElementById(`indicador-${serialEntrante}`);
 
                     // --- LÓGICA PARA LWT (DESCONEXIÓN ABRUPTA) ---
-                    if (tipo === "alertas_conexion") {
+                    if (tipoMensaje === "alertas_conexion") {
                         if (data.st === "offline") {
-                            memoriaEquipos[serialS1].offline = true;
+                            memoriaEquipos[serialEntrante].offline = true;
 
-                            // 1. Pintamos el icono de rojo en la tabla
-                            const celdaIndicador = document.getElementById(`indicador-${serialS1}`);
                             if (celdaIndicador) {
                                 celdaIndicador.innerHTML = `<span title="Desconectado (Caída abrupta)">🔴</span>`;
                             }
 
                             // 2. Mostramos una alerta visual en pantalla
                             if (typeof mostrarToast === "function") {
-                                mostrarToast("Conexión Perdida", `El equipo ${serialS1} se ha desconectado abruptamente.`, "danger");
+                                mostrarToast("Conexión Perdida", `El equipo ${serialEntrante} se ha desconectado abruptamente.`, "danger");
                             }
 
                             // 3. Si el monitor de este equipo está abierto, le avisamos
-                            if (window.topicoActual === serialS1) {
+                            if (window.topicoActual === serialEntrante) {
                                 const elSts1 = document.getElementById('val-sts1');
                                 if (elSts1) {
                                     elSts1.innerText = "¡OFFLINE! (Conexión Perdida)";
@@ -359,9 +365,9 @@
                     }
                     else if (tipoMensaje === "json_completo") {
 
-                        if (memoriaEquipos[serialS1].offline) {
-                            memoriaEquipos[serialS1].offline = false;
-                            mostrarToast("Reconexión", `El equipo ${serialS1} ha vuelto a enlazarse.`, "success");
+                        if (memoriaEquipos[serialEntrante].offline) {
+                            memoriaEquipos[serialEntrante].offline = false;
+                            mostrarToast("Reconexión", `El equipo ${serialEntrante} ha vuelto a enlazarse.`, "success");
                         }
                         
                         // Si por alguna razón envía telemetría normal, asumimos que ya no está actualizando

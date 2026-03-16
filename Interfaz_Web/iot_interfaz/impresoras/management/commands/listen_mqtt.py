@@ -29,7 +29,7 @@ class Command(BaseCommand):
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"Error de conexión: {e}"))
 
-    def on_connect(self, client, userdata, flags, rc):
+    def on_connect(self, client, userdata, flags, rc, properties=None):
         if rc == 0:
             self.stdout.write(self.style.SUCCESS('✅ Conectado al Broker MQTT'))
             client.subscribe("v1/fiscal/+/json_completo")
