@@ -26,16 +26,25 @@ esp_err_t enviar_trama_spi_robusta(uint8_t *data, int len, uint32_t num_pack, ui
     uint32_t checksum_paquete = 0;
     for (int j = 0; j < len; j++) checksum_paquete += data[j];
 
+    uint16_t tam_total = 15 + len; 
+    uint8_t trama_completa[1050]; 
+    
+    trama_completa[0] = SPI_CMD_PACKET;
+    memcpy(&trama_completa[1], &num_pack, 4);
+    memcpy(&trama_completa[5], &total_packs, 4);
+    
+    uint16_t tam_actual = (uint16_t)len;
+    memcpy(&trama_completa[9], &tam_actual, 2);
+    
+    memcpy(&trama_completa[11], data, len); // El firmware real
+    memcpy(&trama_completa[11 + len], &checksum_paquete, 4);
+
     int intentos = 0;
     while (intentos < MAX_REINTENTOS_SPI) {
         // Envio de la trama
-        transaccionar_byte_spi(SPI_CMD_PACKET); // Comando
-        enviar_chunk_spi((uint8_t*)&num_pack, 4); // Número del paquete
-        enviar_chunk_spi((uint8_t*)&total_packs, 4); // Cantidad de paquetes
-        uint16_t tam_actual = (uint16_t)len;
-        enviar_chunk_spi((uint8_t*)&tam_actual, 2); // Tamaño del paquete
-        enviar_chunk_spi(data, len); // Datos del paquete
-        enviar_chunk_spi((uint8_t*)&checksum_paquete, 4); // Checksum del paquete
+        enviar_chunk_spi(trama_completa, tam_actual);
+
+        vTaskDelay(pdMS_TO_TICKS(50));
 
         // Verificación
         if (transaccionar_byte_spi(0x00) == ACK_BYTE) {

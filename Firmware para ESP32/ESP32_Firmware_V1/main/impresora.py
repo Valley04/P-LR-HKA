@@ -3,7 +3,7 @@ import time
 import sys
 
 # --- CONFIGURACIÓN ---
-PUERTO_PC = "COM4"  # <--- ¡VERIFICAR!
+PUERTO_PC = "COM11"  # <--- ¡VERIFICAR!
 BAUDIOS = 9600
 
 # Control bytes

@@ -11,7 +11,7 @@
 #include "freertos/semphr.h"
 #include "mqtt_client.h"
 
-#define ISMART_VERSION "020100"
+#define ISMART_VERSION "020200"
 
 // CONSTANTES DE CONFIGURACIÓN
 

@@ -302,17 +302,30 @@
                                 celdaIndicador.innerHTML = `<span title="Desconectado (Caída abrupta)">🔴</span>`;
                             }
 
-                            // 2. Mostramos una alerta visual en pantalla
-                            if (typeof mostrarToast === "function") {
-                                mostrarToast("Conexión Perdida", `El equipo ${serialEntrante} se ha desconectado abruptamente.`, "danger");
+                            const elRssiOta = document.getElementById(`val-rssi-ota-${serialEntrante}`);
+                            if (elRssiOta) {
+                                elRssiOta.innerHTML = `<i class="bi bi-wifi-off me-1"></i> Desconectado`;
+                                elRssiOta.className = `badge bg-light text-muted border border-secondary px-3 py-2 fs-6 shadow-sm`;
                             }
 
-                            // 3. Si el monitor de este equipo está abierto, le avisamos
+                            const indicadorTabla = document.getElementById(`wifi-${serialEntrante}`);
+                            if (indicadorTabla) {
+                                indicadorTabla.innerHTML = `<i class="bi bi-wifi-off text-muted fs-5" title="Equipo Offline"></i>`;
+                            }
+
+                            // 2. Mostramos una alerta visual en pantalla
                             if (window.topicoActual === serialEntrante) {
-                                const elSts1 = document.getElementById('val-sts1');
-                                if (elSts1) {
-                                    elSts1.innerText = "¡OFFLINE! (Conexión Perdida)";
-                                    elSts1.className = "text-danger fw-bold";
+                                if (typeof mostrarToast === "function") {
+                                    mostrarToast("Conexión Perdida", `El equipo ${serialEntrante} se ha desconectado abruptamente.`, "danger");
+                                }
+
+                                // 3. Si el monitor de este equipo está abierto, le avisamos
+                                if (window.topicoActual === serialEntrante) {
+                                    const elSts1 = document.getElementById('val-sts1');
+                                    if (elSts1) {
+                                        elSts1.innerText = "¡OFFLINE! (Conexión Perdida)";
+                                        elSts1.className = "text-danger fw-bold";
+                                    }
                                 }
                             }
                         }
@@ -367,7 +380,6 @@
 
                         if (memoriaEquipos[serialEntrante].offline) {
                             memoriaEquipos[serialEntrante].offline = false;
-                            mostrarToast("Reconexión", `El equipo ${serialEntrante} ha vuelto a enlazarse.`, "success");
                         }
                         
                         // Si por alguna razón envía telemetría normal, asumimos que ya no está actualizando

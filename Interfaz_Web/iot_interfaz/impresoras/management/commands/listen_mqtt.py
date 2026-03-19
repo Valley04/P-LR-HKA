@@ -54,18 +54,29 @@ class Command(BaseCommand):
                 if tipo_mensaje == "alertas_conexion":
                     if payload.get("st") == "offline":
                         evento_tipo = "Desconexión Abrupta (LWT)"
+                        
+                        # Rescatamos la última "foto" conocida de los datos del equipo
+                        datos_viejos = equipo.ultimo_log_datos if equipo.ultimo_log_datos else {}
+                        payload_guardar = datos_viejos.copy()
+                        
+                        payload_guardar["st"] = "offline"
+                        payload_guardar["alerta_lwt"] = payload.get("alerta", "conexion_perdida_abruptamente")
+                        payload_guardar["fecha_desconexion"] = timezone.localtime().strftime("%d/%m/%Y %I:%M:%S %p")
+                        payload_guardar["fw_ismart"] = equipo.fw_ismart_instalado or "Desconocida"
+                        payload_guardar["fw_printer"] = equipo.fw_printer_instalado or "Desconocida"
+                        
                         LogDispositivo.objects.create(
                             dispositivo=equipo,
                             evento=evento_tipo,
-                            detalles=json.dumps(payload)
+                            detalles=json.dumps(payload_guardar)
                         )
                         self.stdout.write(self.style.ERROR(f"🔴 [ALERTA] {serial_msg} se ha desconectado (LWT)"))
                     return # Terminamos aquí, no hay contadores que actualizar
 
                 elif tipo_mensaje == "json_completo":
 
-                    viejo_fw_ismart = equipo.fw_ismart_instalado
-                    viejo_fw_printer = equipo.fw_printer_instalado
+                    viejo_fw_ismart = str(equipo.fw_ismart_instalado)
+                    viejo_fw_printer = str(equipo.fw_printer_instalado)
 
                     # Actualizamos los datos vitales del equipo
                     equipo.ultima_conexion = timezone.now()
@@ -81,9 +92,10 @@ class Command(BaseCommand):
                     equipo.save()                
 
                     # Obtenemos el diccionario con el último historial guardado
-                    datos_viejos = equipo.ultimo_log_datos
+                    datos_viejos = equipo.ultimo_log_datos if equipo.ultimo_log_datos else {}
 
-                    # Comparamos los valores (usamos str() para asegurar que "60" coincida con "60")
+                    viejo_st = datos_viejos.get('st', 'online')
+
                     nuevo_sts1 = str(payload.get('sts1', ''))
                     viejo_sts1 = str(datos_viejos.get('sts1', ''))
 
@@ -92,16 +104,18 @@ class Command(BaseCommand):
 
                     evento_tipo = None
 
-                    if nuevo_fw_ismart and str(nuevo_fw_ismart) != viejo_fw_ismart and viejo_fw_ismart != "Desconocida":
+                    if viejo_st == "offline":
+                        evento_tipo = "Reconexión Exitosa"
+                    elif nuevo_fw_ismart and str(nuevo_fw_ismart) != viejo_fw_ismart and viejo_fw_ismart not in ["Desconocida", "None"]:
                         evento_tipo = "Actualización Firmware iSmart"
-                    elif nuevo_fw_printer and str(nuevo_fw_printer) != viejo_fw_printer and viejo_fw_printer != "Desconocida":
+                    elif nuevo_fw_printer and str(nuevo_fw_printer) != viejo_fw_printer and viejo_fw_printer not in ["Desconocida", "None"]:
                         evento_tipo = "Actualización Firmware Impresora"
-                    elif nuevo_sts2 != viejo_sts2 and viejo_sts2 != '':
+                    elif nuevo_sts2 and nuevo_sts2 != viejo_sts2:
                         evento_tipo = "Cambio de Error"
-                    elif nuevo_sts1 != viejo_sts1 and viejo_sts1 != '':
+                    elif nuevo_sts1 and nuevo_sts1 != viejo_sts1:
                         evento_tipo = "Cambio de Estado"
                     elif not datos_viejos:
-                        evento_tipo = "Primer Registro Inicial" # Si es un equipo nuevo
+                        evento_tipo = "Primer Registro Inicial"
 
                     # 5. Si hubo algún cambio, guardamos el JSON en el historial
                     if evento_tipo:

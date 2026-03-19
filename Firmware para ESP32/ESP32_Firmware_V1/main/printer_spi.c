@@ -7,10 +7,10 @@
 #define TAG_SPI "PRINTER_SPI"
 
 // Prines típicos de SPI en el ESP32
-#define PIN_NUM_MISO 19
-#define PIN_NUM_MOSI 23
-#define PIN_NUM_CLK 18
-#define PIN_NUM_CS 22
+#define PIN_NUM_MISO 25
+#define PIN_NUM_MOSI 27
+#define PIN_NUM_CLK 26
+#define PIN_NUM_CS 32
 
 spi_device_handle_t spi_printer;
 static bool spi_inicializado = false;
@@ -61,7 +61,7 @@ void iniciar_spi_impresora() {
 
     spi_device_interface_config_t devcfg;
     memset(&devcfg, 0, sizeof(devcfg));
-    devcfg.clock_speed_hz = 1 * 1000 * 1000; // 1 MHz
+    devcfg.clock_speed_hz = 100 * 1000; // 1 MHz
     devcfg.mode = 0; // SPI Mode 0 (CPOL=0, CPHA=0)
     devcfg.spics_io_num = PIN_NUM_CS;
     devcfg.queue_size = 7;

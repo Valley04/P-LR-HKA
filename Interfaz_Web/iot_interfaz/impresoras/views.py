@@ -53,9 +53,9 @@ def disparar_ota_mqtt(request, dispositivo_id):
         equipo = get_object_or_404(Dispositivo, id=dispositivo_id)
         fw_id = request.POST.get('firmware_id')
         fw_destino = get_object_or_404(VersionFirmware, id=fw_id)
-        nombre_proyecto = fw_destino.proyecto.nombre.lower() if fw_destino.proyecto else ""
+        tipo_guardado = fw_destino.tipo_modulo 
 
-        if "impresora" in nombre_proyecto or "printer" in nombre_proyecto:
+        if tipo_guardado == "impresora":
             objetivo_hardware = "printer"
         else:
             objetivo_hardware = "ismart"
