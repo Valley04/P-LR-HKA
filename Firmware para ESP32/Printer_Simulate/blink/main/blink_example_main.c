@@ -8,6 +8,16 @@
 
 #define TAG "MOCK_PRINTER"
 
+// Constantes Fiscales HKA
+#define STX 0x02
+#define ETX 0x03
+#define ENQ 0x05
+#define ACK 0x06
+
+// Estados de la impresora
+#define STS1 0x60
+#define STS2 0x40
+
 // Los mismos pines que configuramos en el Master
 #define PIN_NUM_MISO 25
 #define PIN_NUM_CLK  26
@@ -16,16 +26,22 @@
 
 // Comandos que espera recibir del Master (Basado en tu printer_config.h)
 #define SPI_CMD_START  0x01
-#define SPI_CMD_PACKET 0x02
-#define SPI_CMD_END    0x03
-#define ACK_BYTE       0x06
+#define SPI_CMD_PACKET 0x04
+#define SPI_CMD_END    0x07
 
 // Buffers alineados en memoria (Requisito del DMA)
 WORD_ALIGNED_ATTR uint8_t sendbuf[1050] = {0}; // Buffer para enviar
 WORD_ALIGNED_ATTR uint8_t recvbuf[1050] = {0}; // Buffer para recibir
 
+// Función para calcular LRC
+uint8_t calcular_lrc(uint8_t *data, int len) {
+    uint8_t lrc = 0;
+    for (int i = 0; i < len; i++) lrc ^= data[i];
+    return lrc;
+}
+
 void app_main(void) {
-    ESP_LOGI(TAG, "Iniciando Simulador de Impresora (Esclavo SPI)...");
+    ESP_LOGI(TAG, "🖨️ Iniciando Simulador Fiscal HKA sobre SPI...");
 
     spi_bus_config_t buscfg = {
         .mosi_io_num = PIN_NUM_MOSI,
@@ -55,14 +71,10 @@ void app_main(void) {
     spi_slave_transaction_t t;
     memset(&t, 0, sizeof(t));
 
-    while (1) {
-        // Limpiamos el buffer de recepción
-        memset(recvbuf, 0, sizeof(recvbuf));
-        
-        // Preparamos nuestra respuesta: Siempre devolveremos un ACK (0x06) en el primer byte
-        memset(sendbuf, 0, sizeof(sendbuf));
-        sendbuf[0] = ACK_BYTE; 
+    // Preparamos nuestra respuesta: Siempre devolveremos un ACK (0x06) en el primer byte
+    memset(sendbuf, 0, sizeof(sendbuf));
 
+    while (1) {
         t.length = 1030 * 8; // Tamaño máximo que esperamos recibir en bits
         t.tx_buffer = sendbuf;
         t.rx_buffer = recvbuf;
@@ -74,20 +86,79 @@ void app_main(void) {
             uint32_t bytes_recibidos = t.trans_len / 8; // trans_len viene en bits
             
             if (bytes_recibidos > 0) {
-                uint8_t comando = recvbuf[0];
+                uint8_t primer_byte = recvbuf[0];
 
-                if (comando == SPI_CMD_START) {
+                if (primer_byte == ENQ) {
+                    ESP_LOGI(TAG, "📥 Recibido: ENQ -> Preparando STATUS");
+                    
+                    // Preparamos el Status para la *próxima* vez que el Master lea
+                    memset(sendbuf, 0, sizeof(sendbuf));
+                    uint8_t cuerpo[] = {0x60, 0x40, ETX};
+                    uint8_t lrc = calcular_lrc(cuerpo, sizeof(cuerpo));
+                    
+                    sendbuf[0] = STX;
+                    sendbuf[1] = STS1;
+                    sendbuf[2] = STS2;
+                    sendbuf[3] = ETX;
+                    sendbuf[4] = lrc;
+                } else if (primer_byte == STX) {
+                    // Extraemos hasta 3 bytes para poder identificar tanto "S1" como "SV2"
+                    char cmd[5] = {0};
+                    memcpy(cmd, &recvbuf[1], 3); 
+                    
+                    // --- REPORTE S1 ---
+                    if (strncmp(cmd, "S1", 2) == 0) {
+                        ESP_LOGI(TAG, "📥 Recibido: Comando S1 -> Preparando trama de 133 bytes");
+                        memset(sendbuf, 0, sizeof(sendbuf));
+                        
+                        char *payload = "S100\x0A00000264819849029\x0A00000000\x0A00000\x0A00000000\x0A00000\x0A00000000\x0A00000\x0A00000000\x0A00000\x0A0020\x0A0017\x0AJ-312171197\x0AZ1A8779988\x0A123000\x0A300126\x0A";
+                        int payload_len = strlen(payload);
+                        
+                        sendbuf[0] = STX;
+                        memcpy(&sendbuf[1], payload, payload_len);
+                        sendbuf[1 + payload_len] = ETX;
+                        sendbuf[2 + payload_len] = calcular_lrc(&sendbuf[1], payload_len + 1); 
+                    }
+                    else if (strncmp(cmd, "SV2", 3) == 0) {
+                        ESP_LOGI(TAG, "📥 Recibido: Comando SV2 -> Preparando versiones");
+                        memset(sendbuf, 0, sizeof(sendbuf));
+                        
+                        // El mismo payload que armabas en Python
+                        char *payload = "SV2\x0AZ7C\x0AVE\x0A020507GD00\x0A";
+                        int payload_len = strlen(payload);
+                        
+                        sendbuf[0] = STX;
+                        memcpy(&sendbuf[1], payload, payload_len);
+                        sendbuf[1 + payload_len] = ETX;
+                        sendbuf[2 + payload_len] = calcular_lrc(&sendbuf[1], payload_len + 1);
+                    }
+                    else {
+                        ESP_LOGW(TAG, "Comando fiscal no implementado: %s", cmd);
+                    }
+                }
+                else if (primer_byte == 0x00) {
+                    memset(sendbuf, 0, sizeof(sendbuf));
+                }
+                else if (primer_byte == SPI_CMD_START) {
                     ESP_LOGI(TAG, "📥 Recibido: CMD_START (Iniciando OTA)");
+                    memset(sendbuf, 0, sizeof(sendbuf));
+                    sendbuf[0] = ACK; // Confirmamos inicio
                 } 
-                else if (comando == SPI_CMD_PACKET) {
-                    // Si es un paquete, imprimimos el tamaño y los primeros bytes para verificar
-                    ESP_LOGI(TAG, "📦 Recibido: PACKET (%lu bytes). Checksum simulado OK -> Enviando ACK", bytes_recibidos);
+                else if (primer_byte == SPI_CMD_PACKET) {
+                    ESP_LOGI(TAG, "📦 Recibido: PACKET (%lu bytes). Checksum OK -> Enviando ACK", bytes_recibidos);
+                    memset(sendbuf, 0, sizeof(sendbuf));
+                    sendbuf[0] = ACK;
                 } 
-                else if (comando == SPI_CMD_END) {
+                else if (primer_byte == SPI_CMD_END) {
                     ESP_LOGI(TAG, "🏁 Recibido: CMD_END (OTA Finalizado)");
+                    memset(sendbuf, 0, sizeof(sendbuf));
+                    sendbuf[0] = ACK; // Confirmamos finalización
                 }
                 else {
-                    ESP_LOGW(TAG, "Recibida trama desconocida de %lu bytes. Primer byte: 0x%02X", bytes_recibidos, comando);
+                    // Filtro de ruido: solo advertir si es una trama sustancial
+                    if(bytes_recibidos >= 10) {
+                        ESP_LOGW(TAG, "Recibida trama desconocida de %lu bytes. Primer byte: 0x%02X", bytes_recibidos, primer_byte);
+                    }
                 }
             }
         }

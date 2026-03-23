@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "freertos/queue.h"
-#include "driver/uart.h"
+#include "driver/spi_master.h"
 #include "esp_err.h"
 #include "esp_log.h"
 #include "esp_system.h"
@@ -14,15 +14,20 @@
 // VARIABLES GLOBALES (declaradas en printer_config.h como extern)
 mqtt_data_t mqtt_data;
 const char* TAG_PRINTER = "printer_events";
-QueueHandle_t printer_uart_queue = NULL;
+QueueHandle_t printer_spi_queue = NULL;
 SemaphoreHandle_t mqtt_data_mutex = NULL;
 
 // VARIABLES ESTÁTICAS (solo visibles en este archivo)
 static TaskHandle_t printer_task_handle = NULL;
-static bool uart_initialized = false;
+static bool spi_initialized = false;
+
+spi_device_handle_t spi_printer = NULL;
+
 const uint8_t CMD_STATUS_S1[] = {0x53, 0x31};
 const uint8_t CMD_STATUS_SV2[] = {'S', 'V', '2'};
-static uint8_t rx_buffer[UART_BUFFER_SIZE];
+
+WORD_ALIGNED_ATTR static uint8_t rx_buffer[SPI_BUFFER_SIZE];
+WORD_ALIGNED_ATTR static uint8_t tx_buffer[SPI_BUFFER_SIZE];
 
 // Contexto de la tarea
 typedef struct {
@@ -44,23 +49,42 @@ static printer_task_context_t task_ctx = {
 // FUNCIONES AUXILIARES (static para optimización)
 
 bool esperar_ack_impresora(uint32_t timeout_ms) {
-    uint8_t ack_buffer[1];
-    int ack_received = uart_read_bytes(UART_PORT, ack_buffer, 1, pdMS_TO_TICKS(timeout_ms));
+    uint8_t dummy_tx = 0x00; // Byte vacío para generar el reloj
+    uint8_t ack_rx = 0x00;
 
-    if (ack_received > 0) {    
-        if (ack_buffer[0] == ACK_BYTE) {
-            ESP_LOGI(TAG_PRINTER, "✅ ACK recibido de la impresora.");
-            return true;
+    spi_transaction_t t = {
+        .length = 8, // Vamos a leer 1 byte (8 bits)
+        .tx_buffer = &dummy_tx,
+        .rx_buffer = &ack_rx
+    };
 
-        } else if (ack_buffer[0] == NAK_BYTE) {
-            ESP_LOGE(TAG_PRINTER, "❌ NAK recibido. La impresora rechazó el comando.");
-            return false;
-        } else {
-            ESP_LOGW(TAG_PRINTER, "⚠️ Byte inesperado recibido: 0x%02X", ack_buffer[0]);
-            return false;
+    uint32_t tiempo_esperado = 0;
+    const uint32_t delay_polling = 10; // Preguntamos a la impresora cada 10ms
+
+    while (tiempo_esperado < timeout_ms) {
+        // En SPI, el Master TIENE que enviar un reloj para poder leer
+        esp_err_t ret = spi_device_transmit(spi_printer, &t);
+        
+        // Si la lectura fue exitosa y la impresora nos devolvió algo distinto a silencio (0x00)
+        if (ret == ESP_OK && ack_rx != 0x00) { 
+            if (ack_rx == ACK_BYTE) {
+                ESP_LOGI(TAG_PRINTER, "✅ ACK recibido de la impresora.");
+                return true;
+            } else if (ack_rx == NAK_BYTE) {
+                ESP_LOGE(TAG_PRINTER, "❌ NAK recibido. La impresora rechazó el comando.");
+                return false;
+            } else {
+                ESP_LOGW(TAG_PRINTER, "⚠️ Byte inesperado recibido: 0x%02X", ack_rx);
+                return false;
+            }
         }
+        
+        // Si no hemos recibido el ACK, le damos un respiro a la impresora y volvemos a preguntar
+        vTaskDelay(pdMS_TO_TICKS(delay_polling));
+        tiempo_esperado += delay_polling;
     }
-    ESP_LOGE(TAG_PRINTER, "⏰ Timeout esperando ACK/NAK.");
+
+    ESP_LOGE(TAG_PRINTER, "⏰ Timeout esperando ACK/NAK por SPI.");
     return false;
 }
 
@@ -72,10 +96,8 @@ bool printer_get_fw_version(void) {
         mqtt_data.fw_ismart[sizeof(mqtt_data.fw_ismart) - 1] = '\0';
         xSemaphoreGive(mqtt_data_mutex);
     }
-    
-    uart_flush(UART_PORT);
 
-    if (!uart_send_frame(CMD_STATUS_SV2, sizeof(CMD_STATUS_SV2))) {
+    if (!spi_send_frame(CMD_STATUS_SV2, sizeof(CMD_STATUS_SV2))) {
         LOG_E(TAG_PRINTER, "Error enviando comando de versión");
         if (xSemaphoreTake(mqtt_data_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
             strcpy(mqtt_data.fw_ismart, "000000");
@@ -125,40 +147,62 @@ bool printer_get_fw_version(void) {
 }
 
 // Función para enviar comando por UART
-static bool uart_send_command(uint8_t command) {
-    if (!uart_initialized) return false;
-    uart_flush_input(UART_PORT);
+bool spi_send_command(uint8_t command) {
+    if (!spi_initialized) return false;
+
+    spi_transaction_t t = {
+        .length = 8,              // Tamaño en bits (1 byte = 8 bits)
+        .tx_buffer = &command,    // Apuntamos al comando que queremos enviar
+        .rx_buffer = NULL         // No nos interesa leer nada en este instante
+    };
     
-    int sent = uart_write_bytes(UART_PORT, (const char*)&command, 1);
-    if (sent == 1) {
-        uart_wait_tx_done(UART_PORT, pdMS_TO_TICKS(100));
-        return true;
+    esp_err_t ret = spi_device_transmit(spi_printer, &t);
+    
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG_PRINTER, "Fallo de hardware al enviar comando SPI: 0x%02X", command);
+        return false;
     }
-    return false;
+    
+    return true;
 }
 
-bool uart_send_frame(const uint8_t *data, size_t len) {
-    if (!uart_initialized || data == NULL || len == 0) return false;
+bool spi_send_frame(const uint8_t *data, size_t len) {
+    if (!spi_initialized || data == NULL || len == 0) return false;
+
+    // Verificamos que la trama no desborde nuestro buffer seguro
+    if (len + 3 > SPI_BUFFER_SIZE) {
+        ESP_LOGE(TAG_PRINTER, "Trama demasiado larga para enviar por SPI");
+        return false;
+    }
     
-    uint8_t stx = STX_BYTE;
-    uint8_t etx = ETX_BYTE;
     uint8_t lrc = 0;
 
-    // Calculamos el LRC
-    for (size_t i = 0; i < len; i++) lrc ^= data[i];
-    lrc ^= etx;
+    // Calculamos el LRC del payload
+    for (size_t i = 0; i < len; i++) {
+        lrc ^= data[i];
+    }
+    lrc ^= ETX_BYTE; // Incluimos el ETX en el LRC
 
-    // Enviamos datos parte por parte
-    uart_write_bytes(UART_PORT, &stx, 1);
-    uart_write_bytes(UART_PORT, data, len);
-    uart_write_bytes(UART_PORT, &etx, 1);
-    uart_write_bytes(UART_PORT, &lrc, 1);
+    // EMPAQUETADO: Construimos la caja completa antes de enviarla
+    tx_buffer[0] = STX_BYTE;
+    memcpy(&tx_buffer[1], data, len);
+    tx_buffer[1 + len] = ETX_BYTE;
+    tx_buffer[2 + len] = lrc;
 
-    // Esperamos a que el hardware termine de transmitir
-    esp_err_t err = uart_wait_tx_done(UART_PORT, pdMS_TO_TICKS(100));
+    // Tamaño total = 1 (STX) + len (Datos) + 1 (ETX) + 1 (LRC) = len + 3
+    size_t tamano_total = len + 3;
+
+    // ¡Un solo viaje! El CS baja y sube una sola vez
+    spi_transaction_t t = {
+        .length = tamano_total * 8, // En bits
+        .tx_buffer = tx_buffer,
+        .rx_buffer = NULL // No esperamos respuesta en este milisegundo
+    };
+
+    esp_err_t err = spi_device_transmit(spi_printer, &t);
     
     if (err != ESP_OK) {
-        ESP_LOGE(TAG_PRINTER, "Error en transmisión UART: %s", esp_err_to_name(err));
+        ESP_LOGE(TAG_PRINTER, "Error en transmisión SPI: %s", esp_err_to_name(err));
         return false;
     }
 
@@ -170,154 +214,160 @@ bool uart_send_frame(const uint8_t *data, size_t len) {
 // En printer_task.c
 
 static int recibir_trama_generica(uint8_t* buffer, size_t longitud_maxima, uint32_t timeout_ms) {
-    uint8_t byte_temporal;
-    int leidos;
+    uint8_t dummy_tx = 0x00;
+    uint8_t byte_rx = 0x00;
     int total_bytes_recibidos = 0;
+    bool stx_encontrado = false;
     
     TickType_t tiempo_inicio = xTaskGetTickCount();
     TickType_t tiempo_limite = pdMS_TO_TICKS(timeout_ms);
-    bool stx_encontrado = false;
+
+    spi_device_acquire_bus(spi_printer, portMAX_DELAY);
+
+    // Configuramos la transacción para que NO levante el pin CS al terminar
+    spi_transaction_t t = {
+        .length = 8,
+        .tx_buffer = &dummy_tx,
+        .rx_buffer = &byte_rx,
+        .flags = SPI_TRANS_CS_KEEP_ACTIVE 
+    };
 
     // Buscamos STX
     while ((xTaskGetTickCount() - tiempo_inicio) < tiempo_limite) {
-        leidos = uart_read_bytes(UART_PORT, &byte_temporal, 1, pdMS_TO_TICKS(50));
-        
-        if (leidos > 0) {
-            if (byte_temporal == STX_BYTE) { // 0x02
-                buffer[0] = STX_BYTE;
-                total_bytes_recibidos = 1;
-                stx_encontrado = true;
-                break;
-            } else {
-                 ESP_LOGW(TAG_PRINTER, "🗑️ Ignorando basura: 0x%02X", byte_temporal);
-            }
+        spi_device_polling_transmit(spi_printer, &t);
+
+        if (byte_rx == STX_BYTE) {
+            buffer[0] = STX_BYTE;
+            total_bytes_recibidos = 1;
+            stx_encontrado = true;
+            break;
+        } else if (byte_rx != 0x00) {
+            ESP_LOGW(TAG_PRINTER, " ");
         }
+
+        esp_rom_delay_us(500);
     }
 
-    if (!stx_encontrado) return -1; // Nunca llegó el inicio
+    if (!stx_encontrado) {
+        t.flags = 0;
+        t.length = 0;
+        t.tx_buffer = NULL;
+        t.rx_buffer = NULL;
+        spi_device_polling_transmit(spi_printer, &t);
+        spi_device_release_bus(spi_printer);
+        return -1; // Nunca llegó el inicio
+    }
 
+    TickType_t tiempo_ultimo_byte = xTaskGetTickCount();
     // Llegamos hasta ETX + 1
     while (total_bytes_recibidos < longitud_maxima) {
         // Usamos un timeout corto entre caracteres (ej. 100ms)
-        leidos = uart_read_bytes(UART_PORT, &byte_temporal, 1, pdMS_TO_TICKS(100));
-        
-        if (leidos > 0) {
-            buffer[total_bytes_recibidos] = byte_temporal;
-
-            total_bytes_recibidos++;
-
-            // Si encontramos el ETX (0x03), hemos terminado de leer el cuerpo
-            if (byte_temporal == ETX_BYTE) { // 0x03
-                // Leemos 1 byte más (el LRC)
-                uint8_t lrc;
-                leidos = uart_read_bytes(UART_PORT, &lrc, 1, pdMS_TO_TICKS(100));
-                if (leidos > 0) {
-                    if (total_bytes_recibidos < longitud_maxima) { 
-                        buffer[total_bytes_recibidos] = lrc;
-                        total_bytes_recibidos++;
-                    }
-                    ESP_LOGI(TAG_PRINTER, "Trama completa recibida (%d bytes)", total_bytes_recibidos);
-                    return total_bytes_recibidos; 
-                }
-            }
-        } else {
-            // Pasó tiempo y no llegaron más bytes, pero ya teníamos el STX...
+        if ((xTaskGetTickCount() - tiempo_ultimo_byte) > pdMS_TO_TICKS(100)) {
             ESP_LOGE(TAG_PRINTER, "Se cortó la trama (Timeout entre bytes)");
-            return -2;
+            break; 
+        }
+
+        spi_device_polling_transmit(spi_printer, &t);
+        buffer[total_bytes_recibidos] = byte_rx;
+        total_bytes_recibidos++;
+        tiempo_ultimo_byte = xTaskGetTickCount();
+
+        if (byte_rx == ETX_BYTE) {
+            // Hemos llegado al ETX, solo nos falta succionar 1 byte más (el LRC)
+            spi_device_polling_transmit(spi_printer, &t);
+            
+            if (total_bytes_recibidos < longitud_maxima) { 
+                buffer[total_bytes_recibidos] = byte_rx;
+                total_bytes_recibidos++;
+            }
+            
+            ESP_LOGI(TAG_PRINTER, "Trama completa recibida por SPI (%d bytes)", total_bytes_recibidos);
+            
+            // ÉXITO: Levantamos el CS y liberamos el bus
+            t.flags = 0;
+            t.length = 0;
+            spi_device_polling_transmit(spi_printer, &t);
+            spi_device_release_bus(spi_printer);
+            
+            return total_bytes_recibidos; 
         }
     }
-    ESP_LOGE(TAG_PRINTER, "Error: BUFFER LLENO (%d bytes) sin encontrar ETX", total_bytes_recibidos);
-    return -3; // Buffer lleno sin encontrar ETX
+    // Si salimos del bucle porque se llenó el buffer o hubo error
+    ESP_LOGE(TAG_PRINTER, "Error: Lectura abortada (%d bytes)", total_bytes_recibidos);
+    
+    // Levantamos el CS y liberamos el bus
+    t.flags = 0;
+    t.length = 0;
+    spi_device_polling_transmit(spi_printer, &t);
+    spi_device_release_bus(spi_printer);
+    
+    return (total_bytes_recibidos >= longitud_maxima) ? -3 : -2;
 }
 
 // FUNCIONES PÚBLICAS (declaradas en printer_task.h)
 
 // Inicialización UART
-bool printer_uart_init(void) {
-    if (uart_initialized) {
-        ESP_LOGI(TAG_PRINTER, "UART ya está inicializado");
-        return true;
-    }
+bool printer_spi_init(void) {
+    if (spi_initialized) return true;
     
-    ESP_LOGI(TAG_PRINTER, "Configurando UART...");
-    
-    uart_config_t uart_config = {
-        .baud_rate = UART_BAUDRATE,
-        .data_bits = UART_DATA_8_BITS,
-        .parity = UART_PARITY_EVEN,
-        .stop_bits = UART_STOP_BITS_1,
-        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-        .source_clk = UART_SCLK_DEFAULT,
+    // Configuración del Bus (Pines físicos)
+    spi_bus_config_t buscfg = {
+        .miso_io_num = PIN_NUM_MISO,
+        .mosi_io_num = PIN_NUM_MOSI,
+        .sclk_io_num = PIN_NUM_CLK,
+        .quadwp_io_num = -1,
+        .quadhd_io_num = -1,
+        .max_transfer_sz = SPI_BUFFER_SIZE + 10 // Margen de seguridad para el DMA
     };
-    
-    // Instalar driver UART
-    ESP_LOGI(TAG_PRINTER, "Instalando driver UART...");
-    esp_err_t err = uart_driver_install(UART_PORT, 
-                                        UART_BUFFER_SIZE * 2,
-                                        UART_BUFFER_SIZE * 2,
-                                        UART_QUEUE_SIZE,
-                                        &printer_uart_queue,
-                                        0);
-    
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG_PRINTER, "Error al instalar UART: 0x%X", err);
-        return false;
-    }
-    ESP_LOGI(TAG_PRINTER, "Driver UART instalado");
-    
-    // Configurar parámetros
-    ESP_LOGI(TAG_PRINTER, "Configurando parámetros UART...");
-    err = uart_param_config(UART_PORT, &uart_config);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG_PRINTER, "Error configurando UART: 0x%X", err);
-        uart_driver_delete(UART_PORT);
-        return false;
-    }
-    ESP_LOGI(TAG_PRINTER, "Parámetros UART configurados");
-    
-    // Configurar pines
-    ESP_LOGI(TAG_PRINTER, "Configurando pines UART: TX=%d, RX=%d", 
-             UART_TX_PIN, UART_RX_PIN);
-    err = uart_set_pin(UART_PORT, UART_TX_PIN, UART_RX_PIN, 
-                       UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG_PRINTER, "Error configurando pines UART: 0x%X", err);
-        uart_driver_delete(UART_PORT);
-        return false;
-    }
-    ESP_LOGI(TAG_PRINTER, "Pines UART configurados");
-    
-    uart_initialized = true;
-    task_ctx.initialized = true;
-    task_ctx.state = PRINTER_STATE_IDLE;
-    
-    ESP_LOGI(TAG_PRINTER, "UART completamente inicializado y listo");
-    ESP_LOGI(TAG_PRINTER, "Buffer: %d bytes, Cola: %d", 
-             UART_BUFFER_SIZE, UART_QUEUE_SIZE);
-    
-    uart_flush_input(UART_PORT);
 
-    ESP_LOGI(TAG_PRINTER, "UART inicializado y limpio");
+    // Configuración del Dispositivo (Cómo le hablamos a la impresora)
+    spi_device_interface_config_t devcfg = {
+        .clock_speed_hz = SPI_CLOCK_SPEED_HZ,
+        .mode = 0, // Modo SPI 0 (CPOL=0, CPHA=0)
+        .spics_io_num = PIN_NUM_CS,
+        .queue_size = SPI_QUEUE_SIZE,
+    };
+
+    // Inicializar el bus SPI
+    esp_err_t ret = spi_bus_initialize(SPI_HOST_PORT, &buscfg, SPI_DMA_CH_AUTO);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG_PRINTER, "Error inicializando bus SPI: %s", esp_err_to_name(ret));
+        return false;
+    }
+
+    // Añadir el dispositivo (Impresora) al bus
+    ret = spi_bus_add_device(SPI_HOST_PORT, &devcfg, &spi_printer);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG_PRINTER, "Error añadiendo dispositivo SPI: %s", esp_err_to_name(ret));
+        spi_bus_free(SPI_HOST_PORT); // Limpiamos si falla
+        return false;
+    }
+    
+    spi_initialized = true;
+    ESP_LOGI(TAG_PRINTER, "✅ Bus SPI inicializado y dispositivo anclado.");
     return true;
 }
 
 // Desinicialización UART
-void printer_uart_deinit(void) {
-    if (uart_initialized) {
-        uart_driver_delete(UART_PORT);
-        uart_initialized = false;
-        task_ctx.initialized = false;
-        LOG_I(TAG_PRINTER, "UART desinicializado");
+void printer_spi_deinit(void) {
+    if (!spi_initialized) return;
+
+    if (spi_printer != NULL) {
+        spi_bus_remove_device(spi_printer);
+        spi_printer = NULL;
     }
+
+    spi_bus_free(SPI_HOST_PORT);
+    
+    spi_initialized = false;
+    ESP_LOGI(TAG_PRINTER, "🛑 Bus SPI desinicializado (Hardware liberado).");
 }
 
 // Validar trama
 bool validate_frame(const uint8_t* data, size_t len) {
-    const uint8_t ack_msg = ACK_BYTE;
-    const uint8_t nak_msg = NAK_BYTE;
 
     if (len < 5) {
-        uart_write_bytes(UART_PORT, &nak_msg, 1);
+        spi_send_command(NAK_BYTE);
         return false; // Mínimo STX + DATA + ETX + LRC
     }
 
@@ -326,7 +376,7 @@ bool validate_frame(const uint8_t* data, size_t len) {
     uint8_t lrc_calculado = 0;
 
     if (data[0] != STX_BYTE || etx_posicion != ETX_BYTE) {
-        uart_write_bytes(UART_PORT, &nak_msg, 1);
+        spi_send_command(NAK_BYTE);
         return false;
     }
 
@@ -336,10 +386,10 @@ bool validate_frame(const uint8_t* data, size_t len) {
     }
 
     if (lrc_recibido == lrc_calculado) {
-        uart_write_bytes(UART_PORT, &ack_msg, 1);
+        spi_send_command(ACK_BYTE);
         return true;
     } else {
-        uart_write_bytes(UART_PORT, &nak_msg, 1);
+        spi_send_command(ACK_BYTE);
         return false;
     }
 }
@@ -468,12 +518,12 @@ bool printer_reconnect(void) {
 
         task_ctx.state = PRINTER_STATE_RECONNECTING;
         
-        // Desinicializar UART
-        printer_uart_deinit();
+        // Desinicializar SPI
+        printer_spi_deinit();
         vTaskDelay(pdMS_TO_TICKS(RECONNECT_DELAY_MS));
         
         // Re-inicializar UART
-        if (printer_uart_init()) {
+        if (printer_spi_init()) {
             LOG_I(TAG_PRINTER, "Reconexión exitosa");
             // Limpiamos contadores
             task_ctx.reconnect_attempts = 0;
@@ -536,12 +586,12 @@ void printer_handle_error(printer_error_t error) {
 
 // Enviar comando ENQ
 bool send_enq_command(void) {
-    if (!uart_initialized) {
+    if (!spi_initialized) {
         return false;
     }
     
     task_ctx.state = PRINTER_STATE_WAITING_RESPONSE;
-    return uart_send_command(ENQ_CMD);
+    return spi_send_command(ENQ_CMD);
 }
 
 // Recibir respuesta
@@ -553,9 +603,8 @@ int ejecutar_solicitud_s1(uint8_t* buffer, int bytes_maximos) {
     ESP_LOGI(TAG_PRINTER, "Enviando comando S1...");
     vTaskDelay(pdMS_TO_TICKS(100));
 
-    uart_flush_input(UART_PORT);
     // Enviar comando S1
-    if (!uart_send_frame(CMD_STATUS_S1, sizeof(CMD_STATUS_S1))) {
+    if (!spi_send_frame(CMD_STATUS_S1, sizeof(CMD_STATUS_S1))) {
         ESP_LOGE(TAG_PRINTER, "Error al enviar S1");
         printer_handle_error(ERROR_COMMUNICATION_LOST);
         return 0;
@@ -573,12 +622,21 @@ int ejecutar_solicitud_s1(uint8_t* buffer, int bytes_maximos) {
     return receive_response(buffer, bytes_maximos, 3000); // 3 segundos
 }
 
+void enviar_byte_spi(uint8_t byte_a_enviar) {
+    spi_transaction_t t = {
+        .length = 8, 
+        .tx_buffer = &byte_a_enviar,
+        .rx_buffer = NULL // No nos importa la respuesta aquí
+    };
+    spi_device_transmit(spi_printer, &t);
+}
+
 // TAREA PRINCIPAL DE LA IMPRESORA
 static void printer_task_main(void* pvParameters) {
-    ESP_LOGI(TAG_PRINTER, "TAREA IMPRESORA INICIADA");
+    ESP_LOGI(TAG_PRINTER, "TAREA IMPRESORA INICIADA (Modo SPI)");
     task_ctx.initialized = true;
     task_ctx.state = PRINTER_STATE_IDLE;
-    const uint8_t nak_msg = NAK_BYTE;
+    
     bool fw_version_obtained = false;
     
     while (1) {
@@ -586,7 +644,7 @@ static void printer_task_main(void* pvParameters) {
         vTaskDelay(pdMS_TO_TICKS(POLLING_INTERVAL_MS));
 
         if (ota_en_progreso) {
-            LOG_W(TAG_PRINTER, "OTA en progreso. Tarea UART en reposo hasta que se actualice el equipo...");
+            LOG_W(TAG_PRINTER, "OTA en progreso. Polling fiscal SPI en reposo...");
             vTaskDelay(pdMS_TO_TICKS(3000));
             continue;
         }
@@ -607,9 +665,11 @@ static void printer_task_main(void* pvParameters) {
             printer_reset_errors();
             continue;
         }
+
+        vTaskDelay(pdMS_TO_TICKS(20));
             
         // Recibir respuesta
-        int received = receive_response(rx_buffer, UART_BUFFER_SIZE, RESPONSE_TIMEOUT_MS);
+        int received = receive_response(rx_buffer, SPI_BUFFER_SIZE, RESPONSE_TIMEOUT_MS);
         if (received <= 0) {
             ESP_LOGI(TAG_PRINTER, "Sin respuesta al ENQ (Timeout)");
             printer_handle_error(ERROR_NO_RESPONSE);
@@ -619,7 +679,6 @@ static void printer_task_main(void* pvParameters) {
         
         // Validar trama
         if (!validate_frame(rx_buffer, received)) {
-            uart_write_bytes(UART_PORT, &nak_msg, 1);
             ESP_LOGW(TAG_PRINTER, "Trama inválida detectada");
             printer_handle_error(ERROR_INVALID_RESPONSE);
             printer_reset_errors();
@@ -638,7 +697,7 @@ static void printer_task_main(void* pvParameters) {
             }
         }
 
-        int bytes_leidos = ejecutar_solicitud_s1(rx_buffer, UART_BUFFER_SIZE);
+        int bytes_leidos = ejecutar_solicitud_s1(rx_buffer, SPI_BUFFER_SIZE);
 
         if (bytes_leidos <= 0) {
             ESP_LOGW(TAG_PRINTER, "No se recibió respuesta S1 (timeout)");

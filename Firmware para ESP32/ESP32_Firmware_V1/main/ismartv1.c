@@ -16,7 +16,7 @@ void app_main(void) {
     ESP_LOGI(TAG, "RAM libre: %u bytes", free_ram);
     
     // Inicializar comunicación UART
-    if (!printer_uart_init()) {
+    if (!printer_spi_init()) {
         ESP_LOGE(TAG, "Error crítico: No se pudo inicializar UART");
         
         return;
@@ -29,12 +29,10 @@ void app_main(void) {
         ESP_LOGE(TAG, "Error crítico: No se pudo iniciar tarea de impresora");
         
         // Intentar desinicializar UART
-        printer_uart_deinit();
+        printer_spi_deinit();
 
         return;
     }
-
-    iniciar_spi_impresora();
     
     // Lanzar tareas de forma independiente mejora el uso de IRAM y DRAM
     start_mqtt_system();

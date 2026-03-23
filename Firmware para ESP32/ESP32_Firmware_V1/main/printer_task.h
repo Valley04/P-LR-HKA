@@ -39,10 +39,10 @@ void printer_reset_errors(void);
 bool printer_needs_reconnection(void);
 void printer_handle_error(printer_error_t error);
 
-// Comunicación UART
+// Comunicación SPI
 bool send_enq_command(void);
-bool uart_send_frame(const uint8_t *data, size_t len);
-bool send_status_s1_command(void);
+bool spi_send_command(uint8_t command);
+bool spi_send_frame(const uint8_t *data, size_t len);
 int receive_response(uint8_t* buffer, size_t buffer_size, uint32_t timeout_ms);
 
 // Monitoreo

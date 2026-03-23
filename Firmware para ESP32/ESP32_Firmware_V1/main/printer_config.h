@@ -11,17 +11,21 @@
 #include "freertos/semphr.h"
 #include "mqtt_client.h"
 
-#define ISMART_VERSION "020200"
+#define ISMART_VERSION "020300"
 
 // CONSTANTES DE CONFIGURACIÓN
 
-// UART
-#define UART_PORT           UART_NUM_1
-#define UART_BAUDRATE       9600
-#define UART_TX_PIN         4
-#define UART_RX_PIN         5
-#define UART_BUFFER_SIZE    1024      
-#define UART_QUEUE_SIZE     20      
+// SPI
+#define PIN_NUM_MISO        25
+#define PIN_NUM_MOSI        27
+#define PIN_NUM_CLK         26
+#define PIN_NUM_CS          32
+
+// Parámetros del Bus SPI
+#define SPI_HOST_PORT       SPI2_HOST 
+#define SPI_CLOCK_SPEED_HZ  (100 * 1000)  // 100 kHz
+#define SPI_BUFFER_SIZE     1050         
+#define SPI_QUEUE_SIZE      20 
 
 // Protocolo Fiscal
 #define ENQ_CMD             0x05
@@ -59,8 +63,8 @@ extern const uint8_t CMD_STATUS_S3[];
 
 // Comandos de control para actualización de impresora
 #define SPI_CMD_START       0x01
-#define SPI_CMD_PACKET      0x02
-#define SPI_CMD_END         0x03
+#define SPI_CMD_PACKET      0x04
+#define SPI_CMD_END         0x07
 // TIPOS DE DATOS OPTIMIZADOS
 
 // Estados de la comunicación
@@ -169,8 +173,8 @@ extern QueueHandle_t printer_uart_queue;
 // PROTOTIPOS DE FUNCIONES BÁSICAS
 
 // Inicialización
-bool printer_uart_init(void);
-void printer_uart_deinit(void);
+bool printer_spi_init(void);
+void printer_spi_deinit(void);
 
 // Control de estado
 printer_state_t printer_get_state(void);

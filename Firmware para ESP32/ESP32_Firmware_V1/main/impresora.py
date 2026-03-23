@@ -3,7 +3,7 @@ import time
 import sys
 
 # --- CONFIGURACIÓN ---
-PUERTO_PC = "COM11"  # <--- ¡VERIFICAR!
+PUERTO_PC = "COM15"  # <--- ¡VERIFICAR!
 BAUDIOS = 9600
 
 # Control bytes
@@ -31,7 +31,7 @@ def enviar_status(ser):
     ser.write(frame)
     ser.flush()
     
-    ser.read(len(frame)) 
+    # ser.read(len(frame)) 
     
     print(f"➡ STATUS enviado (LRC: {lrc:02X})")
 
@@ -39,7 +39,7 @@ def enviar_respuesta_s1(ser):
     # Serial simulado: Z1F9999988
     campos = [
         b"S100",                # 0: ATM (Cajero)
-        b"00000000019849029",   # 1: Ventas
+        b"00000264819849029",   # 1: Ventas
         b"00000000",            # 2: Última factura
         b"00000",               # 3: Emisión
         b"00000000",            # 4: Último ND
@@ -51,7 +51,7 @@ def enviar_respuesta_s1(ser):
         b"0020",                # 10: Z_cnt
         b"0017",                # 11: F_cnt
         b"J-312171197",         # 12: RIF
-        b"Z1F9999988",          # 13: Serial
+        b"Z1A8779988",          # 13: Serial
         b"123000",              # 14: Hora
         b"300126"               # 15: Fecha
     ]
@@ -65,7 +65,7 @@ def enviar_respuesta_s1(ser):
     ser.write(frame)
     ser.flush()
 
-    ser.read(len(frame))
+    # ser.read(len(frame))
 
     print(f"➡ Respuesta S1 enviada ({len(frame)} bytes)")
     print(f"   Hex: {frame.hex(' ').upper()}")
@@ -86,7 +86,7 @@ def enviar_respuesta_sv2(ser):
     
     ser.write(frame)
     ser.flush()
-    ser.read(len(frame))
+    # ser.read(len(frame))
 
     print(f"➡ Respuesta SV2 enviada ({len(frame)} bytes)")
 

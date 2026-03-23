@@ -1,6 +1,7 @@
 #include "printer_config.h"
 #include "printer_mqtt.h"
 #include "ota_task.h"
+#include "driver/spi_master.h"
 #include "esp_log.h"
 #include "esp_system.h"
 #include "esp_http_client.h"
@@ -19,14 +20,39 @@ extern esp_mqtt_client_handle_t mqtt_client;
 extern SemaphoreHandle_t mqtt_data_mutex;
 extern mqtt_data_t mqtt_data;
 
-extern esp_err_t enviar_chunk_spi(uint8_t *data, int len);
-extern uint8_t transaccionar_byte_spi(uint8_t data);
+extern spi_device_handle_t spi_printer;
+
+static uint8_t transaccionar_byte_spi(uint8_t data) {
+    if (spi_printer == NULL) return 0xFF;
+
+    spi_transaction_t t;
+    memset(&t, 0, sizeof(t));
+    
+    t.length = 8;
+    t.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
+    t.tx_data[0] = data; // Guardamos el byte directamente
+
+    spi_device_polling_transmit(spi_printer, &t);
+    
+    return t.rx_data[0]; // Leemos el byte directamente
+}
+
+static esp_err_t enviar_chunk_spi(uint8_t *data, int len) {
+    if (spi_printer == NULL || len == 0 || data == NULL) return ESP_FAIL;
+
+    spi_transaction_t t;
+    memset(&t, 0, sizeof(t));
+    
+    t.length = len * 8; // Longitud en BITS
+    t.tx_buffer = data; 
+
+    return spi_device_polling_transmit(spi_printer, &t);
+}
 
 esp_err_t enviar_trama_spi_robusta(uint8_t *data, int len, uint32_t num_pack, uint32_t total_packs) {
     uint32_t checksum_paquete = 0;
     for (int j = 0; j < len; j++) checksum_paquete += data[j];
-
-    uint16_t tam_total = 15 + len; 
+ 
     uint8_t trama_completa[1050]; 
     
     trama_completa[0] = SPI_CMD_PACKET;
