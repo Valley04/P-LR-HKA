@@ -23,8 +23,8 @@
 
 // Parámetros del Bus SPI
 #define SPI_HOST_PORT       SPI2_HOST 
-#define SPI_CLOCK_SPEED_HZ  (100 * 1000)  // 100 kHz
-#define SPI_BUFFER_SIZE     1050         
+#define SPI_CLOCK_SPEED_HZ  100000  // 100 kHz
+#define SPI_BUFFER_SIZE     1056         
 #define SPI_QUEUE_SIZE      20 
 
 // Protocolo Fiscal

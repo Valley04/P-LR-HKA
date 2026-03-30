@@ -49,39 +49,40 @@ static printer_task_context_t task_ctx = {
 // FUNCIONES AUXILIARES (static para optimización)
 
 bool esperar_ack_impresora(uint32_t timeout_ms) {
-    uint8_t dummy_tx = 0x00; // Byte vacío para generar el reloj
-    uint8_t ack_rx = 0x00;
+    TickType_t tiempo_inicio = xTaskGetTickCount();
+    TickType_t tiempo_limite = pdMS_TO_TICKS(timeout_ms);
 
-    spi_transaction_t t = {
-        .length = 8, // Vamos a leer 1 byte (8 bits)
-        .tx_buffer = &dummy_tx,
-        .rx_buffer = &ack_rx
-    };
+    while ((xTaskGetTickCount() - tiempo_inicio) < tiempo_limite) {
 
-    uint32_t tiempo_esperado = 0;
-    const uint32_t delay_polling = 10; // Preguntamos a la impresora cada 10ms
+        // Limpiamos los buffers globales
+        memset(tx_buffer, 0, SPI_BUFFER_SIZE);
+        memset(rx_buffer, 0, SPI_BUFFER_SIZE);
 
-    while (tiempo_esperado < timeout_ms) {
-        // En SPI, el Master TIENE que enviar un reloj para poder leer
-        esp_err_t ret = spi_device_transmit(spi_printer, &t);
+        spi_transaction_t t;
+        memset(&t, 0, sizeof(t));
+
+        t.length = 32;
+        t.tx_buffer = tx_buffer;
+        t.rx_buffer = rx_buffer;
         
-        // Si la lectura fue exitosa y la impresora nos devolvió algo distinto a silencio (0x00)
-        if (ret == ESP_OK && ack_rx != 0x00) { 
-            if (ack_rx == ACK_BYTE) {
-                ESP_LOGI(TAG_PRINTER, "✅ ACK recibido de la impresora.");
-                return true;
-            } else if (ack_rx == NAK_BYTE) {
-                ESP_LOGE(TAG_PRINTER, "❌ NAK recibido. La impresora rechazó el comando.");
-                return false;
-            } else {
-                ESP_LOGW(TAG_PRINTER, "⚠️ Byte inesperado recibido: 0x%02X", ack_rx);
-                return false;
+        if (spi_device_transmit(spi_printer, &t) == ESP_OK) {
+            uint8_t ack_rx = rx_buffer[0];
+        
+            // Si la lectura fue exitosa y la impresora nos devolvió algo distinto a silencio (0x00)
+            if (ack_rx != 0xFF && ack_rx != 0x00) { 
+                if (ack_rx == ACK_BYTE) {
+                    ESP_LOGI(TAG_PRINTER, "✅ ACK recibido de la impresora.");
+                    return true;
+                } else if (ack_rx == NAK_BYTE) {
+                    ESP_LOGE(TAG_PRINTER, "❌ NAK recibido. La impresora rechazó el comando.");
+                    return false;
+                } else {
+                    ESP_LOGW(TAG_PRINTER, "⚠️ Byte inesperado recibido: 0x%02X", ack_rx);
+                }
             }
         }
-        
         // Si no hemos recibido el ACK, le damos un respiro a la impresora y volvemos a preguntar
-        vTaskDelay(pdMS_TO_TICKS(delay_polling));
-        tiempo_esperado += delay_polling;
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 
     ESP_LOGE(TAG_PRINTER, "⏰ Timeout esperando ACK/NAK por SPI.");
@@ -96,6 +97,8 @@ bool printer_get_fw_version(void) {
         mqtt_data.fw_ismart[sizeof(mqtt_data.fw_ismart) - 1] = '\0';
         xSemaphoreGive(mqtt_data_mutex);
     }
+
+    vTaskDelay(pdMS_TO_TICKS(50));
 
     if (!spi_send_frame(CMD_STATUS_SV2, sizeof(CMD_STATUS_SV2))) {
         LOG_E(TAG_PRINTER, "Error enviando comando de versión");
@@ -113,6 +116,8 @@ bool printer_get_fw_version(void) {
         }
         return false; // Abortamos temprano
     }
+
+    vTaskDelay(pdMS_TO_TICKS(50));
 
     int bytes_leidos = receive_response(rx_buffer, sizeof(rx_buffer), 1000);    
 
@@ -148,22 +153,25 @@ bool printer_get_fw_version(void) {
 
 // Función para enviar comando por UART
 bool spi_send_command(uint8_t command) {
-    if (!spi_initialized) return false;
+    if (!spi_initialized) return false;  
+    
+    uint8_t *cmd_dma = heap_caps_calloc(1, 4, MALLOC_CAP_DMA); 
+    if (cmd_dma == NULL) return false;
 
-    spi_transaction_t t = {
-        .length = 8,              // Tamaño en bits (1 byte = 8 bits)
-        .tx_buffer = &command,    // Apuntamos al comando que queremos enviar
-        .rx_buffer = NULL         // No nos interesa leer nada en este instante
-    };
-    
-    esp_err_t ret = spi_device_transmit(spi_printer, &t);
-    
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG_PRINTER, "Fallo de hardware al enviar comando SPI: 0x%02X", command);
-        return false;
-    }
-    
-    return true;
+    cmd_dma[0] = command;
+
+    spi_transaction_t t;
+    memset(&t, 0, sizeof(t));
+
+    t.length = 32;
+    t.tx_buffer = cmd_dma;
+    t.rx_buffer = NULL;
+
+    esp_err_t err = spi_device_transmit(spi_printer, &t);
+
+    heap_caps_free(cmd_dma);
+
+    return (err == ESP_OK);
 }
 
 bool spi_send_frame(const uint8_t *data, size_t len) {
@@ -175,9 +183,8 @@ bool spi_send_frame(const uint8_t *data, size_t len) {
         return false;
     }
     
-    uint8_t lrc = 0;
-
     // Calculamos el LRC del payload
+    uint8_t lrc = 0;
     for (size_t i = 0; i < len; i++) {
         lrc ^= data[i];
     }
@@ -191,8 +198,12 @@ bool spi_send_frame(const uint8_t *data, size_t len) {
 
     // Tamaño total = 1 (STX) + len (Datos) + 1 (ETX) + 1 (LRC) = len + 3
     size_t tamano_total = len + 3;
+    size_t tamano_dma = (tamano_total + 3) & ~3;
 
-    // ¡Un solo viaje! El CS baja y sube una sola vez
+    for (size_t i = tamano_total; i < tamano_dma; i++) {
+        tx_buffer[i] = 0x00;
+    }
+
     spi_transaction_t t = {
         .length = tamano_total * 8, // En bits
         .tx_buffer = tx_buffer,
@@ -207,101 +218,6 @@ bool spi_send_frame(const uint8_t *data, size_t len) {
     }
 
     return true;
-}
-
-// Esta función va dentro de printer_task.c
-
-// En printer_task.c
-
-static int recibir_trama_generica(uint8_t* buffer, size_t longitud_maxima, uint32_t timeout_ms) {
-    uint8_t dummy_tx = 0x00;
-    uint8_t byte_rx = 0x00;
-    int total_bytes_recibidos = 0;
-    bool stx_encontrado = false;
-    
-    TickType_t tiempo_inicio = xTaskGetTickCount();
-    TickType_t tiempo_limite = pdMS_TO_TICKS(timeout_ms);
-
-    spi_device_acquire_bus(spi_printer, portMAX_DELAY);
-
-    // Configuramos la transacción para que NO levante el pin CS al terminar
-    spi_transaction_t t = {
-        .length = 8,
-        .tx_buffer = &dummy_tx,
-        .rx_buffer = &byte_rx,
-        .flags = SPI_TRANS_CS_KEEP_ACTIVE 
-    };
-
-    // Buscamos STX
-    while ((xTaskGetTickCount() - tiempo_inicio) < tiempo_limite) {
-        spi_device_polling_transmit(spi_printer, &t);
-
-        if (byte_rx == STX_BYTE) {
-            buffer[0] = STX_BYTE;
-            total_bytes_recibidos = 1;
-            stx_encontrado = true;
-            break;
-        } else if (byte_rx != 0x00) {
-            ESP_LOGW(TAG_PRINTER, " ");
-        }
-
-        esp_rom_delay_us(500);
-    }
-
-    if (!stx_encontrado) {
-        t.flags = 0;
-        t.length = 0;
-        t.tx_buffer = NULL;
-        t.rx_buffer = NULL;
-        spi_device_polling_transmit(spi_printer, &t);
-        spi_device_release_bus(spi_printer);
-        return -1; // Nunca llegó el inicio
-    }
-
-    TickType_t tiempo_ultimo_byte = xTaskGetTickCount();
-    // Llegamos hasta ETX + 1
-    while (total_bytes_recibidos < longitud_maxima) {
-        // Usamos un timeout corto entre caracteres (ej. 100ms)
-        if ((xTaskGetTickCount() - tiempo_ultimo_byte) > pdMS_TO_TICKS(100)) {
-            ESP_LOGE(TAG_PRINTER, "Se cortó la trama (Timeout entre bytes)");
-            break; 
-        }
-
-        spi_device_polling_transmit(spi_printer, &t);
-        buffer[total_bytes_recibidos] = byte_rx;
-        total_bytes_recibidos++;
-        tiempo_ultimo_byte = xTaskGetTickCount();
-
-        if (byte_rx == ETX_BYTE) {
-            // Hemos llegado al ETX, solo nos falta succionar 1 byte más (el LRC)
-            spi_device_polling_transmit(spi_printer, &t);
-            
-            if (total_bytes_recibidos < longitud_maxima) { 
-                buffer[total_bytes_recibidos] = byte_rx;
-                total_bytes_recibidos++;
-            }
-            
-            ESP_LOGI(TAG_PRINTER, "Trama completa recibida por SPI (%d bytes)", total_bytes_recibidos);
-            
-            // ÉXITO: Levantamos el CS y liberamos el bus
-            t.flags = 0;
-            t.length = 0;
-            spi_device_polling_transmit(spi_printer, &t);
-            spi_device_release_bus(spi_printer);
-            
-            return total_bytes_recibidos; 
-        }
-    }
-    // Si salimos del bucle porque se llenó el buffer o hubo error
-    ESP_LOGE(TAG_PRINTER, "Error: Lectura abortada (%d bytes)", total_bytes_recibidos);
-    
-    // Levantamos el CS y liberamos el bus
-    t.flags = 0;
-    t.length = 0;
-    spi_device_polling_transmit(spi_printer, &t);
-    spi_device_release_bus(spi_printer);
-    
-    return (total_bytes_recibidos >= longitud_maxima) ? -3 : -2;
 }
 
 // FUNCIONES PÚBLICAS (declaradas en printer_task.h)
@@ -596,7 +512,56 @@ bool send_enq_command(void) {
 
 // Recibir respuesta
 int receive_response(uint8_t* buffer, size_t buffer_size, uint32_t timeout_ms) {
-    return recibir_trama_generica(buffer, buffer_size, timeout_ms);
+    TickType_t tiempo_inicio = xTaskGetTickCount();
+    TickType_t tiempo_limite = pdMS_TO_TICKS(timeout_ms);
+    
+    while ((xTaskGetTickCount() - tiempo_inicio) < tiempo_limite) {
+        
+        // Limpiamos el buffer de transmisión para que inyecte reloj limpio
+        memset(tx_buffer, 0, SPI_BUFFER_SIZE); 
+
+        // 1. Extraemos todo el bloque de una sola vez
+        spi_transaction_t t;
+        memset(&t, 0, sizeof(t));
+
+        t.length = buffer_size * 8; 
+        t.tx_buffer = tx_buffer;
+        t.rx_buffer = buffer; // Los datos caen directo al buffer
+
+        if (spi_device_transmit(spi_printer, &t) != ESP_OK) {
+            return -1;
+        }
+
+        // 2. Fase de Parseo (Buscamos STX y ETX en el pajar de datos)
+        int start_idx = -1;
+        int etx_idx = -1;
+
+        for (int i = 0; i < buffer_size; i++) {
+            if (buffer[i] == STX_BYTE && start_idx == -1) {
+                start_idx = i;
+            }
+            if (start_idx != -1 && buffer[i] == ETX_BYTE) {
+                etx_idx = i;
+                break; // Encontramos el final
+            }
+        }
+
+        // 3. Si encontramos la trama completa, la recortamos
+        if (start_idx != -1 && etx_idx != -1 && (etx_idx + 1 < buffer_size)) {
+            int trama_len = (etx_idx - start_idx) + 2; // +1 por el ETX, +1 por el LRC
+            
+            // Movemos la trama útil al inicio del buffer
+            memmove(buffer, &buffer[start_idx], trama_len);
+            
+            ESP_LOGI(TAG_PRINTER, "Trama Fiscal interceptada (%d bytes)", trama_len);
+            return trama_len; // ¡Éxito absoluto!
+        }
+        
+        // Si el Simulador aún no había enviado nada, le damos 50ms para pensar
+        vTaskDelay(pdMS_TO_TICKS(50));
+    }
+    
+    return -1; // Nos rendimos
 }
 
 int ejecutar_solicitud_s1(uint8_t* buffer, int bytes_maximos) {
@@ -619,6 +584,7 @@ int ejecutar_solicitud_s1(uint8_t* buffer, int bytes_maximos) {
     }
 
     ESP_LOGI(TAG_PRINTER, "ACK recibido, esperando STATUS S1...");
+    vTaskDelay(pdMS_TO_TICKS(50));
     return receive_response(buffer, bytes_maximos, 3000); // 3 segundos
 }
 
@@ -662,7 +628,6 @@ static void printer_task_main(void* pvParameters) {
         if (!send_enq_command()) {
             ESP_LOGI(TAG_PRINTER, "Error al enviar ENQ");
             printer_handle_error(ERROR_COMMUNICATION_LOST);
-            printer_reset_errors();
             continue;
         }
 
@@ -673,7 +638,6 @@ static void printer_task_main(void* pvParameters) {
         if (received <= 0) {
             ESP_LOGI(TAG_PRINTER, "Sin respuesta al ENQ (Timeout)");
             printer_handle_error(ERROR_NO_RESPONSE);
-            printer_reset_errors();
             continue;
         }
         
@@ -681,7 +645,6 @@ static void printer_task_main(void* pvParameters) {
         if (!validate_frame(rx_buffer, received)) {
             ESP_LOGW(TAG_PRINTER, "Trama inválida detectada");
             printer_handle_error(ERROR_INVALID_RESPONSE);
-            printer_reset_errors();
             continue;
         } 
 
@@ -702,13 +665,11 @@ static void printer_task_main(void* pvParameters) {
         if (bytes_leidos <= 0) {
             ESP_LOGW(TAG_PRINTER, "No se recibió respuesta S1 (timeout)");
             printer_handle_error(ERROR_STATUS_S1_FAILED);
-            printer_reset_errors();
             continue;
         }
     
         if (!validate_frame(rx_buffer, bytes_leidos)) {
             printer_handle_error(ERROR_INVALID_RESPONSE);
-            printer_reset_errors();
             continue;
         }
         
