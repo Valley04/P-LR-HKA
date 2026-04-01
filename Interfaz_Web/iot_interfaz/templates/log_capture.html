@@ -42,8 +42,8 @@
                         <span class="badge bg-light text-dark border" style="font-size: 0.7rem;">{{ equipo.grupo.nombre|default:"Sin grupo" }}</span>
                     </td>
                     <td>
-                        <span class="badge bg-secondary">{{ equipo.ultimo_sts1 }}</span>
-                        <span class="badge bg-secondary">{{ equipo.ultimo_sts2 }}</span>
+                        <span class="badge bg-secondary" title="Estado (STS1)">{{ equipo.ultimo_log_datos.sts1|default:"--" }}</span>
+                        <span class="badge bg-secondary" title="Error (STS2)">{{ equipo.ultimo_log_datos.sts2|default:"--" }}</span>
                     </td>
                     <td class="text-end">
                         <a href="{% url 'descargar_logs_equipo' equipo.id %}" class="btn btn-sm btn-outline-success">📥</a>

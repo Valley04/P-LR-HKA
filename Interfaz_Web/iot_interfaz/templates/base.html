@@ -274,7 +274,8 @@
                     let data = {};
 
                     if (message.length > 0) {
-                        data = JSON.parse(message.toString());
+                        let textoLimpio = message.toString().replace(/[\x00-\x1F\x7F-\x9F]/g, "");
+                        data = JSON.parse(textoLimpio);
                     }
 
                     const ahora = Date.now();
@@ -401,7 +402,7 @@
                         }
 
                         // Actualizar modal (si es el equipo seleccionado y el modal está abierto)
-                        if (topic === topicoActual) {
+                        if (window.topicoActual === serialEntrante) {
                             const diccEstado = {"40": "Modo Entrenamiento y en Espera", 
                                                 "41": "Modo Entrenamiento y en medio de una Transacción Fiscal", 
                                                 "42": "Modo Entrenamiento y en medio de una Transacción No Fiscal",

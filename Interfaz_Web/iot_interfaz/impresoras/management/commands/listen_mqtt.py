@@ -43,8 +43,9 @@ class Command(BaseCommand):
             topic_parts = msg.topic.split('/')
             serial_msg = topic_parts[2]
             tipo_mensaje = topic_parts[3]
-
-            payload = json.loads(msg.payload.decode('utf-8'))
+            raw_payload = msg.payload.decode('utf-8', errors='ignore')
+            raw_payload = raw_payload.replace('\n', '').replace('\r', '').replace('\t', '')
+            payload = json.loads(raw_payload, strict=False)
 
             # Buscar equipo
             equipo = Dispositivo.objects.filter(serial=serial_msg).first()

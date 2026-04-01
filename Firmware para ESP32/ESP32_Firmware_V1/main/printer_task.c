@@ -557,7 +557,6 @@ int receive_response(uint8_t* buffer, size_t buffer_size, uint32_t timeout_ms) {
             return trama_len; // ¡Éxito absoluto!
         }
         
-        // Si el Simulador aún no había enviado nada, le damos 50ms para pensar
         vTaskDelay(pdMS_TO_TICKS(50));
     }
     

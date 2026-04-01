@@ -22,7 +22,29 @@ esp_mqtt_client_handle_t mqtt_client = NULL;
 volatile bool wifi_connected = false;
 volatile bool mqtt_connected = false;
 
+// Estructura segura para mover el mensaje fuera del hilo MQTT
+typedef struct {
+    char payload[256]; // Tamaño suficiente para tu JSON {"comando":"INICIAR_OTA", ...}
+    int len;
+} ota_msg_t;
+
+QueueHandle_t ota_cmd_queue = NULL;
+
 //Funciones OTA
+
+void ota_supervisor_task(void *pvParameters) {
+    ota_msg_t mensaje_entrante;
+
+    while (1) {
+        // La tarea se duerme aquí infinitamente hasta que llegue algo a la cola
+        if (xQueueReceive(ota_cmd_queue, &mensaje_entrante, portMAX_DELAY) == pdTRUE) {
+            ESP_LOGW("OTA_SUPERVISOR", "🚨 ¡Mensaje OTA interceptado en el buzón! Prioridad Máxima.");
+            
+            // Ahora sí, fuera del hilo MQTT, podemos darnos el lujo de parsear el JSON
+            procesar_comando_ota(mensaje_entrante.payload, mensaje_entrante.len);
+        }
+    }
+}
 
 void notificar_evento_ota(const char* serial, const char* estado, const char* objetivo, int progreso) {
     char topic[64];
@@ -56,6 +78,12 @@ void wifi_event_handler(void* arg, esp_event_base_t event_base,
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
         LOG_I(TAG_WIFI, "✅ IP obtenida: " IPSTR, IP2STR(&event->ip_info.ip));
+        esp_netif_t *netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+        esp_netif_dns_info_t dns_info;
+        dns_info.ip.u_addr.ip4.addr = ESP_IP4TOADDR(8, 8, 8, 8);
+        dns_info.ip.type = ESP_IPADDR_TYPE_V4;
+        esp_netif_set_dns_info(netif, ESP_NETIF_DNS_MAIN, &dns_info);
+        LOG_I(TAG_WIFI, "🌐 DNS principal forzado a 8.8.8.8 (Google)");
         wifi_connected = true;
         
         // Lanzamos MQTT aquí mismo, ahora que sabemos que hay internet
@@ -91,19 +119,34 @@ void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event
             LOG_I(TAG_MQTT, "MQTT desconectado");
             break;
             
-        case MQTT_EVENT_DATA:
-            ESP_LOGI(TAG_MQTT, "Mensaje recibido");
-
+        case MQTT_EVENT_DATA: {
             char topic_ota[128];
             snprintf(topic_ota, sizeof(topic_ota), "comandos/%s/ota", mqtt_data.register_number);
 
-            if (strcmp(event->topic, topic_ota) == 0) {
-                LOG_I(TAG_MQTT, "Comando OTA detectado, procesando...");
-                procesar_comando_ota(event->data, event->data_len);
-            } else {
-                LOG_W(TAG_MQTT, "Tópico no reconocido: %s", event->topic);
+            if (event->topic_len == strlen(topic_ota) && 
+                strncmp(event->topic, topic_ota, event->topic_len) == 0) {
+
+                if (uxQueueMessagesWaiting(ota_cmd_queue) > 0) {
+                    LOG_W(TAG_MQTT, "Comando ignorado: Ya hay un comando OTA en el buzón esperando.");
+                    break; 
+                }
+                
+                LOG_W(TAG_MQTT, "Comando OTA detectado en antena. Enviando al buzón...");
+                
+                // Copiamos el mensaje rápido y seguro
+                ota_msg_t nuevo_msg;
+                nuevo_msg.len = event->data_len;
+                if (nuevo_msg.len >= sizeof(nuevo_msg.payload)) {
+                    nuevo_msg.len = sizeof(nuevo_msg.payload) - 1; // Prevenir desbordamientos
+                }
+                memcpy(nuevo_msg.payload, event->data, nuevo_msg.len);
+                nuevo_msg.payload[nuevo_msg.len] = '\0'; // Aseguramos cierre de string
+
+                // Empujamos al buzón (No bloqueante)
+                xQueueSend(ota_cmd_queue, &nuevo_msg, 0);
             }
             break;
+        }
             
         case MQTT_EVENT_ERROR:
             mqtt_connected = false;
@@ -439,6 +482,10 @@ void start_mqtt_system(void) {
 
     // Inicializar WiFi y MQTT
     wifi_init_sta();
+
+    // Creamos un buzón que puede guardar hasta 3 comandos OTA en espera
+    ota_cmd_queue = xQueueCreate(3, sizeof(ota_msg_t));
+    xTaskCreate(ota_supervisor_task, "ota_super", 8192, NULL, 10, NULL);
 
     // 6. Crear tarea MQTT
     if (mqtt_task_handle == NULL) {

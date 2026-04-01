@@ -22,68 +22,117 @@ extern mqtt_data_t mqtt_data;
 
 extern spi_device_handle_t spi_printer;
 
-static uint8_t transaccionar_byte_spi(uint8_t data) {
+static uint8_t transaccionar_byte_spi(uint8_t comando) {
+    uint8_t tx_buf[4] = {comando, 0x00, 0x00, 0x00};
+    uint8_t rx_buf[4] = {0x00, 0x00, 0x00, 0x00};
+
     if (spi_printer == NULL) return 0xFF;
 
     spi_transaction_t t;
     memset(&t, 0, sizeof(t));
     
-    t.length = 8;
-    t.flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA;
-    t.tx_data[0] = data; // Guardamos el byte directamente
+    t.length = 32;
+    t.tx_buffer = tx_buf;
+    t.rx_buffer = NULL;
 
     spi_device_polling_transmit(spi_printer, &t);
+
+    vTaskDelay(pdMS_TO_TICKS(20));
+
+    memset(&t, 0, sizeof(t));
+    uint8_t tx_dummy[4] = {0x00, 0x00, 0x00, 0x00}; // Enviamos ceros
+    t.length = 32;
+    t.tx_buffer = tx_dummy;
+    t.rx_buffer = rx_buf;
     
-    return t.rx_data[0]; // Leemos el byte directamente
+    spi_device_transmit(spi_printer, &t);
+    
+    // El ACK estará en el primer byte que recibimos
+    return rx_buf[0];
 }
 
 static esp_err_t enviar_chunk_spi(uint8_t *data, int len) {
     if (spi_printer == NULL || len == 0 || data == NULL) return ESP_FAIL;
 
+    size_t tamano_dma = (len + 3) & ~3;
+
+    uint8_t *tx_buf = heap_caps_calloc(1, tamano_dma, MALLOC_CAP_DMA);
+    if (tx_buf == NULL) {
+        ESP_LOGE(OTA_SPI, "Error de memoria reservando buffer DMA");
+        return ESP_ERR_NO_MEM;
+    }
+
+    memcpy(tx_buf, data, len);
+
     spi_transaction_t t;
     memset(&t, 0, sizeof(t));
     
-    t.length = len * 8; // Longitud en BITS
-    t.tx_buffer = data; 
+    t.length = tamano_dma * 8; // Longitud en BITS
+    t.tx_buffer = tx_buf;
+    t.rx_buffer = NULL;
+    
+    esp_err_t ret = spi_device_polling_transmit(spi_printer, &t);
 
-    return spi_device_polling_transmit(spi_printer, &t);
+    heap_caps_free(tx_buf);
+
+    return ret;
 }
 
 esp_err_t enviar_trama_spi_robusta(uint8_t *data, int len, uint32_t num_pack, uint32_t total_packs) {
-    uint32_t checksum_paquete = 0;
-    for (int j = 0; j < len; j++) checksum_paquete += data[j];
+    uint8_t checksum_paquete = 0;
+    for (int j = 0; j < len; j++) {
+        checksum_paquete ^= data[j]; 
+    }
  
-    uint8_t trama_completa[1050]; 
+    uint8_t trama_completa[SPI_BUFFER_SIZE]; 
     
+    // Empaquetado estricto (4 bytes de cabecera)
     trama_completa[0] = SPI_CMD_PACKET;
-    memcpy(&trama_completa[1], &num_pack, 4);
-    memcpy(&trama_completa[5], &total_packs, 4);
+    trama_completa[1] = (uint8_t)(num_pack & 0xFF);   // 1 Byte para el número de paquete
+    trama_completa[2] = (uint8_t)((len >> 8) & 0xFF); // Byte ALTO del tamaño
+    trama_completa[3] = (uint8_t)(len & 0xFF);        // Byte BAJO del tamaño
     
-    uint16_t tam_actual = (uint16_t)len;
-    memcpy(&trama_completa[9], &tam_actual, 2);
+    // Inserción de los datos en el índice 4
+    memcpy(&trama_completa[4], data, len); 
     
-    memcpy(&trama_completa[11], data, len); // El firmware real
-    memcpy(&trama_completa[11 + len], &checksum_paquete, 4);
+    // Inserción del checksum al final
+    trama_completa[4 + len] = checksum_paquete;
+
+    // Tamaño total de la trama (4 cabecera + datos + 1 checksum)
+    int tam_total = 5 + len; 
 
     int intentos = 0;
     while (intentos < MAX_REINTENTOS_SPI) {
-        // Envio de la trama
-        enviar_chunk_spi(trama_completa, tam_actual);
+        
+        // Enviamos la trama real (con el tamaño total, no solo 'len')
+        enviar_chunk_spi(trama_completa, tam_total);
 
+        // Le damos 50ms al Esclavo para validar el Checksum y poner el ACK en su bandeja
         vTaskDelay(pdMS_TO_TICKS(50));
 
-        // Verificación
-        if (transaccionar_byte_spi(0x00) == ACK_BYTE) {
-            return ESP_OK; // Éxito total
+        uint8_t tx_dummy[4] = {0x00, 0x00, 0x00, 0x00};
+        uint8_t rx_buf[4] = {0x00, 0x00, 0x00, 0x00};
+        
+        spi_transaction_t t;
+        memset(&t, 0, sizeof(t));
+        t.length = 32;
+        t.tx_buffer = tx_dummy;
+        t.rx_buffer = rx_buf;
+        
+        spi_device_transmit(spi_printer, &t);
+
+        // Validamos el primer byte recibido
+        if (rx_buf[0] == 0x06) { // 0x06 es ACK
+            return ESP_OK; // ¡Éxito total!
         }
 
         intentos++;
-        LOG_W(OTA_SPI, "⚠️ NAK en paquete %d (Intento %d/%d). Reintentando...", 
-              num_pack, intentos, MAX_REINTENTOS_SPI);
+        ESP_LOGW(OTA_SPI, "⚠️ NAK en paquete %lu (Intento %d/%d). Reintentando... (Recibido: 0x%02X)", 
+              num_pack, intentos, MAX_REINTENTOS_SPI, rx_buf[0]);
         vTaskDelay(pdMS_TO_TICKS(50)); 
     }
 
-    return ESP_FAIL; // Se agotaron los reintentos
+    return ESP_FAIL; 
 }
 
 void actualizar_impresora_por_spi(const char *url_descarga, const char* serial) {
@@ -227,9 +276,7 @@ static void tarea_ota_esp32(void *pvParameters) {
         }
     }
     else if (strcmp(ota_info->objetivo, "printer") == 0) {
-
         actualizar_impresora_por_spi(ota_info->url, mqtt_data.register_number);
-
         ota_en_progreso = false;
         ESP_LOGI(TAG_OTA, "✅ OTA de impresora finalizado. Reanudando UART normal...");
     }

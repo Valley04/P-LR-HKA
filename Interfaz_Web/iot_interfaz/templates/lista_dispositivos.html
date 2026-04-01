@@ -411,15 +411,15 @@
             const serial = fila.getAttribute('data-serial');
             
             // Usamos la variable global definida en base.html
-            topicoActual = `v1/fiscal/${serial}/json_completo`;
+            window.topicoActual = serial;
             
             document.getElementById('serial-display').innerText = serial;
-            
-            const llavesJSON = ['sts1', 'sts2', 'atm', 'vts', 'last_b', 'b_iss', 'db_n', 'db_a', 'cr_n', 'cr_a', 'nf_n', 'nf_a', 'z_cnt', 'f_cnt', 'rif', 'ser', 'time', 'date'];
-            llavesJSON.forEach(llave => {
-                const elemento = document.getElementById(`val-${llave}`);
-                if (elemento) elemento.innerText = "--";
-            });
+        }
+    });
+
+    document.addEventListener('hide.bs.modal', function (event) {
+        if (event.target.id === 'modalMonitor') {
+            window.topicoActual = null; // Cerramos el candado al salir
         }
     });
 </script>

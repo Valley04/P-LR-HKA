@@ -13,6 +13,7 @@
 #define ETX 0x03
 #define ENQ 0x05
 #define ACK 0x06
+#define NAK 0x15
 
 // Estados de la impresora
 #define STS1 0x60
@@ -29,7 +30,7 @@
 #define SPI_CMD_PACKET 0x04
 #define SPI_CMD_END    0x07
 
-#define SPI_BUFFER_SIZE 1050
+#define SPI_BUFFER_SIZE 1056
 
 // Buffers alineados en memoria (Requisito del DMA)
 uint8_t *sendbuf = NULL; // Buffer para enviar
@@ -42,6 +43,14 @@ typedef enum {
 } pending_res_t;
 
 pending_res_t pending_response = PENDING_NONE;
+uint8_t fw_version = 2;
+uint8_t fw_update = 5;
+uint8_t fw_revision = 7;
+const char* fw_chip = "GD00";
+bool ota_in_progress = false;
+uint32_t ota_bytes_received = 0;
+uint16_t next_expected_packet = 0;
+bool ota_integrity_error = false;
 
 // Función para calcular LRC
 uint8_t calcular_lrc(uint8_t *data, int len) {
@@ -131,7 +140,11 @@ void app_main(void) {
                 }
                 else if (pending_response == PENDING_SV2) {
                     ESP_LOGI("MOCK_PRINTER", "⏳ Master leyó el ACK. Cargando trama SV2...");
-                    char *payload = "SV2\nZ7C\nVE\n020507GD00\n";
+                    char payload[100];
+                    
+                    snprintf(payload, sizeof(payload), "SV2\nZ7C\nVE\n%02d%02d%02d%s\n",
+                              fw_version, fw_update, fw_revision, fw_chip);
+
                     int payload_len = strlen(payload);
                     
                     sendbuf[0] = STX;
@@ -187,18 +200,56 @@ void app_main(void) {
             }
             else if (primer_byte == SPI_CMD_START) {
                 ESP_LOGI(TAG, "📥 Recibido: CMD_START (Iniciando OTA)");
+                ota_in_progress = true;
+                ota_integrity_error = false;
+                next_expected_packet = 1;
+                ota_bytes_received = 0;
+
                 memset(sendbuf, 0, SPI_BUFFER_SIZE);
                 sendbuf[0] = ACK; // Confirmamos inicio
             } 
             else if (primer_byte == SPI_CMD_PACKET) {
-                ESP_LOGI(TAG, "📦 Recibido: PACKET (%lu bytes). Checksum OK -> Enviando ACK", bytes_recibidos);
+                uint8_t pkg_num = recvbuf[start_idx + 1];
+                uint16_t pkg_size = (recvbuf[start_idx + 2] << 8) | recvbuf[start_idx + 3];
+                uint8_t *pkg_data = &recvbuf[start_idx + 4];
+                uint8_t received_chk = recvbuf[start_idx + 4 + pkg_size];
+                
+                // Validar Checksum localmente
+                uint8_t local_chk = calcular_lrc(pkg_data, pkg_size);
+
+                if (local_chk != received_chk) {
+                    ESP_LOGE(TAG, "❌ Error de Checksum en paquete %d. Calc: 0x%02X, Recibido: 0x%02X", 
+                             pkg_num, local_chk, received_chk);
+                    ota_integrity_error = true;
+                }
+
+                if (pkg_num != next_expected_packet) {
+                    ESP_LOGE(TAG, "❌ Error de secuencia. Esperado: %d, Recibido: %d", 
+                             next_expected_packet, pkg_num);
+                    ota_integrity_error = true;
+                }
+
                 memset(sendbuf, 0, SPI_BUFFER_SIZE);
-                sendbuf[0] = ACK;
+
+                if (!ota_integrity_error) {
+                    ota_bytes_received += pkg_size;
+                    next_expected_packet++;
+                    ESP_LOGI(TAG, "📦 Paquete %d recibido OK (%d bytes)", pkg_num, pkg_size);
+                    sendbuf[0] = ACK; // Confirmamos éxito al Master
+                } else {
+                    sendbuf[0] = NAK; // Informamos del fallo al Master
+                }
             } 
             else if (primer_byte == SPI_CMD_END) {
-                ESP_LOGI(TAG, "🏁 Recibido: CMD_END (OTA Finalizado)");
-                memset(sendbuf, 0, SPI_BUFFER_SIZE);
-                sendbuf[0] = ACK; // Confirmamos finalización
+                if (ota_in_progress && !ota_integrity_error && next_expected_packet > 0) {
+                    fw_revision++; // Incrementamos el formato 020507 -> 020508
+                    ESP_LOGI(TAG, "🏁 OTA SUCCESS: Sistema actualizado a %02d%02d%02d%s", 
+                            fw_version, fw_update, fw_revision, fw_chip);
+                } else {
+                    ESP_LOGE(TAG, "🏁 OTA FAIL: La actualización fue abortada por errores de integridad.");
+                }
+                ota_in_progress = false;
+                sendbuf[0] = ACK;
             }
             else {
                 ESP_LOGW("MOCK_PRINTER", "❓ Dato desconocido: 0x%02X en índice [%d]", primer_byte, start_idx);
