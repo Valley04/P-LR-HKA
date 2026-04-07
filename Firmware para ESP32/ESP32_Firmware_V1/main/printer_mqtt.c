@@ -303,7 +303,7 @@ bool mqtt_publish(const char* topic, const char* payload, const char* tipo_dato)
 
     esp_mqtt5_user_property_item_t user_prop_items[] = {
         {"modelo_dispositivo", "HKA80"},
-        {"firmware_version", "V2.0"},
+        {"firmware_version", ISMART_VERSION},
         {"serial", serial_seguro},
         {"tipo_dato", tipo_dato},
         {"wifi_rssi", rssi_str}

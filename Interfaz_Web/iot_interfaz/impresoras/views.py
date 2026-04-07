@@ -280,10 +280,22 @@ def exportar_dispositivos_excel(request):
 
 @login_required # Solo para usuarios loggeados
 def dashboard_view(request):
-    total_dispositivos = Dispositivo.objects.count()
-    hace_2_minutos = timezone.now() - timedelta(seconds=30)
-    en_linea = Dispositivo.objects.filter(ultima_conexion__gte=hace_2_minutos).count()
-    alertas = Dispositivo.objects.exclude(ultimo_sts2=40).count()
+    dispositivos = Dispositivo.objects.all()
+    total_dispositivos = dispositivos.count()
+    limite_conexion = timezone.now() - timedelta(seconds=30)
+    en_linea = Dispositivo.objects.filter(ultima_conexion__gte=limite_conexion).count()
+
+    alertas = 0
+    for equipo in dispositivos:
+        # Obtenemos el último historial conocido
+        datos = equipo.ultimo_log_datos if equipo.ultimo_log_datos else {}
+        
+        # Leemos el estado 2. Si es un equipo nuevo sin datos, asumimos '40' (Todo bien)
+        sts2 = str(datos.get('sts2', '40')) 
+        
+        # Si el estado no es '40', es un error real, sumamos 1 a la alerta
+        if sts2 != "40":
+            alertas += 1
 
     # Modelos para el grafico de barras
     modelos_data = ModeloEquipo.objects.annotate(cantidad=Count('dispositivos'))
@@ -297,6 +309,7 @@ def dashboard_view(request):
         .values('mes') \
         .annotate(cantidad=Count('id')) \
         .order_by('mes')
+    
     labels_meses = [r['mes'].strftime('%b %Y') for r in registro_mensual]
     data_meses = [r['cantidad'] for r in registro_mensual]
 
