@@ -1,5 +1,4 @@
 #include "printer_config.h"
-#include "printer_mqtt.h"
 #include "ota_task.h"
 #include "driver/spi_master.h"
 #include "esp_log.h"
@@ -35,6 +34,8 @@ static uint8_t transaccionar_byte_spi(uint8_t comando) {
     t.tx_buffer = tx_buf;
     t.rx_buffer = NULL;
 
+    xSemaphoreTake(spi_bus_mutex, portMAX_DELAY);
+
     spi_device_polling_transmit(spi_printer, &t);
 
     vTaskDelay(pdMS_TO_TICKS(20));
@@ -46,6 +47,8 @@ static uint8_t transaccionar_byte_spi(uint8_t comando) {
     t.rx_buffer = rx_buf;
     
     spi_device_transmit(spi_printer, &t);
+
+    xSemaphoreGive(spi_bus_mutex);
     
     // El ACK estará en el primer byte que recibimos
     return rx_buf[0];
@@ -70,8 +73,12 @@ static esp_err_t enviar_chunk_spi(uint8_t *data, int len) {
     t.length = tamano_dma * 8; // Longitud en BITS
     t.tx_buffer = tx_buf;
     t.rx_buffer = NULL;
+
+    xSemaphoreTake(spi_bus_mutex, portMAX_DELAY);
     
     esp_err_t ret = spi_device_polling_transmit(spi_printer, &t);
+
+    xSemaphoreGive(spi_bus_mutex);
 
     heap_caps_free(tx_buf);
 
@@ -267,7 +274,18 @@ static void tarea_ota_esp32(void *pvParameters) {
             notificar_evento_ota(mqtt_data.register_number, "exito", "ismart", 100);
             ESP_LOGI(TAG_OTA, "OTA completada con éxito. Reiniciando...");
             vTaskDelay(pdMS_TO_TICKS(1500));
+
+            extern void printer_spi_deinit(void); // Llamamos a tu función de limpieza
+            printer_spi_deinit();
+
+            if (mqtt_client != NULL) {
+                esp_mqtt_client_disconnect(mqtt_client);
+                esp_mqtt_client_stop(mqtt_client);
+            }
+            vTaskDelay(pdMS_TO_TICKS(500));
+            esp_wifi_disconnect();
             esp_wifi_stop();
+            vTaskDelay(pdMS_TO_TICKS(500));
             esp_restart();
         } else {
             notificar_evento_ota(mqtt_data.register_number, "error", "ismart", 0);

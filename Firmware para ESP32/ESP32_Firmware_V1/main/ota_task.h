@@ -2,6 +2,8 @@
 #define OTA_TASK_H
 
 #include "printer_config.h"
+#include "printer_task.h"
+#include "printer_mqtt.h"
 
 #define OTA_MAX_URL_LEN      256
 #define OTA_MAX_TARGET_LEN   16

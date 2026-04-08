@@ -16,6 +16,7 @@ mqtt_data_t mqtt_data;
 const char* TAG_PRINTER = "printer_events";
 QueueHandle_t printer_spi_queue = NULL;
 SemaphoreHandle_t mqtt_data_mutex = NULL;
+SemaphoreHandle_t spi_bus_mutex = NULL;
 
 // VARIABLES ESTÁTICAS (solo visibles en este archivo)
 static TaskHandle_t printer_task_handle = NULL;
@@ -127,13 +128,14 @@ bool printer_get_fw_version(void) {
         int fw_len = 10; // 020507GD00
 
         // LRC
-        if (etx_pos >= fw_len) {
-            int start_idx = etx_pos - fw_len;
+        if (etx_pos >= fw_len + 1) {
+            int start_idx = etx_pos - fw_len - 1;
             
             if (xSemaphoreTake(mqtt_data_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
                 // Version para Impresora
                 memset(mqtt_data.fw_printer, 0, sizeof(mqtt_data.fw_printer));
                 strncpy(mqtt_data.fw_printer, (char*)&rx_buffer[start_idx], fw_len);
+                mqtt_data.fw_printer[fw_len] = '\0';
                 ESP_LOGI(TAG_PRINTER, "✅ Versión detectada vía SV2: %s", mqtt_data.fw_printer);
                 xSemaphoreGive(mqtt_data_mutex);
             }
@@ -398,18 +400,15 @@ void procesar_status_s1(uint8_t* data, size_t len) {
         mqtt_data.amount_notfiscal = strtoul(campos[9], NULL, 10);
         strncpy(mqtt_data.counter_daily_z, campos[10], sizeof(mqtt_data.counter_daily_z) - 1);
         strncpy(mqtt_data.counter_report_fiscal, campos[11], sizeof(mqtt_data.counter_report_fiscal) - 1);
-        
         strncpy(mqtt_data.rif_cliente, campos[12], sizeof(mqtt_data.rif_cliente) - 1);
-        strncpy(mqtt_data.register_number, campos[13], sizeof(mqtt_data.register_number) - 1);
         strncpy(mqtt_data.hour_machine, campos[14], sizeof(mqtt_data.hour_machine) - 1);
         strncpy(mqtt_data.date_machine, campos[15], sizeof(mqtt_data.date_machine) - 1);
         
         // Forzar cierres nulos por seguridad en estructura packed
-        mqtt_data.register_number[sizeof(mqtt_data.register_number) - 1] = '\0';
         mqtt_data.rif_cliente[sizeof(mqtt_data.rif_cliente) - 1] = '\0';
 
         // Actualizar serial
-        update_printer_serial(mqtt_data.register_number);
+        update_printer_serial(campos[13]);
         
         // Actualizar timestamp
         mqtt_data.timestamp = xTaskGetTickCount() * portTICK_PERIOD_MS;
@@ -620,13 +619,19 @@ static void printer_task_main(void* pvParameters) {
                 ESP_LOGE(TAG_PRINTER, "Reconexión fallida, esperando...");
                 continue;
             }
-        }        
+        }
+        
+        if (xSemaphoreTake(spi_bus_mutex, pdMS_TO_TICKS(1000)) != pdTRUE) {
+            ESP_LOGW(TAG_PRINTER, "SPI ocupado (posible OTA), saltando ciclo fiscal...");
+            continue;
+        }
                 
         // Enviar comando ENQ
         ESP_LOGI(TAG_PRINTER, "Enviando comando ENQ...");
         if (!send_enq_command()) {
             ESP_LOGI(TAG_PRINTER, "Error al enviar ENQ");
             printer_handle_error(ERROR_COMMUNICATION_LOST);
+            xSemaphoreGive(spi_bus_mutex);
             continue;
         }
 
@@ -637,6 +642,7 @@ static void printer_task_main(void* pvParameters) {
         if (received <= 0) {
             ESP_LOGI(TAG_PRINTER, "Sin respuesta al ENQ (Timeout)");
             printer_handle_error(ERROR_NO_RESPONSE);
+            xSemaphoreGive(spi_bus_mutex);
             continue;
         }
         
@@ -644,6 +650,7 @@ static void printer_task_main(void* pvParameters) {
         if (!validate_frame(rx_buffer, received)) {
             ESP_LOGW(TAG_PRINTER, "Trama inválida detectada");
             printer_handle_error(ERROR_INVALID_RESPONSE);
+            xSemaphoreGive(spi_bus_mutex);
             continue;
         } 
 
@@ -664,11 +671,13 @@ static void printer_task_main(void* pvParameters) {
         if (bytes_leidos <= 0) {
             ESP_LOGW(TAG_PRINTER, "No se recibió respuesta S1 (timeout)");
             printer_handle_error(ERROR_STATUS_S1_FAILED);
+            xSemaphoreGive(spi_bus_mutex);
             continue;
         }
     
         if (!validate_frame(rx_buffer, bytes_leidos)) {
             printer_handle_error(ERROR_INVALID_RESPONSE);
+            xSemaphoreGive(spi_bus_mutex);
             continue;
         }
         
@@ -676,7 +685,8 @@ static void printer_task_main(void* pvParameters) {
 
         printer_reset_errors();
 
-        ESP_LOGI(TAG_PRINTER, "Ciclo completado exitosamente");        
+        ESP_LOGI(TAG_PRINTER, "Ciclo completado exitosamente");
+        xSemaphoreGive(spi_bus_mutex);        
     }
 }
 
@@ -686,6 +696,14 @@ esp_err_t printer_task_start(void) {
         mqtt_data_mutex = xSemaphoreCreateMutex();
         if (mqtt_data_mutex == NULL) {
             ESP_LOGE(TAG_PRINTER, "No se pudo crear el Mutex");
+            return ESP_ERR_NO_MEM;
+        }
+    }
+
+    if (spi_bus_mutex == NULL) {
+        spi_bus_mutex = xSemaphoreCreateMutex();
+        if (spi_bus_mutex == NULL) {
+            ESP_LOGE(TAG_PRINTER, "No se pudo crear el Mutex de SPI");
             return ESP_ERR_NO_MEM;
         }
     }

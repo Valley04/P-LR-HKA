@@ -242,7 +242,9 @@ void app_main(void) {
             } 
             else if (primer_byte == SPI_CMD_END) {
                 if (ota_in_progress && !ota_integrity_error && next_expected_packet > 0) {
-                    fw_revision++; // Incrementamos el formato 020507 -> 020508
+                    if (fw_revision < 8) {
+                        fw_revision++; 
+                    } // Incrementamos el formato 020507 -> 020508
                     ESP_LOGI(TAG, "🏁 OTA SUCCESS: Sistema actualizado a %02d%02d%02d%s", 
                             fw_version, fw_update, fw_revision, fw_chip);
                 } else {

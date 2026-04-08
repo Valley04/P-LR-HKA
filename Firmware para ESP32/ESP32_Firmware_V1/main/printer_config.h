@@ -11,7 +11,7 @@
 #include "freertos/semphr.h"
 #include "mqtt_client.h"
 
-#define ISMART_VERSION "020400"
+#define ISMART_VERSION "020700"
 
 // CONSTANTES DE CONFIGURACIÓN
 
@@ -144,6 +144,7 @@ extern const char* TAG_PRINTER;
 extern esp_mqtt_client_handle_t mqtt_client;
 extern SemaphoreHandle_t mqtt_data_mutex;
 extern TaskHandle_t mqtt_task_handle;
+extern SemaphoreHandle_t spi_bus_mutex;
 
 // Colas (definidas en printer_task.c)
 extern QueueHandle_t printer_uart_queue;
