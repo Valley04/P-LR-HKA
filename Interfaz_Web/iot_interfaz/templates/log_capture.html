@@ -2,7 +2,12 @@
 {% load json_filters %}
 
 {% block dispositivos_content %}
-<div class="p-4">
+<div id="vista-log-capture" class="p-4"
+     hx-get="{% url 'log_capture' %}?buscar={{ request.GET.buscar }}" 
+     hx-trigger="mqttNuevoLog from:body" 
+     hx-target="#vista-log-capture" 
+     hx-swap="outerHTML">
+     
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h4>Historial por Dispositivo</h4>
         <small class="text-muted">Conservación automática: 90 días</small>

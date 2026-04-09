@@ -231,11 +231,11 @@
                         <div class="row mb-3 text-center">
                             <div class="col-6 border-end">
                                 <small class="text-muted d-block text-uppercase fw-bold">Módulo iSmart</small>
-                                <span class="badge bg-primary fs-6 mt-1">v. {{ equipo.ultimo_log_datos.fw_ismart|default:"Desconocida" }}</span>
+                                <span id="val-fw_ismart-{{ equipo.serial }}" class="badge bg-primary fs-6 mt-1">v. {{ equipo.ultimo_log_datos.fw_ismart|default:"Desconocida" }}</span>
                             </div>
                             <div class="col-6">
                                 <small class="text-muted d-block text-uppercase fw-bold">Impresora Fiscal</small>
-                                <span class="badge bg-secondary fs-6 mt-1">v. {{ equipo.ultimo_log_datos.fw_printer|default:"Desconocida" }}</span>
+                                <span id="val-fw_printer-{{ equipo.serial }}" class="badge bg-secondary fs-6 mt-1">v. {{ equipo.ultimo_log_datos.fw_printer|default:"Desconocida" }}</span>
                             </div>
                         </div>
 

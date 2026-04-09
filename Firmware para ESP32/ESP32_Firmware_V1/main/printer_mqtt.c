@@ -11,6 +11,7 @@
 #include "mqtt_client.h"
 #include "mqtt5_client.h"
 #include "esp_crt_bundle.h"
+#include "esp_mac.h"
 
 // VARIABLES ESTÁTICAS
 static const char* TAG_MQTT = "mqtt_events";
@@ -220,12 +221,21 @@ void mqtt_app_start(void) {
     static char lwt_topic[64];
     prepare_mqtt_topic(lwt_topic, sizeof(lwt_topic), mqtt_data.register_number, "alertas_conexion");
     const char* lwt_msg = "{\"st\":\"offline\", \"alerta\":\"conexion_perdida_abruptamente\"}";
+    uint8_t mac[6];
+    char client_id_seguro[32];
+
+    esp_read_mac(mac, ESP_MAC_WIFI_STA);
+
+    // Ensamblamos un ID temporal pero absolutamente único
+    snprintf(client_id_seguro, sizeof(client_id_seguro), "iSmart_%02X%02X%02X%02X%02X%02X", 
+            mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
     
     // CONFIGURACIÓN CORRECTA para ESP-IDF v5.5.2
     esp_mqtt_client_config_t mqtt_cfg = {
         .broker.address.hostname = "832b8689599f4045be005c116bc416f0.s1.eu.hivemq.cloud",
         .broker.address.port = 8883,
         .broker.address.transport = MQTT_TRANSPORT_OVER_SSL,
+        .credentials.client_id = client_id_seguro,
         .broker.verification.crt_bundle_attach = esp_crt_bundle_attach,
         .credentials.username = "HKAESP32",
         .credentials.authentication.password = "ESPhka32",

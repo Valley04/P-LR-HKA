@@ -109,8 +109,8 @@
                     {% endif %}
                 </div>
 
-                    {% block content %}
-                    {% endblock %}
+            {% block content %}
+        {% endblock %}
     {% if request.user.is_authenticated %}
 
             </div> 
@@ -320,6 +320,10 @@
                                     }
                                 }
                             }
+
+                            if (!document.body.classList.contains('modal-open')) {
+                                document.body.dispatchEvent(new CustomEvent('mqtt-update', { bubbles: true }));
+                            }
                         }
                     }
                     else if (tipoMensaje === "ota") {
@@ -430,6 +434,19 @@
                                     else { elemento.innerText = data[llave]; }
                                 }
                             });
+
+                            if (data.fw_ismart) {
+                                const elFwIsmart = document.getElementById(`val-fw_ismart-${serialEntrante}`);
+                                if (elFwIsmart) elFwIsmart.innerText = `v. ${data.fw_ismart}`;
+                            }
+                            if (data.fw_printer) {
+                                const elFwPrinter = document.getElementById(`val-fw_printer-${serialEntrante}`);
+                                if (elFwPrinter) elFwPrinter.innerText = `v. ${data.fw_printer}`;
+                            }
+                        }
+
+                        if (!document.body.classList.contains('modal-open')) {
+                            document.body.dispatchEvent(new CustomEvent('mqtt-update', { bubbles: true }));
                         }
                     }
 
