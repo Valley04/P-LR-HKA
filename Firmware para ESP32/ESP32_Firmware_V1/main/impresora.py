@@ -51,7 +51,7 @@ def enviar_respuesta_s1(ser):
         b"0020",                # 10: Z_cnt
         b"0017",                # 11: F_cnt
         b"J-312171197",         # 12: RIF
-        b"Z1A8779988",          # 13: Serial
+        b"Z1B7779988",          # 13: Serial
         b"123000",              # 14: Hora
         b"300126"               # 15: Fecha
     ]

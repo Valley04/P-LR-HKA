@@ -87,6 +87,7 @@ class Command(BaseCommand):
 
                     if payload.get('fw_ismart'):
                         equipo.fw_ismart_instalado = str(nuevo_fw_ismart)
+
                     if payload.get('fw_printer'):
                         equipo.fw_printer_instalado = str(nuevo_fw_printer)
 
@@ -103,30 +104,34 @@ class Command(BaseCommand):
                     nuevo_sts2 = str(payload.get('sts2', ''))
                     viejo_sts2 = str(datos_viejos.get('sts2', ''))
 
-                    evento_tipo = None
+                    eventos_detectados = []
 
+                    # 1. Evaluaciones Independientes (Puros 'if')
                     if viejo_st == "offline":
-                        evento_tipo = "Reconexión Exitosa"
-                    elif nuevo_fw_ismart and str(nuevo_fw_ismart) != viejo_fw_ismart and viejo_fw_ismart not in ["Desconocida", "None"]:
-                        evento_tipo = "Actualización Firmware iSmart"
-                    elif nuevo_fw_printer and str(nuevo_fw_printer) != viejo_fw_printer and viejo_fw_printer not in ["Desconocida", "None"]:
-                        evento_tipo = "Actualización Firmware Impresora"
-                    elif nuevo_sts2 and nuevo_sts2 != viejo_sts2:
-                        evento_tipo = "Cambio de Error"
-                    elif nuevo_sts1 and nuevo_sts1 != viejo_sts1:
-                        evento_tipo = "Cambio de Estado"
-                    elif not datos_viejos:
-                        evento_tipo = "Primer Registro Inicial"
+                        eventos_detectados.append("Reconexión Exitosa")
+                    
+                    if nuevo_fw_ismart and str(nuevo_fw_ismart) != viejo_fw_ismart and viejo_fw_ismart not in ["Desconocida", "None"]:
+                        eventos_detectados.append("Actualización Firmware iSmart")
+                    
+                    if nuevo_fw_printer and str(nuevo_fw_printer) != viejo_fw_printer and viejo_fw_printer not in ["Desconocida", "None"]:
+                        eventos_detectados.append("Actualización Firmware Impresora")
+                    
+                    if nuevo_sts2 and nuevo_sts2 != viejo_sts2:
+                        eventos_detectados.append("Cambio de Error")
+                    
+                    if nuevo_sts1 and nuevo_sts1 != viejo_sts1:
+                        eventos_detectados.append("Cambio de Estado")
+                    
+                    if not datos_viejos:
+                        eventos_detectados.append("Primer Registro Inicial")
 
-                    # 5. Si hubo algún cambio, guardamos el JSON en el historial
-                    if evento_tipo:
-
+                    # 5. Guardamos un Log INDIVIDUAL por cada cambio detectado en la misma trama
+                    for evento_tipo in eventos_detectados:
                         LogDispositivo.objects.create(
                             dispositivo=equipo,
                             evento=evento_tipo,
                             detalles=json.dumps(payload)
                         )
-
                         self.stdout.write(self.style.SUCCESS(f"📝 [NUEVO LOG] {evento_tipo} en {serial_msg}"))
 
                     # 6. Limpieza de logs antiguos (se mantiene igual)
