@@ -17,7 +17,7 @@ void app_main(void) {
     
     // Inicializar comunicación UART
     if (!printer_spi_init()) {
-        ESP_LOGE(TAG, "Error crítico: No se pudo inicializar UART");
+        ESP_LOGE(TAG, "Error crítico: No se pudo inicializar SPI");
         
         return;
     }

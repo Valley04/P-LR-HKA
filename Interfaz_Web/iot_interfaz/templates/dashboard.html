@@ -1,115 +1,117 @@
 {% extends 'base.html' %}
 
-{% block title %}Dashboard Principal{% endblock %}
+{% block title %}Dashboard Principal | Monitor IoT{% endblock %}
 
 {% block content %}
-<div class="container-fluid p-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="h3 mb-0 text-gray-800">Panel de Control General</h2>
-        <span class="text-muted small">Estado del Sistema: <span class="text-success fw-bold">● Activo</span></span>
-    </div>
+<div class="p-6 md:p-8 space-y-8">
 
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card border-0 border-start border-primary border-4 shadow-sm h-100 py-2">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <div class="text-xs fw-bold text-primary text-uppercase mb-1">Equipos Registrados</div>
-                            <div class="h3 mb-0 fw-bold">{{ total_dispositivos }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-pc-display-horizontal fs-1 text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-gray-800 p-6 rounded-2xl shadow-sm border-l-4 border-blue-500">
+        <div>
+            <h2 class="text-2xl font-bold text-white tracking-tight">Panel de Control General</h2>
+            <p class="text-gray-400 text-sm mt-1">Visión global de la flota The Factory HKA</p>
         </div>
-
-        <div class="col-md-4">
-            <div class="card border-0 border-start border-success border-4 shadow-sm h-100 py-2">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <div class="text-xs fw-bold text-success text-uppercase mb-1">En Línea (MQTT)</div>
-                            <div class="h3 mb-0 fw-bold">{{ en_linea }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-broadcast fs-1 text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card border-0 border-start border-danger border-4 shadow-sm h-100 py-2">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <div class="text-xs fw-bold text-danger text-uppercase mb-1">Alertas</div>
-                            <div class="h3 mb-0 fw-bold">{{ alertas }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-exclamation-octagon fs-1 text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="mt-4 sm:mt-0 bg-gray-900 px-4 py-2 rounded-full border border-gray-700 flex items-center shadow-inner">
+            <span class="text-gray-400 text-xs font-semibold uppercase tracking-wider mr-2">Estado del Sistema:</span>
+            <span class="flex items-center text-green-400 font-bold text-sm">
+                <span class="relative flex h-3 w-3 mr-2">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                </span>
+                Activo
+            </span>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-lg-8">
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-white border-0 py-3">
-                    <h6 class="m-0 fw-bold text-dark">Crecimiento de Dispositivos (6 meses)</h6>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <div class="bg-gray-800 rounded-[2rem] p-6 shadow-lg border border-gray-700 relative overflow-hidden group hover:border-blue-500/50 transition-colors">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-blue-400"></div>
+            <div class="flex justify-between items-center">
+                <div>
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Equipos Registrados</div>
+                    <div class="text-4xl font-extrabold text-white">{{ total_dispositivos }}</div>
                 </div>
-                <div class="card-body">
-                    <canvas id="graficaTiempo" style="max-height: 350px;"></canvas>
+                <div class="p-4 bg-gray-900/50 rounded-2xl text-blue-400 group-hover:scale-110 group-hover:text-blue-300 transition-transform">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-4">
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-white border-0 py-3">
-                    <h6 class="m-0 fw-bold text-dark">Modelos Registrados</h6>
+        <div class="bg-gray-800 rounded-[2rem] p-6 shadow-lg border border-gray-700 relative overflow-hidden group hover:border-green-500/50 transition-colors">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-600 to-green-400"></div>
+            <div class="flex justify-between items-center">
+                <div>
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">En Línea (MQTT)</div>
+                    <div class="text-4xl font-extrabold text-white">{{ en_linea }}</div>
                 </div>
-                <div class="card-body">
-                    <canvas id="graficaModelos" style="max-height: 350px;"></canvas>
+                <div class="p-4 bg-gray-900/50 rounded-2xl text-green-400 group-hover:scale-110 group-hover:text-green-300 transition-transform">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 rounded-[2rem] p-6 shadow-lg border border-gray-700 relative overflow-hidden group hover:border-red-500/50 transition-colors">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 to-red-400"></div>
+            <div class="flex justify-between items-center">
+                <div>
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Alertas Criticas</div>
+                    <div class="text-4xl font-extrabold text-white">{{ alertas }}</div>
+                </div>
+                <div class="p-4 bg-gray-900/50 rounded-2xl text-red-400 group-hover:scale-110 group-hover:text-red-300 transition-transform">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row mt-4">
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-header bg-white fw-bold text-secondary">
-                    <i class="bi bi-cpu text-primary me-2"></i>Distribución Versiones iSmart
-                </div>
-                <div class="card-body d-flex justify-content-center align-items-center" style="position: relative; height: 250px;">
-                    <canvas id="chartIsmart"></canvas>
-                </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <div class="lg:col-span-2 bg-gray-800 rounded-[2rem] shadow-lg border border-gray-700 overflow-hidden">
+            <div class="bg-gray-900/30 px-6 py-4 border-b border-gray-700 flex justify-between items-center">
+                <h6 class="m-0 font-semibold text-white">Crecimiento de Dispositivos (6 meses)</h6>
+            </div>
+            <div class="p-6">
+                <canvas id="graficaTiempo" class="w-full" style="max-height: 350px;"></canvas>
             </div>
         </div>
 
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-header bg-white fw-bold text-secondary">
-                    <i class="bi bi-printer text-secondary me-2"></i>Distribución Versiones Impresora
-                </div>
-                <div class="card-body d-flex justify-content-center align-items-center" style="position: relative; height: 250px;">
-                    <canvas id="chartPrinter"></canvas>
-                </div>
+        <div class="bg-gray-800 rounded-[2rem] shadow-lg border border-gray-700 overflow-hidden">
+            <div class="bg-gray-900/30 px-6 py-4 border-b border-gray-700">
+                <h6 class="m-0 font-semibold text-white">Modelos Registrados</h6>
+            </div>
+            <div class="p-6">
+                <canvas id="graficaModelos" class="w-full" style="max-height: 350px;"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <div class="bg-gray-800 rounded-[2rem] shadow-lg border border-gray-700 overflow-hidden">
+            <div class="bg-gray-900/30 px-6 py-4 border-b border-gray-700 flex items-center">
+                <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
+                <h6 class="m-0 font-semibold text-white">Distribución Versiones iSmart</h6>
+            </div>
+            <div class="p-6 flex justify-center items-center h-[280px]">
+                <canvas id="chartIsmart"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 rounded-[2rem] shadow-lg border border-gray-700 overflow-hidden">
+            <div class="bg-gray-900/30 px-6 py-4 border-b border-gray-700 flex items-center">
+                <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                <h6 class="m-0 font-semibold text-white">Distribución Versiones Impresora</h6>
+            </div>
+            <div class="p-6 flex justify-center items-center h-[280px]">
+                <canvas id="chartPrinter"></canvas>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-
 (function() {
 
     if (window.misGraficosDashboard) {
@@ -124,8 +126,26 @@
     const dataPrinter = {{ data_printer|safe }};
     const backgroundColors = ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#0dcaf0', '#6c757d'];
 
+    Chart.defaults.color = '#f3f4f6';
+    Chart.defaults.borderColor = '#374151';
+
+    Chart.defaults.plugins.legend.labels.color = '#f3f4f6';
+    if (Chart.defaults.plugins.title) {
+        Chart.defaults.plugins.title.color = '#ffffff';
+    }
+
+    Chart.defaults.scales = {
+        x: {
+            ticks: { color: '#f3f4f6' },
+            grid: { color: '#374151' }
+        },
+        y: {
+            ticks: { color: '#f3f4f6' },
+            grid: { color: '#374151' }
+        }
+    };
+
     const ctxTiempo = document.getElementById("graficaTiempo");
-    // 1. Gráfica de Línea (Tiempo)
     if (ctxTiempo) {
         const chartTiempo = new Chart(ctxTiempo, {
             type: 'line',
@@ -134,10 +154,10 @@
                 datasets: [{
                     label: "Nuevos Registros",
                     data: {{ data_meses|safe }},
-                    borderColor: "#0d6efd",
-                    backgroundColor: "rgba(13, 110, 253, 0.05)",
+                    borderColor: "#3b82f6",
+                    backgroundColor: "rgba(59, 130, 246, 0.1)",
                     fill: true,
-                    tension: 0.3
+                    tension: 0.4
                 }]
             },
             options: { plugins: { legend: { display: false } } }
@@ -154,7 +174,8 @@
                 datasets: [{
                     label: 'Equipos',
                     data: {{ counts_modelos|safe }},
-                    backgroundColor: '#198754'
+                    backgroundColor: '#10b981',
+                    borderRadius: 4
                 }]
             },
             options: {
@@ -174,14 +195,15 @@
                 datasets: [{
                     data: dataIsmart,
                     backgroundColor: backgroundColors,
-                    borderWidth: 2,
+                    borderWidth: 0,
                     hoverOffset: 4
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { position: 'right' } }
+                plugins: { legend: { position: 'right' } },
+                cutout: '70%'
             }
         });
         window.misGraficosDashboard.push(chartIsmart);
@@ -196,14 +218,15 @@
                 datasets: [{
                     data: dataPrinter,
                     backgroundColor: backgroundColors.slice().reverse(),
-                    borderWidth: 2,
+                    borderWidth: 0,
                     hoverOffset: 4
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { position: 'right' } }
+                plugins: { legend: { position: 'right' } },
+                cutout: '70%'
             }
         });
         window.misGraficosDashboard.push(chartPrinter);

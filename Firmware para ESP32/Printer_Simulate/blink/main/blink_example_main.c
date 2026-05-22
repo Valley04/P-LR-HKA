@@ -99,7 +99,7 @@ void app_main(void) {
         spi_slave_transaction_t t;
         memset(&t, 0, sizeof(t));
 
-        t.length = 1050 * 8; // Esperamos hasta 1050 bytes (en bits)
+        t.length =  SPI_BUFFER_SIZE * 8;
         t.tx_buffer = sendbuf;
         t.rx_buffer = recvbuf;
 
@@ -155,6 +155,11 @@ void app_main(void) {
                 }
                 continue;
             }
+
+            // Se imprimirá en consola todo el contenido del buffer cuando llegue información real
+            ESP_LOGI("MOCK_PRINTER", "🔍 --- INICIO DUMP SPI CRUDO (%lu bytes) ---", bytes_recibidos);
+            esp_log_buffer_hex("RAW_SPI_RX", recvbuf, bytes_recibidos);
+            ESP_LOGI("MOCK_PRINTER", "🔍 --- FIN DUMP SPI CRUDO ---");
 
             uint8_t primer_byte = recvbuf[start_idx];
             ESP_LOGI("MOCK_PRINTER", "📥 Dato útil en índice [%d]: 0x%02X", start_idx, primer_byte);

@@ -1,0 +1,8 @@
+@import "tailwindcss";
+@source "../../templates";
+@source "../../../templates";
+@source "../../../**/*.{html,py,js}";
+
+@theme {
+  --font-sans: "Fira Sans", sans-serif;
+}

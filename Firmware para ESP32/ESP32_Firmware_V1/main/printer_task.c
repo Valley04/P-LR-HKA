@@ -53,6 +53,8 @@ bool esperar_ack_impresora(uint32_t timeout_ms) {
     TickType_t tiempo_inicio = xTaskGetTickCount();
     TickType_t tiempo_limite = pdMS_TO_TICKS(timeout_ms);
 
+    const int LECTURA_BYTES = 1056;
+
     while ((xTaskGetTickCount() - tiempo_inicio) < tiempo_limite) {
 
         // Limpiamos los buffers globales
@@ -62,28 +64,28 @@ bool esperar_ack_impresora(uint32_t timeout_ms) {
         spi_transaction_t t;
         memset(&t, 0, sizeof(t));
 
-        t.length = 32;
+        t.length = LECTURA_BYTES * 8;
         t.tx_buffer = tx_buffer;
         t.rx_buffer = rx_buffer;
         
         if (spi_device_transmit(spi_printer, &t) == ESP_OK) {
-            uint8_t ack_rx = rx_buffer[0];
-        
-            // Si la lectura fue exitosa y la impresora nos devolvió algo distinto a silencio (0x00)
-            if (ack_rx != 0xFF && ack_rx != 0x00) { 
-                if (ack_rx == ACK_BYTE) {
-                    ESP_LOGI(TAG_PRINTER, "✅ ACK recibido de la impresora.");
+            
+            for (int i = 0; i < LECTURA_BYTES; i++) {
+                uint8_t byte_leido = rx_buffer[i];
+                
+                if (byte_leido == ACK_BYTE) {
+                    ESP_LOGI(TAG_PRINTER, "✅ ACK recibido (en el índice %d).", i);
                     return true;
-                } else if (ack_rx == NAK_BYTE) {
-                    ESP_LOGE(TAG_PRINTER, "❌ NAK recibido. La impresora rechazó el comando.");
+                } else if (byte_leido == NAK_BYTE) {
+                    ESP_LOGE(TAG_PRINTER, "❌ NAK recibido (en el índice %d).", i);
                     return false;
-                } else {
-                    ESP_LOGW(TAG_PRINTER, "⚠️ Byte inesperado recibido: 0x%02X", ack_rx);
                 }
+                
             }
+
         }
         // Si no hemos recibido el ACK, le damos un respiro a la impresora y volvemos a preguntar
-        vTaskDelay(pdMS_TO_TICKS(10));
+        vTaskDelay(pdMS_TO_TICKS(20));
     }
 
     ESP_LOGE(TAG_PRINTER, "⏰ Timeout esperando ACK/NAK por SPI.");
@@ -110,40 +112,60 @@ bool printer_get_fw_version(void) {
         return false;
     }
 
-    if (!esperar_ack_impresora(500)) {
-        if (xSemaphoreTake(mqtt_data_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-            strcpy(mqtt_data.fw_printer, "0000000000");
-            xSemaphoreGive(mqtt_data_mutex);
-        }
-        return false; // Abortamos temprano
-    }
-
     vTaskDelay(pdMS_TO_TICKS(50));
 
     int bytes_leidos = receive_response(rx_buffer, sizeof(rx_buffer), 1000);    
 
-    if (bytes_leidos > 15 && validate_frame(rx_buffer, bytes_leidos)) {
+    if (bytes_leidos > 3) {
 
-        int etx_pos = bytes_leidos - 2;
-        int fw_len = 10; // 020507GD00
+        ESP_LOGI(TAG_PRINTER, "DUMP TRAMA SV2 REAL");
+        ESP_LOG_BUFFER_HEX(TAG_PRINTER, rx_buffer, bytes_leidos);
 
-        // LRC
-        if (etx_pos >= fw_len + 1) {
-            int start_idx = etx_pos - fw_len - 1;
-            
+        if (validate_frame(rx_buffer, bytes_leidos)) {
+            char payload_crudo[32] = {0};
+            int payload_len = bytes_leidos - 3;
+            memcpy(payload_crudo, &rx_buffer[1], payload_len);
+
+            char* ptr = payload_crudo;
+            char* ultima_parte = payload_crudo;
+
+            while (ptr != NULL && *ptr != '\0') {
+                char* siguiente = strchr(ptr, '\n');
+                if (siguiente != NULL) {
+                    ultima_parte = siguiente + 1; // Apuntamos al contenido después del \n
+                    ptr = siguiente + 1;
+                } else {
+                    break;
+                }
+            }
+
+            if (payload_len > 0 && payload_len < sizeof(payload_crudo)) {
+                memcpy(payload_crudo, &rx_buffer[1], payload_len);
+                ESP_LOGI(TAG_PRINTER, "📄 Payload SV2 detectado (Texto): '%s'", payload_crudo);
+            }
+
             if (xSemaphoreTake(mqtt_data_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-                // Version para Impresora
                 memset(mqtt_data.fw_printer, 0, sizeof(mqtt_data.fw_printer));
-                strncpy(mqtt_data.fw_printer, (char*)&rx_buffer[start_idx], fw_len);
-                mqtt_data.fw_printer[fw_len] = '\0';
-                ESP_LOGI(TAG_PRINTER, "✅ Versión detectada vía SV2: %s", mqtt_data.fw_printer);
+                
+                // Solo si encontramos algo coherente (mayor a 4 caracteres para evitar basura)
+                if (strlen(ultima_parte) >= 5) {
+                    strncpy(mqtt_data.fw_printer, ultima_parte, sizeof(mqtt_data.fw_printer) - 1);
+                } else {
+                    strcpy(mqtt_data.fw_printer, "0000000000");
+                }
+                
+                ESP_LOGI(TAG_PRINTER, "✅ Versión EXTRAÍDA: %s", mqtt_data.fw_printer);
                 xSemaphoreGive(mqtt_data_mutex);
             }
 
             return true;
+            
+        } else {
+            ESP_LOGE(TAG_PRINTER, "❌ Trama SV2 falló validación de Checksum (LRC)");
         }
+
     } else {
-        ESP_LOGE(TAG_PRINTER, "❌ Trama SV2 inválida o error de Checksum (LRC)");
+        ESP_LOGE(TAG_PRINTER, "❌ Trama SV2 muy corta para extraer versión");
     }
 
     if (xSemaphoreTake(mqtt_data_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
@@ -224,7 +246,7 @@ bool spi_send_frame(const uint8_t *data, size_t len) {
 
 // FUNCIONES PÚBLICAS (declaradas en printer_task.h)
 
-// Inicialización UART
+// Inicialización SPI
 bool printer_spi_init(void) {
     if (spi_initialized) return true;
     
@@ -476,13 +498,6 @@ bool printer_needs_reconnection(void) {
         return true;
     }
     
-    // Verificar timeout prolongado
-    uint32_t current_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
-    if ((current_time - task_ctx.last_success_time) > (POLLING_INTERVAL_MS * 3)) {
-        LOG_W(TAG_PRINTER, "Sin respuesta por mucho tiempo, considerando reconexión");
-        return true;
-    }
-    
     return false;
 }
 
@@ -518,11 +533,11 @@ int receive_response(uint8_t* buffer, size_t buffer_size, uint32_t timeout_ms) {
         
         // Limpiamos el buffer de transmisión para que inyecte reloj limpio
         memset(tx_buffer, 0, SPI_BUFFER_SIZE); 
+        memset(buffer, 0, buffer_size);
 
         // 1. Extraemos todo el bloque de una sola vez
         spi_transaction_t t;
         memset(&t, 0, sizeof(t));
-
         t.length = buffer_size * 8; 
         t.tx_buffer = tx_buffer;
         t.rx_buffer = buffer; // Los datos caen directo al buffer
@@ -531,27 +546,39 @@ int receive_response(uint8_t* buffer, size_t buffer_size, uint32_t timeout_ms) {
             return -1;
         }
 
-        // 2. Fase de Parseo (Buscamos STX y ETX en el pajar de datos)
+        bool impresora_lista = false;
+
         int start_idx = -1;
+        for (int i = 0; i < buffer_size; i++) {
+            if (buffer[i] == STX_BYTE) {
+                impresora_lista = true;
+                start_idx = i;
+                break; // ¡Conseguimos el 0x02! Dejamos de buscar.
+            }
+        }
+
+        if (!impresora_lista) {
+            vTaskDelay(pdMS_TO_TICKS(50));
+            continue;
+        }
+
+        // 2. Fase de Parseo (Buscamos STX y ETX en el pajar de datos)
         int etx_idx = -1;
 
-        for (int i = 0; i < buffer_size; i++) {
-            if (buffer[i] == STX_BYTE && start_idx == -1) {
-                start_idx = i;
-            }
-            if (start_idx != -1 && buffer[i] == ETX_BYTE) {
+        for (int i = start_idx; i < buffer_size; i++) {
+            if (buffer[i] == ETX_BYTE) {
                 etx_idx = i;
-                break; // Encontramos el final
+                break;
             }
         }
 
         // 3. Si encontramos la trama completa, la recortamos
         if (start_idx != -1 && etx_idx != -1 && (etx_idx + 1 < buffer_size)) {
-            int trama_len = (etx_idx - start_idx) + 2; // +1 por el ETX, +1 por el LRC
-            
+            int longitud = etx_idx - start_idx;
+            int trama_len = longitud + 2; // +1 por el ETX, +1 por el LRC
+
             // Movemos la trama útil al inicio del buffer
             memmove(buffer, &buffer[start_idx], trama_len);
-            
             ESP_LOGI(TAG_PRINTER, "Trama Fiscal interceptada (%d bytes)", trama_len);
             return trama_len; // ¡Éxito absoluto!
         }
@@ -559,6 +586,7 @@ int receive_response(uint8_t* buffer, size_t buffer_size, uint32_t timeout_ms) {
         vTaskDelay(pdMS_TO_TICKS(50));
     }
     
+    ESP_LOGE(TAG_PRINTER, "⏰ Timeout: La impresora nunca envió STX (0x02)");
     return -1; // Nos rendimos
 }
 
@@ -573,16 +601,11 @@ int ejecutar_solicitud_s1(uint8_t* buffer, int bytes_maximos) {
         return 0;
         
     } 
-    ESP_LOGI(TAG_PRINTER, "Comando S1 enviado, esperando ACK...");
     
-    // Esperar ACK con timeout más corto
-    if (!esperar_ack_impresora(500)) {
-        printer_handle_error(ERROR_INVALID_RESPONSE); 
-        return 0; // Abortamos, no habrá trama
-    }
+    ESP_LOGI(TAG_PRINTER, "Comando S1 enviado...");
 
-    ESP_LOGI(TAG_PRINTER, "ACK recibido, esperando STATUS S1...");
     vTaskDelay(pdMS_TO_TICKS(50));
+
     return receive_response(buffer, bytes_maximos, 3000); // 3 segundos
 }
 

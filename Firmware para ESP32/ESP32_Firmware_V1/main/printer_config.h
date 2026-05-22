@@ -46,8 +46,8 @@ extern const uint8_t CMD_STATUS_S3[];
 #define COMMAND_DELAY_MS        100     // 100ms entre comandos
 
 // Límites
-#define MAX_RECONNECT_ATTEMPTS  5
-#define MAX_ERROR_COUNT         10
+#define MAX_RECONNECT_ATTEMPTS  10
+#define MAX_ERROR_COUNT         3
 #define MAX_SERIAL_LENGTH       10
 #define STATUS_S1_MIN_LENGTH    117
 
@@ -62,9 +62,9 @@ extern const uint8_t CMD_STATUS_S3[];
 #define MQTT_RETAIN        0
 
 // Comandos de control para actualización de impresora
-#define SPI_CMD_START       0x01
-#define SPI_CMD_PACKET      0x04
-#define SPI_CMD_END         0x07
+#define SPI_CMD_START       0x07
+#define SPI_CMD_PACKET      0x08
+#define SPI_CMD_END         0x09
 // TIPOS DE DATOS OPTIMIZADOS
 
 // Estados de la comunicación
@@ -185,6 +185,8 @@ const char* printer_state_to_string(printer_state_t state);
 // Validación
 bool validate_frame(const uint8_t* data, size_t len);
 bool is_valid_response(const uint8_t* data, size_t len);
+bool spi_send_frame(const uint8_t *data, size_t len);
+bool esperar_ack_impresora(uint32_t timeout_ms);
 
 void iniciar_spi_impresora();
 

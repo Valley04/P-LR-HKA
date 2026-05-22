@@ -1,3 +1,4 @@
+# settings.py
 from pathlib import Path
 import os
 from django.contrib.messages import constants as messages
@@ -27,8 +28,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'tailwind',
+    'theme',
     'impresoras',
 ]
+
+TAILWIND_APP_NAME = 'theme'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

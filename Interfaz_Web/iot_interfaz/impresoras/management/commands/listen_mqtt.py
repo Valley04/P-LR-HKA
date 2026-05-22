@@ -11,7 +11,7 @@ class Command(BaseCommand):
     help = 'Inicia el worker que escucha mensajes MQTT y los guarda en la BD'
 
     def handle(self, *args, **options):
-        self.stdout.write(self.style.SUCCESS('🚀 Iniciando Worker MQTT...'))
+        self.stdout.write(self.style.SUCCESS('[OK] Iniciando Worker MQTT...'))
 
         # Configuración del Cliente
         client = mqtt.Client(protocol=mqtt.MQTTv5)

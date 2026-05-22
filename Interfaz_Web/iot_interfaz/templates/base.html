@@ -1,447 +1,422 @@
+{% load tailwind_tags %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Mi Proyecto IoT{% endblock %}</title>
+    <title>{% block title %}Monitor IIoT | The Factory HKA{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    {% tailwind_css %}
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
 </head>
-<body class="bg-light">
+
+<body class="font-sans bg-gray-900 text-gray-100">
 
     {% if request.user.is_authenticated %}
-
-    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;" id="contenedor-toasts">
-    </div>
-
         <div class="d-flex">
             <style>
-                .sidebar .nav-link:not(.active):hover {
-                    background-color: #e9ecef;
-                    color: #0d6efd !important;
-                    transition: background-color 0.2s ease-in-out;
-                    border-radius: 0.25rem;
+                .menu-item.activo {
+                    background-color: rgba(30, 58, 138, 0.4) !important; 
+                    color: #dbeafe !important;
+                    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06) !important;
+                }
+                .menu-item.activo svg {
+                    color: #60a5fa !important;
+                }
+                button, .btn, .dropdown-item, .btn-action {
+                    border-radius: 0.75rem !important;
+                    transition: all 0.2s ease-in-out !important;
+                }
+                
+                input, .form-control, .form-select {
+                    border-radius: 0.75rem !important;
+                }
+
+                .modal-content {
+                    background-color: #1f2937 !important;
+                    color: #f3f4f6 !important;            
+                    border: 1px solid #374151 !important; 
+                }
+
+                .modal-header {
+                    border-bottom: 1px solid #374151 !important;
+                }
+
+                .modal-footer {
+                    border-top: 1px solid #374151 !important;
                 }
             </style>
 
-            <div class="sidebar d-flex flex-column p-2 bg-light border-end" style="height: 100vh; position: sticky; top: 0; overflow-y: auto; width: 177px; flex-shrink: 0;">
-                <h4 class="text-center mb-4 text-primary fw-bold">Monitor IoT</h4>
-                <hr>
-                    <ul class="nav nav-pills flex-column mb-auto">
+            <div class="bg-gray-800 border-r border-gray-700 !flex flex-col p-4" style="height: 100vh; position: sticky; top: 0; overflow-y: auto; width: 210px; flex-shrink: 0;">
 
-                        <li><a hx-get="/dashboard/" 
-                            hx-target="#contenido-principal"
-                            hx-select="#contenido-principal"
-                            hx-push-url="true"
-                            class="nav-link text-dark" style="cursor: pointer"
-                            onclick="marcarActivo(this)">
-                            Dashboard
-                            </a>
-                        </li>
-                        <li><a hx-get="/dispositivos/" 
-                            hx-target="#contenido-principal"
-                            hx-select="#contenido-principal"
-                            hx-push-url="true"
-                            class="nav-link text-dark" style="cursor: pointer"
-                            onclick="marcarActivo(this)">
-                            Gestión de Dispositivos
-                            </a>
-                        </li>
-                        <li><a hx-get="/firmware/"
-                            hx-target="#contenido-principal"
-                            hx-select="#contenido-principal"
-                            hx-push-url="true"
-                            class="nav-link text-dark" style="cursor: pointer"
-                            onclick="marcarActivo(this)">
-                            Gestión de Firmware
-                            </a>
-                        </li>
-                    </ul>
+                <div class="mb-8 mt-2 text-center">
+                    <h4 class="text-xl font-bold !text-blue-500 tracking-wide !flex items-center justify-center gap-2 m-0">
+                        <svg class="w-6 h-6 !text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
+                        <span class="whitespace-nowrap">Monitor IIoT</span>
+                    </h4>
+                </div>
+
+                <hr class="border-gray-700 mb-6">
+
+                <ul class="!flex flex-col gap-2 flex-grow p-0 m-0" style="list-style: none;">
                     
-                <hr>
-                <ul class="nav nav-pills flex-column">
+                    <li>
+                        <a hx-get="/dashboard/" 
+                            hx-target="#contenido-principal"
+                            hx-select="#contenido-principal"
+                            hx-push-url="true"
+                            class="menu-item !flex items-center gap-3 px-3 py-3 rounded-xl !text-gray-300 font-medium transition-all duration-200 hover:bg-gray-700 hover:!text-white cursor-pointer group"
+                            onclick="marcarActivo(this)"
+                            style="text-decoration: none;">
+                            <svg class="w-5 h-5 !text-gray-400 group-hover:!text-blue-400 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    
+                    <li>
+                        <a hx-get="/dispositivos/" 
+                            hx-target="#contenido-principal"
+                            hx-select="#contenido-principal"
+                            hx-push-url="true"
+                            class="menu-item !flex items-center gap-3 px-3 py-3 rounded-xl !text-gray-300 font-medium transition-all duration-200 hover:bg-gray-700 hover:!text-white cursor-pointer group"
+                            onclick="marcarActivo(this)"
+                            style="text-decoration: none;">
+                            <svg class="w-5 h-5 !text-gray-400 group-hover:!text-blue-400 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <span>Dispositivos</span>
+                        </a>
+                    </li>
+                    
+                    <li>
+                        <a hx-get="/firmware/"
+                            hx-target="#contenido-principal"
+                            hx-select="#contenido-principal"
+                            hx-push-url="true"
+                            class="menu-item !flex items-center gap-3 px-3 py-3 rounded-xl !text-gray-300 font-medium transition-all duration-200 hover:bg-gray-700 hover:!text-white cursor-pointer group"
+                            onclick="marcarActivo(this)"
+                            style="text-decoration: none;">
+                            <svg class="w-5 h-5 !text-gray-400 group-hover:!text-blue-400 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                            <span>Firmware</span>
+                        </a>
+                    </li>
+                </ul>
+                    
+                <hr class="border-gray-700 my-4">
+                
+                <ul class="!flex flex-col gap-2 p-0 m-0" style="list-style: none;">
                     {% if request.user.is_superuser %}
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle text-dark" href="#" id="navbarScrollingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                Admin
+                            <a class="nav-link dropdown-toggle px-4 py-0 rounded-xl !text-gray-300 font-medium transition-all hover:bg-gray-700 hover:!text-white cursor-pointer !flex items-center gap-3" href="#" id="navbarScrollingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="text-decoration: none;">
+                                <svg class="w-5 h-5 !text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span>Admin</span>
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarScrollingDropdown">
-                                <li><a class="dropdown-item" href="{% url 'admin:index' %}">Gestión de Usuarios</a></li>
-                                <li><hr class="dropdown-divider"></li>
+                            <ul class="dropdown-menu dropdown-menu-dark bg-gray-800 border border-gray-700 shadow-xl rounded-xl" aria-labelledby="navbarScrollingDropdown">
+                                <li><a class="dropdown-item hover:bg-gray-700" href="{% url 'admin:index' %}">Gestión Usuarios</a></li>
+                                <li><hr class="dropdown-divider border-gray-600"></li>
                                 <li>
                                     <form method="post" action="{% url 'logout' %}">
                                         {% csrf_token %}
-                                        <button type="submit" class="dropdown-item">Cerrar sesión</button>
+                                        <button type="submit" class="dropdown-item !text-red-400 hover:bg-red-900/30 hover:!text-red-300 transition-colors">Cerrar sesión</button>
                                     </form>
                                 </li>
                             </ul>
                         </li>
                     {% else %}
-                        <li class="nav-item">
-                            <form method="post" action="{% url 'logout' %}">
+                        <li>
+                            <form method="post" action="{% url 'logout' %}" class="w-full">
                                 {% csrf_token %}
-                                <button type="submit" class="nav-link text-danger fw-bold">
-                                    Cerrar sesión
+                                <button type="submit" class="w-full text-left px-4 py-3 rounded-xl !text-red-400 font-medium hover:bg-red-900/30 hover:!text-red-300 transition-all !flex items-center gap-3" style="border: none; background: transparent;">
+                                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                                    <span>Cerrar sesión</span>
                                 </button>
                             </form>
                         </li>
                     {% endif %}
                 </ul>
-            </div>
-
-        <div id="contenido-principal" style="flex: 1;">
-        
-    {% else %}
-        <div class="w-100 d-flex flex-column" style="min-height: 100vh;">
-            <div>
-    {% endif %}
-
-                <div class="container-fluid mt-3">
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
+                <hr class="border-gray-700 my-4">
                 </div>
 
-            {% block content %}
-        {% endblock %}
-    {% if request.user.is_authenticated %}
 
-            </div> 
-        </div> 
-        
-        <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
-        <script>
-            function marcarActivo(botonClickeado) {
-                let botones = document.querySelectorAll('.sidebar .nav-link');
-            
-                // A todos les quitamos el estilo de presionado (los "apagamos")
-                botones.forEach(boton => {
-                    boton.classList.remove('active', 'text-white');
-                    boton.classList.add('text-dark');
-                });
-
-                // Al botón que acabas de clickear, lo "encendemos"
-                botonClickeado.classList.remove('text-dark');
-                botonClickeado.classList.add('active', 'text-white');
-            }
-
-            // FUNCIÓN PARA CREAR NOTIFICACIONES FLOTANTES
-            function mostrarToast(titulo, mensaje, tipo = 'danger') {
-                const contenedor = document.getElementById('contenedor-toasts');
-                const toastId = 'toast-' + Date.now(); // Un ID único
-                
-                // Elegimos color e ícono según el tipo de mensaje
-                let bgClass = 'bg-danger text-white';
-                let icono = '❗';
-                let btnCloseClass = 'btn-close-white';
-                
-                if (tipo === 'success') {
-                    bgClass = 'bg-success text-white';
-                    icono = '✅';
-                } else if (tipo === 'warning') {
-                    bgClass = 'bg-warning text-dark';
-                    icono = '⚠️';
-                    btnCloseClass = ''; // Botón oscuro para fondo amarillo
-                }
-
-                // Armamos el HTML de la notificación
-                const toastHTML = `
-                    <div id="${toastId}" class="toast align-items-center ${bgClass} border-0 mb-2 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
-                        <div class="d-flex">
-                            <div class="toast-body fw-bold">
-                                ${icono} ${titulo}: <span class="fw-normal">${mensaje}</span>
-                            </div>
-                            <button type="button" class="btn-close ${btnCloseClass} me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            <div id="contenido-principal" class="bg-gray-900 flex-1 h-screen overflow-y-auto">
+                <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;" id="contenedor-toasts"></div>
+                <div class="container-fluid p-0"> 
+                    {% if messages %}
+                        <div class="p-3">
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
                         </div>
-                    </div>
-                `;
-                
-                // Lo inyectamos en la pantalla
-                contenedor.insertAdjacentHTML('beforeend', toastHTML);
-                
-                // Le decimos a Bootstrap que lo muestre y que dure 6 segundos (6000ms)
-                const toastElement = document.getElementById(toastId);
-                const toast = new bootstrap.Toast(toastElement, { delay: 6000 });
-                toast.show();
-                
-                // Limpieza: Cuando desaparezca, lo borramos del código para no saturar el navegador
-                toastElement.addEventListener('hidden.bs.toast', () => {
-                    toastElement.remove();
-                });
+                    {% endif %}                    
+                </div>
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    {% else %}
+        <div class="min-h-screen flex items-center justify-center p-4 bg-gray-900">
+            <div class="w-full max-w-md">
+                {% block login_content %}{% endblock %}
+            </div> 
+        </div>
+    {% endif %}
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
+    <script>
+        // 1. FUNCIÓN DE RESPUESTA INMEDIATA AL CLIC
+        function marcarActivo(botonClickeado) {
+            // ¡CORRECCIÓN! Solo buscamos '.menu-item'
+            let botones = document.querySelectorAll('.menu-item');
+            
+            // Apaga todos
+            botones.forEach(boton => {
+                boton.classList.remove('activo');
+            });
+            
+            // Enciende solo el que tocaste
+            if (botonClickeado) {
+                botonClickeado.classList.add('activo');
+            }
+        }
+
+        // 2. AUTO-MARCAR AL HACER F5
+        document.addEventListener("DOMContentLoaded", function() {
+            let rutaActual = window.location.pathname;
+            // ¡CORRECCIÓN! Solo buscamos '.menu-item'
+            let botones = document.querySelectorAll('.menu-item');
+            
+            botones.forEach(boton => {
+                let rutaBoton = boton.getAttribute('hx-get');
+                if (rutaBoton && (rutaActual === rutaBoton || rutaActual.includes(rutaBoton.replace(/\/$/, '')))) {
+                    marcarActivo(boton);
+                }
+            });
+        });
+
+        // 3. EVENTO HTMX LIMPIO (Solo para modales y OTA, ya no maneja el menú)
+        document.body.addEventListener('htmx:afterSwap', function(evt) {
+            
+            // TU CÓDIGO ORIGINAL: Limpieza del Modal
+            const sombras = document.querySelectorAll('.modal-backdrop');
+            sombras.forEach(sombra => sombra.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+
+            // TU CÓDIGO ORIGINAL: Restauración inmediata de la Interfaz OTA
+            const ahora = Date.now();
+            for (const serial in memoriaEquipos) {
+                const equipo = memoriaEquipos[serial];
+                const celdaIndicador = document.getElementById(`indicador-${serial}`);
+                const badgeProgreso = document.getElementById(`progreso-ota-${serial}`);
+
+                if (equipo.actualizando) {
+                    if (celdaIndicador) celdaIndicador.innerHTML = `<span title="Actualizando (Freno de mano activado)">🟡</span>`;
+                    if (badgeProgreso) {
+                        badgeProgreso.classList.remove('d-none');
+                        badgeProgreso.innerText = `⏳ ${equipo.porcentaje || 0}%`;
+                    }
+                } else if (ahora - equipo.ultimoLatido > equipo.limiteSilencio) {
+                    if (celdaIndicador) celdaIndicador.innerHTML = `<span title="Desconectado (Sin señal)">🔴</span>`;
+                }
+            }
+        });         
+
+        // FUNCIÓN PARA CREAR NOTIFICACIONES FLOTANTES
+        function mostrarToast(titulo, mensaje, tipo = 'danger') {
+            const contenedor = document.getElementById('contenedor-toasts');
+            const toastId = 'toast-' + Date.now(); // Un ID único
+            
+            // Elegimos color e ícono según el tipo de mensaje
+            let bgClass = 'bg-danger text-white';
+            let icono = '❗';
+            let btnCloseClass = 'btn-close-white';
+            
+            if (tipo === 'success') {
+                bgClass = 'bg-success text-white';
+                icono = '✅';
+            } else if (tipo === 'warning') {
+                bgClass = 'bg-warning text-dark';
+                icono = '⚠️';
+                btnCloseClass = ''; // Botón oscuro para fondo amarillo
             }
 
-            // CONFIGURACIÓN GLOBAL
-            const urlBroker = "wss://832b8689599f4045be005c116bc416f0.s1.eu.hivemq.cloud:8884/mqtt";
-            const opciones = {
-                clientId: "web_" + Math.random().toString(16).substring(2, 8),
-                protocolVersion: 5,
-                username: "djangochannels", 
-                password: "Channels12345",
-            };
+            // Armamos el HTML de la notificación
+            const toastHTML = `
+                <div id="${toastId}" class="toast align-items-center ${bgClass} border-0 mb-2 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body fw-bold">
+                            ${icono} ${titulo}: <span class="fw-normal">${mensaje}</span>
+                        </div>
+                        <button type="button" class="btn-close ${btnCloseClass} me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+            
+            // Lo inyectamos en la pantalla
+            contenedor.insertAdjacentHTML('beforeend', toastHTML);
+            
+            // Le decimos a Bootstrap que lo muestre y que dure 6 segundos (6000ms)
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { delay: 6000 });
+            toast.show();
+            
+            // Limpieza: Cuando desaparezca, lo borramos del código para no saturar el navegador
+            toastElement.addEventListener('hidden.bs.toast', () => {
+                toastElement.remove();
+            });
+        }
 
-            const cliente = mqtt.connect(urlBroker, opciones);
-            let topicoActual = null;
-            const memoriaEquipos = {}; 
+        // CONFIGURACIÓN GLOBAL
+        const urlBroker = "wss://832b8689599f4045be005c116bc416f0.s1.eu.hivemq.cloud:8884/mqtt";
+        const opciones = {
+            clientId: "web_" + Math.random().toString(16).substring(2, 8),
+            protocolVersion: 5,
+            username: "djangochannels", 
+            password: "Channels12345",
+        };
 
-            // EL VIGILANTE (Heartbeat)
-            setInterval(() => {
-                const ahora = Date.now();
-                for (const serial in memoriaEquipos) {
-                    const equipo = memoriaEquipos[serial];
-                    const celdaIndicador = document.getElementById(`indicador-${serial}`);
-                    
-                    if (celdaIndicador) {
-                        if (equipo.actualizando) {
-                            if (!celdaIndicador.innerHTML.includes('🟡')) {
-                                celdaIndicador.innerHTML = `<span title="Actualizando (Freno de mano activado)">🟡</span>`;
-                            }
-                        } else if (ahora - equipo.ultimoLatido > equipo.limiteSilencio) {
-                            if (!celdaIndicador.innerHTML.includes('🔴')) {
-                                celdaIndicador.innerHTML = `<span title="Desconectado (Sin señal)">🔴</span>`;
-                            }
+        const cliente = mqtt.connect(urlBroker, opciones);
+        let topicoActual = null;
+        const memoriaEquipos = {}; 
+
+        // EL VIGILANTE (Heartbeat)
+        setInterval(() => {
+            const ahora = Date.now();
+            for (const serial in memoriaEquipos) {
+                const equipo = memoriaEquipos[serial];
+                const celdaIndicador = document.getElementById(`indicador-${serial}`);
+                
+                if (celdaIndicador) {
+                    if (equipo.actualizando) {
+                        if (!celdaIndicador.innerHTML.includes('🟡')) {
+                            celdaIndicador.innerHTML = `<span title="Actualizando (Freno de mano activado)">🟡</span>`;
+                        }
+                    } else if (ahora - equipo.ultimoLatido > equipo.limiteSilencio) {
+                        if (!celdaIndicador.innerHTML.includes('🔴')) {
+                            celdaIndicador.innerHTML = `<span title="Desconectado (Sin señal)">🔴</span>`;
                         }
                     }
                 }
-            }, 1000);
+            }
+        }, 1000);
 
-            // CONEXIÓN Y SUSCRIPCIÓN GLOBAL
-            cliente.on('connect', () => {
-                console.log("✅ Conectado al Broker Permanentemente");
-                cliente.subscribe("v1/fiscal/#");
-            });
+        // CONEXIÓN Y SUSCRIPCIÓN GLOBAL
+        cliente.on('connect', () => {
+            console.log("✅ Conectado al Broker Permanentemente");
+            cliente.subscribe("v1/fiscal/#");
+        });
 
-            // PROCESAMIENTO DE MENSAJES (Seguro contra HTMX)
-            cliente.on('message', function (topic, message, packet) {
-                try {
-                    const partesTopico = topic.split('/');
-                    const serialEntrante = partesTopico[2];
-                    const tipoMensaje = partesTopico[3];
+        // PROCESAMIENTO DE MENSAJES (Seguro contra HTMX)
+        cliente.on('message', function (topic, message, packet) {
+            try {
+                const partesTopico = topic.split('/');
+                const serialEntrante = partesTopico[2];
+                const tipoMensaje = partesTopico[3];
 
-                    // 1. EXTRAER USER PROPERTIES (Sin importar si el mensaje es json o alerta)
-                    if (typeof packet !== 'undefined' && packet !== null) {
-                        if (packet.properties && packet.properties.userProperties) {
-                            const props = packet.properties.userProperties;
-                            
-                            // Si el ESP32 envió el dato del Wi-Fi
-                            if (props.wifi_rssi) {
-                                const rssi = parseInt(props.wifi_rssi);
-                                let iconoWifi = "bi-wifi"; // Lleno
-                                let colorWifi = "text-success"; // Verde
-                                let colorBorde = "border-success";
+                // 1. EXTRAER USER PROPERTIES (Sin importar si el mensaje es json o alerta)
+                if (typeof packet !== 'undefined' && packet !== null) {
+                    if (packet.properties && packet.properties.userProperties) {
+                        const props = packet.properties.userProperties;
+                        
+                        // Si el ESP32 envió el dato del Wi-Fi
+                        if (props.wifi_rssi) {
+                            const rssi = parseInt(props.wifi_rssi);
+                            let iconoWifi = "bi-wifi"; // Lleno
+                            let colorWifi = "text-success"; // Verde
+                            let colorBorde = "border-success";
 
-                                // Lógica de fuerza de señal (dBm)
-                                if (rssi < -85) {
-                                    iconoWifi = "bi-wifi-1"; // 1 rayita
-                                    colorWifi = "text-danger"; // Rojo (Crítico)
-                                    colorBorde = "border-danger";
-                                } else if (rssi < -70) {
-                                    iconoWifi = "bi-wifi-2"; // 2 rayitas
-                                    colorWifi = "text-warning"; // Amarillo (Medio)
-                                    colorBorde = "border-warning";
-                                }
-
-                                const elRssiOta = document.getElementById(`val-rssi-ota-${serialEntrante}`);
-                                if (elRssiOta) {
-                                    elRssiOta.innerHTML = `<i class="bi ${iconoWifi} me-1"></i> ${rssi} dBm`;
-                                    elRssiOta.className = `badge bg-white px-3 py-2 fs-6 text-dark border border-2 shadow-sm ${colorBorde}`;
-                                }
-
-                                // Actualizar en la lista general de la tabla (opcional pero genial)
-                                const indicadorTabla = document.getElementById(`wifi-${serialEntrante}`);
-                                if (indicadorTabla) {
-                                    indicadorTabla.innerHTML = `<i class="bi ${iconoWifi} ${colorWifi} fs-5" title="${rssi} dBm"></i>`;
-                                }
-                            }
-                        }
-                    }
-                    
-                    let data = {};
-
-                    if (message.length > 0) {
-                        let textoLimpio = message.toString().replace(/[\x00-\x1F\x7F-\x9F]/g, "");
-                        data = JSON.parse(textoLimpio);
-                    }
-
-                    const ahora = Date.now();
-                    
-                    // Lógica de memoria y silencio...
-                    if (!memoriaEquipos[serialEntrante]) {
-                        memoriaEquipos[serialEntrante] = { 
-                            ultimoLatido: ahora, 
-                            ultimoTS: data.ts || 0, 
-                            limiteSilencio: 35000,
-                            actualizando: false,
-                            offline: false 
-                        };
-                    }
-
-                    // Actualizar íconos en la tabla (si la tabla existe en la pantalla actual)
-                    const celdaIndicador = document.getElementById(`indicador-${serialEntrante}`);
-
-                    // --- LÓGICA PARA LWT (DESCONEXIÓN ABRUPTA) ---
-                    if (tipoMensaje === "alertas_conexion") {
-                        if (data.st === "offline") {
-                            memoriaEquipos[serialEntrante].offline = true;
-
-                            if (celdaIndicador) {
-                                celdaIndicador.innerHTML = `<span title="Desconectado (Caída abrupta)">🔴</span>`;
+                            // Lógica de fuerza de señal (dBm)
+                            if (rssi < -85) {
+                                iconoWifi = "bi-wifi-1"; // 1 rayita
+                                colorWifi = "text-danger"; // Rojo (Crítico)
+                                colorBorde = "border-danger";
+                            } else if (rssi < -70) {
+                                iconoWifi = "bi-wifi-2"; // 2 rayitas
+                                colorWifi = "text-warning"; // Amarillo (Medio)
+                                colorBorde = "border-warning";
                             }
 
                             const elRssiOta = document.getElementById(`val-rssi-ota-${serialEntrante}`);
                             if (elRssiOta) {
-                                elRssiOta.innerHTML = `<i class="bi bi-wifi-off me-1"></i> Desconectado`;
-                                elRssiOta.className = `badge bg-light text-muted border border-secondary px-3 py-2 fs-6 shadow-sm`;
+                                elRssiOta.innerHTML = `<i class="bi ${iconoWifi} me-1"></i> ${rssi} dBm`;
+                                elRssiOta.className = `badge bg-white px-3 py-2 fs-6 text-dark border border-2 shadow-sm ${colorBorde}`;
                             }
 
+                            // Actualizar en la lista general de la tabla (opcional pero genial)
                             const indicadorTabla = document.getElementById(`wifi-${serialEntrante}`);
                             if (indicadorTabla) {
-                                indicadorTabla.innerHTML = `<i class="bi bi-wifi-off text-muted fs-5" title="Equipo Offline"></i>`;
-                            }
-
-                            // 2. Mostramos una alerta visual en pantalla
-                            if (window.topicoActual === serialEntrante) {
-                                if (typeof mostrarToast === "function") {
-                                    mostrarToast("Conexión Perdida", `El equipo ${serialEntrante} se ha desconectado abruptamente.`, "danger");
-                                }
-
-                                // 3. Si el monitor de este equipo está abierto, le avisamos
-                                if (window.topicoActual === serialEntrante) {
-                                    const elSts1 = document.getElementById('val-sts1');
-                                    if (elSts1) {
-                                        elSts1.innerText = "¡OFFLINE! (Conexión Perdida)";
-                                        elSts1.className = "text-danger fw-bold";
-                                    }
-                                }
-                            }
-
-                            if (!document.body.classList.contains('modal-open')) {
-                                document.body.dispatchEvent(new CustomEvent('mqtt-update', { bubbles: true }));
+                                indicadorTabla.innerHTML = `<i class="bi ${iconoWifi} ${colorWifi} fs-5" title="${rssi} dBm"></i>`;
                             }
                         }
                     }
-                    else if (tipoMensaje === "ota") {
-                        const badgeProgreso = document.getElementById(`progreso-ota-${serialEntrante}`);
+                }
+                
+                let data = {};
 
-                        if (data.st === "iniciado" || data.st === "actualizando") {
-                            memoriaEquipos[serialEntrante].actualizando = true;
-                            memoriaEquipos[serialEntrante].porcentaje = data.pr;
-                            memoriaEquipos[serialEntrante].ultimoLatido = ahora;
+                if (message.length > 0) {
+                    let textoLimpio = message.toString().replace(/[\x00-\x1F\x7F-\x9F]/g, "");
+                    data = JSON.parse(textoLimpio);
+                }
 
-                            if (celdaIndicador) {
-                                celdaIndicador.innerHTML = `<span title="Actualizando ${data.tg} (${data.pr}%)">🟡</span>`;
-                            }
+                const ahora = Date.now();
+                
+                // Lógica de memoria y silencio...
+                if (!memoriaEquipos[serialEntrante]) {
+                    memoriaEquipos[serialEntrante] = { 
+                        ultimoLatido: ahora, 
+                        ultimoTS: data.ts || 0, 
+                        limiteSilencio: 35000,
+                        actualizando: false,
+                        offline: false 
+                    };
+                }
 
-                            // Mostramos el porcentaje al lado del botón
-                            if (badgeProgreso) {
-                                badgeProgreso.classList.remove('d-none');
-                                badgeProgreso.innerText = `⏳ ${data.pr}%`;
-                            }
-                        } 
-                        else if (data.st === "exito") {
-                            memoriaEquipos[serialEntrante].actualizando = false;
-                            memoriaEquipos[serialEntrante].porcentaje = 0;
-                            memoriaEquipos[serialEntrante].ultimoLatido = ahora;
+                // Actualizar íconos en la tabla (si la tabla existe en la pantalla actual)
+                const celdaIndicador = document.getElementById(`indicador-${serialEntrante}`);
 
-                            if (celdaIndicador) {
-                                celdaIndicador.innerHTML = `<span title="En línea (Recién actualizado)">🟢</span>`
-                            }
-                            if (badgeProgreso) {
-                                badgeProgreso.classList.add('d-none');
-                            }
-
-                            mostrarToast("Actualización Completada", `El equipo ${serialEntrante} actualizó ${data.tg} con éxito.`, "success")
-                        }
-                        else if (data.st === "error") {
-                            memoriaEquipos[serialEntrante].actualizando = false; // Soltamos al vigilante
-                            memoriaEquipos[serialEntrante].porcentaje = 0;
-                            
-                            if (celdaIndicador) {
-                                celdaIndicador.innerHTML = `<span title="¡Error en actualización de ${data.tg}! (Falló al ${data.pr}%)">❗</span>`;
-                            }
-                            if (badgeProgreso) {
-                                badgeProgreso.classList.add('d-none');
-                            }
-
-                            mostrarToast("Alerta OTA", `El equipo ${serialEntrante} falló al actualizar ${data.tg} (${data.pr}%).`, "danger");
-                        }
-                    }
-                    else if (tipoMensaje === "json_completo") {
-
-                        if (memoriaEquipos[serialEntrante].offline) {
-                            memoriaEquipos[serialEntrante].offline = false;
-                        }
-                        
-                        // Si por alguna razón envía telemetría normal, asumimos que ya no está actualizando
-                        if (memoriaEquipos[serialEntrante].actualizando) {
-                            memoriaEquipos[serialEntrante].actualizando = false;
-                        }
-
-                        const tiempoTranscurrido = data.ts - memoriaEquipos[serialEntrante].ultimoTS;
-                        if (tiempoTranscurrido > 0) {
-                            memoriaEquipos[serialEntrante].limiteSilencio = tiempoTranscurrido + 10000; 
-                        }
-                        memoriaEquipos[serialEntrante].ultimoLatido = ahora;
-                        memoriaEquipos[serialEntrante].ultimoTS = data.ts;
+                // --- LÓGICA PARA LWT (DESCONEXIÓN ABRUPTA) ---
+                if (tipoMensaje === "alertas_conexion") {
+                    if (data.st === "offline") {
+                        memoriaEquipos[serialEntrante].offline = true;
 
                         if (celdaIndicador) {
-                            let htmlIconos = `<span title="En línea">🟢</span>`;
-                            if (data.sts2 && data.sts2 !== "40") htmlIconos += ` <span title="¡Error en impresora!">⚠️</span>`;
-                            celdaIndicador.innerHTML = htmlIconos;
+                            celdaIndicador.innerHTML = `<span title="Desconectado (Caída abrupta)">🔴</span>`;
                         }
 
-                        // Actualizar modal (si es el equipo seleccionado y el modal está abierto)
-                        if (window.topicoActual === serialEntrante) {
-                            const diccEstado = {"40": "Modo Entrenamiento y en Espera", 
-                                                "41": "Modo Entrenamiento y en medio de una Transacción Fiscal", 
-                                                "42": "Modo Entrenamiento y en medio de una Transacción No Fiscal",
-                                                "60": "Modo Fiscal y en Espera", 
-                                                "68": "Modo Fiscal con la MF llena y en Espera", 
-                                                "61": "Modo Fiscal y en medio de una Transacción Fiscal", 
-                                                "69": "Modo Fiscal con la MF llena y en medio de una Transacción Fiscal",
-                                                "62": "Modo Fiscal y en medio de una Transacción No Fiscal",
-                                                "6A": "Modo Fiscal con la MF llena y en Transacción No Fiscal"
-                                            };
-                            const diccError = { "40": "Ningún error", 
-                                                "48": "Error gaveta",
-                                                "41": "Error sin papel",
-                                                "42": "Error mecánico de la impresora / papel",
-                                                "43": "Error mecánico de la impresora y fin de papel",
-                                                "60": "Error fiscal",
-                                                "64": "Error en la memoria fiscal",
-                                                "6C": "Error memoria fiscal llena"
-                                            };
-                            
-                            const llavesJSON = ['sts1', 'sts2', 'atm', 'vts', 'last_b', 'b_iss', 'db_n', 'db_a', 'cr_n', 'cr_a', 'nf_n', 'nf_a', 'z_cnt', 'f_cnt', 'rif', 'ser', 'time', 'date'];
-                            
-                            llavesJSON.forEach(llave => {
-                                const elemento = document.getElementById(`val-${llave}`);
-                                if (elemento && data[llave] !== undefined) {
-                                    if (llave === 'sts1') { elemento.innerText = diccEstado[data[llave]] || `Desconocido (${data[llave]})`; } 
-                                    else if (llave === 'sts2') { 
-                                        elemento.innerText = diccError[data[llave]] || `Desconocido (${data[llave]})`;
-                                        elemento.className = data[llave] === "40" ? "text-success fw-bold" : "text-danger fw-bold";
-                                    }
-                                    else if (llave === 'date' && data[llave].length === 6) { elemento.innerText = `${data[llave].substring(0,2)}/${data[llave].substring(2,4)}/20${data[llave].substring(4,6)}`; } 
-                                    else if (llave === 'time' && data[llave].length === 6) { elemento.innerText = `${data[llave].substring(0,2)}:${data[llave].substring(2,4)}:${data[llave].substring(4,6)}`; } 
-                                    else if (llave === 'vts') { elemento.innerText = new Intl.NumberFormat('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(parseInt(data[llave], 10) / 100); } 
-                                    else { elemento.innerText = data[llave]; }
-                                }
-                            });
+                        const elRssiOta = document.getElementById(`val-rssi-ota-${serialEntrante}`);
+                        if (elRssiOta) {
+                            elRssiOta.innerHTML = `<i class="bi bi-wifi-off me-1"></i> Desconectado`;
+                            elRssiOta.className = `badge bg-light text-muted border border-secondary px-3 py-2 fs-6 shadow-sm`;
+                        }
 
-                            if (data.fw_ismart) {
-                                const elFwIsmart = document.getElementById(`val-fw_ismart-${serialEntrante}`);
-                                if (elFwIsmart) elFwIsmart.innerText = `v. ${data.fw_ismart}`;
+                        const indicadorTabla = document.getElementById(`wifi-${serialEntrante}`);
+                        if (indicadorTabla) {
+                            indicadorTabla.innerHTML = `<i class="bi bi-wifi-off text-muted fs-5" title="Equipo Offline"></i>`;
+                        }
+
+                        // 2. Mostramos una alerta visual en pantalla
+                        if (window.topicoActual === serialEntrante) {
+                            if (typeof mostrarToast === "function") {
+                                mostrarToast("Conexión Perdida", `El equipo ${serialEntrante} se ha desconectado abruptamente.`, "danger");
                             }
-                            if (data.fw_printer) {
-                                const elFwPrinter = document.getElementById(`val-fw_printer-${serialEntrante}`);
-                                if (elFwPrinter) elFwPrinter.innerText = `v. ${data.fw_printer}`;
+
+                            // 3. Si el monitor de este equipo está abierto, le avisamos
+                            if (window.topicoActual === serialEntrante) {
+                                const elSts1 = document.getElementById('val-sts1');
+                                if (elSts1) {
+                                    elSts1.innerText = "¡OFFLINE! (Conexión Perdida)";
+                                    elSts1.className = "text-danger fw-bold";
+                                }
                             }
                         }
 
@@ -449,45 +424,167 @@
                             document.body.dispatchEvent(new CustomEvent('mqtt-update', { bubbles: true }));
                         }
                     }
+                }
+                else if (tipoMensaje === "ota") {
+                    const badgeProgreso = document.getElementById(`progreso-ota-${serialEntrante}`);
 
-                } catch (error) { console.log("Falló el procesamiento:", error); }
-            });
-            
-            document.body.addEventListener('htmx:afterSwap', function() {
-                // Limpieza del Modal
-                const sombras = document.querySelectorAll('.modal-backdrop');
-                sombras.forEach(sombra => sombra.remove());
-                document.body.classList.remove('modal-open');
-                document.body.style.overflow = '';
-                document.body.style.paddingRight = '';
+                    if (data.st === "iniciado" || data.st === "actualizando") {
+                        memoriaEquipos[serialEntrante].actualizando = true;
+                        memoriaEquipos[serialEntrante].porcentaje = data.pr;
+                        memoriaEquipos[serialEntrante].ultimoLatido = ahora;
 
-                // Restauración inmediata de la Interfaz
-                const ahora = Date.now();
-                for (const serial in memoriaEquipos) {
-                    const equipo = memoriaEquipos[serial];
-                    const celdaIndicador = document.getElementById(`indicador-${serial}`);
-                    const badgeProgreso = document.getElementById(`progreso-ota-${serial}`);
+                        if (celdaIndicador) {
+                            celdaIndicador.innerHTML = `<span title="Actualizando ${data.tg} (${data.pr}%)">🟡</span>`;
+                        }
 
-                    if (equipo.actualizando) {
-                        if (celdaIndicador) celdaIndicador.innerHTML = `<span title="Actualizando (Freno de mano activado)">🟡</span>`;
+                        // Mostramos el porcentaje al lado del botón
                         if (badgeProgreso) {
                             badgeProgreso.classList.remove('d-none');
-                            badgeProgreso.innerText = `⏳ ${equipo.porcentaje || 0}%`;
+                            badgeProgreso.innerText = `⏳ ${data.pr}%`;
                         }
-                    } else if (ahora - equipo.ultimoLatido > equipo.limiteSilencio) {
-                        if (celdaIndicador) celdaIndicador.innerHTML = `<span title="Desconectado (Sin señal)">🔴</span>`;
+                    } 
+                    else if (data.st === "exito") {
+                        memoriaEquipos[serialEntrante].actualizando = false;
+                        memoriaEquipos[serialEntrante].porcentaje = 0;
+                        memoriaEquipos[serialEntrante].ultimoLatido = ahora;
+
+                        if (celdaIndicador) {
+                            celdaIndicador.innerHTML = `<span title="En línea (Recién actualizado)">🟢</span>`
+                        }
+                        if (badgeProgreso) {
+                            badgeProgreso.classList.add('d-none');
+                        }
+
+                        mostrarToast("Actualización Completada", `El equipo ${serialEntrante} actualizó ${data.tg} con éxito.`, "success")
+                    }
+                    else if (data.st === "error") {
+                        memoriaEquipos[serialEntrante].actualizando = false; // Soltamos al vigilante
+                        memoriaEquipos[serialEntrante].porcentaje = 0;
+                        
+                        if (celdaIndicador) {
+                            celdaIndicador.innerHTML = `<span title="¡Error en actualización de ${data.tg}! (Falló al ${data.pr}%)">❗</span>`;
+                        }
+                        if (badgeProgreso) {
+                            badgeProgreso.classList.add('d-none');
+                        }
+
+                        mostrarToast("Alerta OTA", `El equipo ${serialEntrante} falló al actualizar ${data.tg} (${data.pr}%).`, "danger");
                     }
                 }
-            });
-        </script>
+                else if (tipoMensaje === "json_completo") {
 
-    {% else %}
-                </div> 
-            </div>
-    {% endif %}
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+                    if (memoriaEquipos[serialEntrante].offline) {
+                        memoriaEquipos[serialEntrante].offline = false;
+                    }
+                    
+                    // Si por alguna razón envía telemetría normal, asumimos que ya no está actualizando
+                    if (memoriaEquipos[serialEntrante].actualizando) {
+                        memoriaEquipos[serialEntrante].actualizando = false;
+                    }
+
+                    const tiempoTranscurrido = data.ts - memoriaEquipos[serialEntrante].ultimoTS;
+                    if (tiempoTranscurrido > 0) {
+                        memoriaEquipos[serialEntrante].limiteSilencio = tiempoTranscurrido + 10000; 
+                    }
+                    memoriaEquipos[serialEntrante].ultimoLatido = ahora;
+                    memoriaEquipos[serialEntrante].ultimoTS = data.ts;
+
+                    if (celdaIndicador) {
+                        let htmlIconos = `<span title="En línea">🟢</span>`;
+                        if (data.sts2 && data.sts2 !== "40") htmlIconos += ` <span title="¡Error en impresora!">⚠️</span>`;
+                        celdaIndicador.innerHTML = htmlIconos;
+                    }
+
+                    // Actualizar modal (si es el equipo seleccionado y el modal está abierto)
+                    if (window.topicoActual === serialEntrante) {
+                        const diccEstado = {"40": "Modo Entrenamiento y en Espera", 
+                                            "41": "Modo Entrenamiento y en medio de una Transacción Fiscal", 
+                                            "42": "Modo Entrenamiento y en medio de una Transacción No Fiscal",
+                                            "60": "Modo Fiscal y en Espera", 
+                                            "68": "Modo Fiscal con la MF llena y en Espera", 
+                                            "61": "Modo Fiscal y en medio de una Transacción Fiscal", 
+                                            "69": "Modo Fiscal con la MF llena y en medio de una Transacción Fiscal",
+                                            "62": "Modo Fiscal y en medio de una Transacción No Fiscal",
+                                            "6A": "Modo Fiscal con la MF llena y en Transacción No Fiscal"
+                                        };
+                        const diccError = { "40": "Ningún error", 
+                                            "48": "Error gaveta",
+                                            "41": "Error sin papel",
+                                            "42": "Error mecánico de la impresora / papel",
+                                            "43": "Error mecánico de la impresora y fin de papel",
+                                            "60": "Error fiscal",
+                                            "64": "Error en la memoria fiscal",
+                                            "6C": "Error memoria fiscal llena"
+                                        };
+                        
+                        const llavesJSON = ['sts1', 'sts2', 'atm', 'vts', 'last_b', 'b_iss', 'db_n', 'db_a', 'cr_n', 'cr_a', 'nf_n', 'nf_a', 'z_cnt', 'f_cnt', 'rif', 'ser', 'time', 'date'];
+                        
+                        llavesJSON.forEach(llave => {
+                            const elemento = document.getElementById(`val-${llave}`);
+                            if (elemento && data[llave] !== undefined) {
+                                if (llave === 'sts1') { elemento.innerText = diccEstado[data[llave]] || `Desconocido (${data[llave]})`; } 
+                                else if (llave === 'sts2') { 
+                                    elemento.innerText = diccError[data[llave]] || `Desconocido (${data[llave]})`;
+                                    elemento.className = data[llave] === "40" ? "text-success fw-bold" : "text-danger fw-bold";
+                                }
+                                else if (llave === 'date' && data[llave].length === 6) { elemento.innerText = `${data[llave].substring(0,2)}/${data[llave].substring(2,4)}/20${data[llave].substring(4,6)}`; } 
+                                else if (llave === 'time' && data[llave].length === 6) { elemento.innerText = `${data[llave].substring(0,2)}:${data[llave].substring(2,4)}:${data[llave].substring(4,6)}`; } 
+                                else if (llave === 'vts') { elemento.innerText = new Intl.NumberFormat('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(parseInt(data[llave], 10) / 100); } 
+                                else { elemento.innerText = data[llave]; }
+                            }
+                        });
+
+                        if (data.fw_ismart) {
+                            const elFwIsmart = document.getElementById(`val-fw_ismart-${serialEntrante}`);
+                            if (elFwIsmart) elFwIsmart.innerText = `v. ${data.fw_ismart}`;
+                        }
+                        if (data.fw_printer) {
+                            const elFwPrinter = document.getElementById(`val-fw_printer-${serialEntrante}`);
+                            if (elFwPrinter) elFwPrinter.innerText = `v. ${data.fw_printer}`;
+                        }
+                    }
+
+                    if (!document.body.classList.contains('modal-open')) {
+                        document.body.dispatchEvent(new CustomEvent('mqtt-update', { bubbles: true }));
+                    }
+                }
+
+            } catch (error) { console.log("Falló el procesamiento:", error); }
+        });
+        
+        document.body.addEventListener('htmx:afterSwap', function(evt) {
+
+            // 1. NUESTRO NUEVO CÓDIGO: Actualizar el azul del menú lateral
+            if(evt.detail && evt.detail.target.id === 'contenido-principal') {
+                actualizarMenuActivo();
+            }
+
+            // 2. TU CÓDIGO ORIGINAL: Limpieza del Modal
+            const sombras = document.querySelectorAll('.modal-backdrop');
+            sombras.forEach(sombra => sombra.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+
+            // 3. TU CÓDIGO ORIGINAL: Restauración inmediata de la Interfaz OTA
+            const ahora = Date.now();
+            for (const serial in memoriaEquipos) {
+                const equipo = memoriaEquipos[serial];
+                const celdaIndicador = document.getElementById(`indicador-${serial}`);
+                const badgeProgreso = document.getElementById(`progreso-ota-${serial}`);
+
+                if (equipo.actualizando) {
+                    if (celdaIndicador) celdaIndicador.innerHTML = `<span title="Actualizando (Freno de mano activado)">🟡</span>`;
+                    if (badgeProgreso) {
+                        badgeProgreso.classList.remove('d-none');
+                        badgeProgreso.innerText = `⏳ ${equipo.porcentaje || 0}%`;
+                    }
+                } else if (ahora - equipo.ultimoLatido > equipo.limiteSilencio) {
+                    if (celdaIndicador) celdaIndicador.innerHTML = `<span title="Desconectado (Sin señal)">🔴</span>`;
+                }
+            }
+        });
+    </script>
 
 </body>
 </html>

@@ -21,122 +21,57 @@ extern mqtt_data_t mqtt_data;
 
 extern spi_device_handle_t spi_printer;
 
-static uint8_t transaccionar_byte_spi(uint8_t comando) {
-    uint8_t tx_buf[4] = {comando, 0x00, 0x00, 0x00};
-    uint8_t rx_buf[4] = {0x00, 0x00, 0x00, 0x00};
-
-    if (spi_printer == NULL) return 0xFF;
-
-    spi_transaction_t t;
-    memset(&t, 0, sizeof(t));
-    
-    t.length = 32;
-    t.tx_buffer = tx_buf;
-    t.rx_buffer = NULL;
-
-    xSemaphoreTake(spi_bus_mutex, portMAX_DELAY);
-
-    spi_device_polling_transmit(spi_printer, &t);
-
-    vTaskDelay(pdMS_TO_TICKS(20));
-
-    memset(&t, 0, sizeof(t));
-    uint8_t tx_dummy[4] = {0x00, 0x00, 0x00, 0x00}; // Enviamos ceros
-    t.length = 32;
-    t.tx_buffer = tx_dummy;
-    t.rx_buffer = rx_buf;
-    
-    spi_device_transmit(spi_printer, &t);
-
-    xSemaphoreGive(spi_bus_mutex);
-    
-    // El ACK estará en el primer byte que recibimos
-    return rx_buf[0];
-}
-
-static esp_err_t enviar_chunk_spi(uint8_t *data, int len) {
-    if (spi_printer == NULL || len == 0 || data == NULL) return ESP_FAIL;
-
-    size_t tamano_dma = (len + 3) & ~3;
-
-    uint8_t *tx_buf = heap_caps_calloc(1, tamano_dma, MALLOC_CAP_DMA);
-    if (tx_buf == NULL) {
-        ESP_LOGE(OTA_SPI, "Error de memoria reservando buffer DMA");
-        return ESP_ERR_NO_MEM;
-    }
-
-    memcpy(tx_buf, data, len);
-
-    spi_transaction_t t;
-    memset(&t, 0, sizeof(t));
-    
-    t.length = tamano_dma * 8; // Longitud en BITS
-    t.tx_buffer = tx_buf;
-    t.rx_buffer = NULL;
-
-    xSemaphoreTake(spi_bus_mutex, portMAX_DELAY);
-    
-    esp_err_t ret = spi_device_polling_transmit(spi_printer, &t);
-
-    xSemaphoreGive(spi_bus_mutex);
-
-    heap_caps_free(tx_buf);
-
-    return ret;
-}
+bool spi_send_frame(const uint8_t *data, size_t len);
+bool esperar_ack_impresora(uint32_t timeout_ms);
 
 esp_err_t enviar_trama_spi_robusta(uint8_t *data, int len, uint32_t num_pack, uint32_t total_packs) {
-    uint8_t checksum_paquete = 0;
-    for (int j = 0; j < len; j++) {
-        checksum_paquete ^= data[j]; 
-    }
  
-    uint8_t trama_completa[SPI_BUFFER_SIZE]; 
+    uint8_t payload[SPI_BUFFER_SIZE]; 
     
     // Empaquetado estricto (4 bytes de cabecera)
-    trama_completa[0] = SPI_CMD_PACKET;
-    trama_completa[1] = (uint8_t)(num_pack & 0xFF);   // 1 Byte para el número de paquete
-    trama_completa[2] = (uint8_t)((len >> 8) & 0xFF); // Byte ALTO del tamaño
-    trama_completa[3] = (uint8_t)(len & 0xFF);        // Byte BAJO del tamaño
+    payload[0] = SPI_CMD_PACKET;
+    payload[1] = (uint8_t)(num_pack & 0xFF);   // 1 Byte para el número de paquete
+    payload[2] = (uint8_t)((len >> 8) & 0xFF); // Byte ALTO del tamaño
+    payload[3] = (uint8_t)(len & 0xFF);        // Byte BAJO del tamaño
     
-    // Inserción de los datos en el índice 4
-    memcpy(&trama_completa[4], data, len); 
-    
-    // Inserción del checksum al final
-    trama_completa[4 + len] = checksum_paquete;
+    // Inserción de los datos en el índice 5
+    memcpy(&payload[5], data, len); 
 
-    // Tamaño total de la trama (4 cabecera + datos + 1 checksum)
-    int tam_total = 5 + len; 
+    // Checksum solo de datos
+    uint8_t chk_datos = 0;
+    for (int i = 0; i < len; i++) {
+        chk_datos ^= data[i];
+    }
+    payload[4 + len] = chk_datos;
+
+    size_t payload_len = 5 + len;
 
     int intentos = 0;
     while (intentos < MAX_REINTENTOS_SPI) {
         
         // Enviamos la trama real (con el tamaño total, no solo 'len')
-        enviar_chunk_spi(trama_completa, tam_total);
+        xSemaphoreTake(spi_bus_mutex, portMAX_DELAY);
+        bool enviado = spi_send_frame(payload, payload_len);
+        xSemaphoreGive(spi_bus_mutex);
+
+        if (!enviado) return ESP_FAIL;
 
         // Le damos 50ms al Esclavo para validar el Checksum y poner el ACK en su bandeja
         vTaskDelay(pdMS_TO_TICKS(50));
 
-        uint8_t tx_dummy[4] = {0x00, 0x00, 0x00, 0x00};
-        uint8_t rx_buf[4] = {0x00, 0x00, 0x00, 0x00};
-        
-        spi_transaction_t t;
-        memset(&t, 0, sizeof(t));
-        t.length = 32;
-        t.tx_buffer = tx_dummy;
-        t.rx_buffer = rx_buf;
-        
-        spi_device_transmit(spi_printer, &t);
+        // Esperamos el ACK (Protegido por el Mutex por seguridad)
+        xSemaphoreTake(spi_bus_mutex, portMAX_DELAY);
+        bool ack_recibido = esperar_ack_impresora(300);
+        xSemaphoreGive(spi_bus_mutex);
 
-        // Validamos el primer byte recibido
-        if (rx_buf[0] == 0x06) { // 0x06 es ACK
+        if (ack_recibido) { 
             return ESP_OK; // ¡Éxito total!
         }
 
         intentos++;
-        ESP_LOGW(OTA_SPI, "⚠️ NAK en paquete %lu (Intento %d/%d). Reintentando... (Recibido: 0x%02X)", 
-              num_pack, intentos, MAX_REINTENTOS_SPI, rx_buf[0]);
-        vTaskDelay(pdMS_TO_TICKS(50)); 
+        ESP_LOGW(OTA_SPI, "⚠️ Timeout o NAK en paquete %lu (Intento %d/%d). Reintentando...", 
+               num_pack, intentos, MAX_REINTENTOS_SPI);
+        vTaskDelay(pdMS_TO_TICKS(50));
     }
 
     return ESP_FAIL; 
@@ -154,9 +89,14 @@ void actualizar_impresora_por_spi(const char *url_descarga, const char* serial) 
     int fallos_red = 0;
     const int MAX_FALLOS_RED = 5;
 
-    // Comando de iniciación
-    if (transaccionar_byte_spi(SPI_CMD_START) != ACK_BYTE) {
-        LOG_E(OTA_SPI, "Impresora no lista para OTA");
+    // COMANDO START
+    uint8_t cmd_start = SPI_CMD_START;
+    xSemaphoreTake(spi_bus_mutex, portMAX_DELAY);
+    spi_send_frame(&cmd_start, 1);
+    xSemaphoreGive(spi_bus_mutex);
+    
+    if (!esperar_ack_impresora(2000)) {
+        LOG_E(OTA_SPI, "Impresora no lista o rechazó el comando START");
         free(buffer);
         return;
     }
@@ -226,13 +166,21 @@ void actualizar_impresora_por_spi(const char *url_descarga, const char* serial) 
         if (!error_sesion) break;
     }  
     
+    // COMANDO END
     if (total_bytes_recibidos >= content_length) {
-        transaccionar_byte_spi(SPI_CMD_END);
-        notificar_evento_ota(serial, "exito", "printer", 100);
+        uint8_t cmd_end = SPI_CMD_END;
+        xSemaphoreTake(spi_bus_mutex, portMAX_DELAY);
+        spi_send_frame(&cmd_end, 1);
+        xSemaphoreGive(spi_bus_mutex);
+        
+        if (esperar_ack_impresora(2000)) {
+            notificar_evento_ota(serial, "exito", "printer", 100);
+        } else {
+            notificar_evento_ota(serial, "error", "printer", 100); // Opcional: tratar el NAK de END como error
+        }
     } else {
         notificar_evento_ota(serial, "error", "printer", ultimo_porcentaje_notificado);
     }
-
 total_cleanup:
     free(buffer);
 }

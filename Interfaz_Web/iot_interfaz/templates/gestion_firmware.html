@@ -1,128 +1,103 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<style>
-    .fw-list-item:not(.active):hover {
-        background-color: #e9ecef;
-        transition: background-color 0.2s ease-in-out;
-    }
-    .icono-proyecto {
-        width: 40px; height: 40px; object-fit: cover; border-radius: 8px;
-    }
-</style>
-
-<div class="d-flex h-100" style="min-height: 95vh;">
-    <div class="bg-white border-end shadow-sm d-flex flex-column" style="width: 350px;">
-        <div class="p-3 border-bottom">
-            <h6 class="text-muted text-uppercase fw-bold mb-3" style="font-size: 0.8rem;">Gestión de Firmware</h6>
-            <div class="d-flex gap-2 mb-2">
-                <form hx-get="{{ request.path }}" 
-                      hx-target="#contenido-principal" 
-                      hx-select="#contenido-principal"
-                      class="flex-grow-1">
-                    <div class="input-group input-group-sm">
-                        <input type="text" name="buscar" class="form-control" placeholder="Buscar proyecto..." value="{{ query }}">
-                        <button class="btn btn-outline-secondary" type="submit">🔍</button>
-                    </div>
+<div class="flex !h-screen bg-gray-900 overflow-hidden">
+    <div class="w-[305px] bg-gray-800 border-r border-gray-700 flex flex-col">
+        <div class="p-4 border-b border-gray-700">
+            <h6 class="text-white uppercase tracking-widest text-[0.7rem] font-bold mb-4">Gestión de Firmware</h6>
+            <div class="flex gap-2">
+                <form hx-get="{{ request.path }}" hx-target="#contenido-principal" hx-select="#contenido-principal" class="flex-grow">
+                    <input type="text" name="buscar" class="w-full bg-gray-900 border-gray-600 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Buscar proyecto..." value="{{ query }}">
                 </form>
-                <button class="btn btn-sm btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#modalNuevoProyecto">
-                    + Proyecto
+                <button class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl font-bold text-sm transition-all" data-bs-toggle="modal" data-bs-target="#modalNuevoProyecto">
+                    +
                 </button>
             </div>
         </div>
 
-        <div class="list-group list-group-flush overflow-auto flex-grow-1">
+        <div class="overflow-auto flex-grow p-3 space-y-4">
             {% for p in proyectos %}
-                <a hx-get="{% url 'gestion_firmware_detalle' p.id %}" 
-                   hx-target="#contenido-principal"
-                   hx-select="#contenido-principal"
-                   hx-push-url="true"
-                   class="list-group-item list-group-item-action fw-list-item py-3 {% if proyecto_seleccionado and proyecto_seleccionado.id == p.id %}active bg-primary text-white border-primary{% endif %}"
-                   style="cursor: pointer;">
-                    <div class="d-flex align-items-center gap-3">
-                        {% if p.icono %}
-                            <img src="{{ p.icono.url }}" class="icono-proyecto shadow-sm bg-white">
-                        {% else %}
-                            <div class="icono-proyecto bg-light text-primary d-flex align-items-center justify-content-center border shadow-sm">
-                                <i class="bi bi-cpu fs-4"></i>
-                            </div>
-                        {% endif %}
-                        
-                        <div>
-                            <h6 class="mb-0 fw-bold">{{ p.nombre }}</h6>
-                            <small class="{% if proyecto_seleccionado and proyecto_seleccionado.id == p.id %}text-light{% else %}text-muted{% endif %}">
-                                {{ p.versiones.count }} versiones
-                            </small>
+                <a hx-get="{% url 'gestion_firmware_detalle' p.id %}" hx-target="#contenido-principal" hx-select="#contenido-principal" hx-push-url="true"
+                   class="flex items-center gap-4 rounded-2xl transition-all cursor-pointer {% if proyecto_seleccionado and proyecto_seleccionado.id == p.id %}bg-blue-900/40 border-blue-500/30 text-white{% else %}hover:bg-gray-700 text-gray-300{% endif %}">
+                    {% if p.icono %} 
+                        <img src="{{ p.icono.url }}" class="w-10 h-10 objects-cover rounded-lg shadow-sm">
+                    {% else %}
+                        <div class="w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center border border-gray-700">
+                            <i class="bi bi-cpu text-blue-400"></i>
                         </div>
+                    {% endif %}
+                    <div>
+                        <div class="font-bold">{{ p.nombre }}</div>
+                        <div class="text-xs opacity-70">{{ p.versiones.count }} versiones</div>
                     </div>
                 </a>
             {% empty %}
-                <div class="p-4 text-center text-muted small">No hay proyectos creados.</div>
+                <div class="p-4 text-center text-gray-500 text-sm">No hay proyectos creados.</div>
             {% endfor %}
-            <div class="p-3 mt-auto">
-                
-            </div>
         </div>
     </div>
 
-    <div class="flex-grow-1 bg-light p-4">
+    <div class="flex-grow bg-gray-900 p-8 overflow-auto">
         {% if proyecto_seleccionado %}
-            <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-                <div>
-                    <h3 class="fw-bold text-dark mb-1">{{ proyecto_seleccionado.nombre }}</h3>
-                    <p class="text-muted small mb-0">{{ proyecto_seleccionado.descripcion|default:"Sin descripción general." }}</p>
+            <div class="flex justify-between items-start mb-10 border-b border-gray-700 pb-6">
+                <div class="flex-grow">
+                    <h3 class="text-3xl font-extrabold text-white mb-2">{{ proyecto_seleccionado.nombre }}</h3>
+                    <p class="text-gray-400 text-sm max-w-2xl">{{ proyecto_seleccionado.descripcion|default:"Sin descripción." }}</p>
                 </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-outline-danger fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalEliminarProyecto">
+                <div class="flex gap-4 ml-6 shrink-0 mt-1">
+                    <button class="border border-red-900/50 text-red-400 hover:bg-red-900/20 px-5 py-2.5 rounded-xl font-bold transition-all text-sm flex items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalEliminarProyecto">
                         <i class="bi bi-trash"></i> Eliminar Proyecto
                     </button>
-                    <button class="btn btn-success fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevaVersion">
-                        <i class="bi bi-upload"></i> Subir Versión .bin
+                    <button class="bg-green-600 hover:bg-green-500 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-green-900/20 transition-all text-sm flex items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalNuevaVersion">
+                        <i class="bi bi-upload"></i> Subir Versión
                     </button>
                 </div>
             </div>
 
-            <div class="card shadow-sm border-0">
-                <div class="card-body p-0">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
+            <div class="bg-gray-800 rounded-3xl border border-gray-700 shadow-2xl">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-900/50 text-gray-400 text-xs uppercase tracking-wider">
                             <tr>
-                                <th>Versión</th>
-                                <th>Fecha de Subida</th>
-                                <th>Tipo</th>
-                                <th>Notas</th>
-                                <th class="text-end">Acciones</th>
+                                <th class="p-4">Versión</th>
+                                <th class="p-4">Fecha de Subida</th>
+                                <th class="p-4">Tipo</th>
+                                <th class="p-4">Notas</th>
+                                <th class="p-4 text-right w-34">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="text-white divide-y divide-gray-700">
                             {% for v in versiones %}
-                            <tr>
-                                <td class="fw-bold align-middle">{{ v.version }}</td>
-                                <td class="align-middle text-muted">{{ v.fecha_subida|date:"d M Y, H:i" }}</td>
-                                <td class="align-middle">
-                                    {% if v.es_obligatoria %}
-                                        <span class="badge bg-danger">Crítica</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">Opcional</span>
-                                    {% endif %}
-                                </td>
-                                <td class="align-middle small text-truncate" style="max-width: 200px;" title="{{ v.notas_version }}">
-                                    {{ v.notas_version|default:"-" }}
-                                </td>
-                                <td class="text-end align-middle text-nowrap">
-                                    <a href="{{ v.archivo_bin.url }}" class="btn btn-sm btn-outline-primary shadow-sm px-3" download>
-                                        <i class="bi bi-download me-1"></i> Descargar
-                                    </a>
-                                    
-                                    <button class="btn btn-sm btn-outline-danger shadow-sm px-3 ms-2" data-bs-toggle="modal" data-bs-target="#modalEliminarV-{{ v.id }}">
-                                        <i class="bi bi-trash me-1"></i> Eliminar
-                                    </button>
-                                </td>
-                            </tr>
+                                <tr class="hover:bg-gray-700/50 transition-colors">
+                                    <td class="p-4 font-mono font-bold text-blue-400">{{ v.version }}</td>
+                                    <td class="p-4 text-gray-400 text-sm">{{ v.fecha_subida|date:"d M Y, H:i" }}</td>
+                                    <td class="p-4">
+                                        <span class="px-2 py-1 rounded-lg text-xs font-bold {% if v.es_obligatoria %}bg-red-900 text-red-200{% else %}bg-gray-700 text-gray-300{% endif %}">
+                                            {% if v.es_obligatoria %}Crítica{% else %}Opcional{% endif %}
+                                        </span>
+                                    </td>
+                                    <td class="p-4 text-sm text-gray-400 max-w-[200px] truncate">{{ v.notas_version|default:"-" }}</td>
+                                    <td class="p-4 text-right">
+                                        <div class="flex justify-end gap-2">
+                                            <a href="{{ v.archivo_bin.url }}" 
+                                            class="inline-flex items-center gap-2 px-3 py-2 text-blue-400 bg-blue-900/40 hover:bg-blue-900/70 rounded-lg transition-all text-sm font-bold"
+                                            title="Descargar archivo">
+                                                <i class="bi bi-download"></i>
+                                                <span>Descargar</span>
+                                            </a>
+
+                                            <button class="inline-flex items-center gap-2 px-3 py-2 text-red-400 bg-red-900/40 hover:bg-red-900/70 rounded-lg transition-all text-sm font-bold"
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#modalEliminarV-{{ v.id }}"
+                                                    title="Eliminar versión">
+                                                <i class="bi bi-trash"></i>
+                                                <span>Eliminar</span>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
                             {% empty %}
-                            <tr>
-                                <td colspan="5" class="text-center py-4 text-muted">Aún no has subido ningún archivo .bin para este proyecto.</td>
-                            </tr>
+                                <tr><td colspan="5" class="p-8 text-center text-gray-500">No hay versiones subidas.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -130,26 +105,39 @@
             </div>
             {% for v in versiones %}  
                 <div class="modal fade" id="modalEliminarV-{{ v.id }}" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog text-start">
-                        <div class="modal-content border-0 shadow-lg">
-                            <div class="modal-header bg-danger text-white">
-                                <h5 class="modal-title">⚠️ Confirmar Eliminación</h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content bg-gray-800 border border-gray-700 shadow-2xl rounded-3xl overflow-hidden">
+                            
+                            <div class="modal-header border-b border-gray-700 px-6 py-4">
+                                <h5 class="modal-title text-white font-bold flex items-center gap-2">
+                                    <i class="bi bi-exclamation-triangle text-red-500"></i>
+                                    Confirmar Eliminación
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
-                            <div class="modal-body">
-                                <p>¿Estás completamente segura de que deseas eliminar la versión <strong>{{ v.version }}</strong> del proyecto <strong>{{ proyecto_seleccionado.nombre }}</strong>?</p>
-                                <div class="alert alert-warning small mb-0">
-                                    <strong>Atención:</strong> El archivo físico <code>.bin</code> será borrado permanentemente del servidor.
+
+                            <div class="modal-body px-6 py-3 text-gray-300">
+                                <p>¿Estás seguro de eliminar la versión <strong>{{ v.version }}</strong> del proyecto <strong>{{ proyecto_seleccionado.nombre }}</strong>?</p>
+                                
+                                <div class="mt-4 p-4 bg-red-900/20 border border-red-900/50 rounded-xl">
+                                    <p class="text-red-200 text-sm m-0">
+                                        <strong>Atención:</strong> El archivo físico <code>.bin</code> será borrado permanentemente del servidor. Esta acción no se puede deshacer.
+                                    </p>
                                 </div>
                             </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+
+                            <div class="modal-footer border-t border-gray-700 px-6 py-4">
+                                <button type="button" class="bg-gray-900 hover:bg-gray-700 px-4 py-2 text-gray-400 hover:text-white transition-colors" data-bs-dismiss="modal">Cancelar</button>
+                                
                                 <form hx-post="{% url 'eliminar_version' v.id %}"
-                                        hx-target="#contenido-principal"
-                                        hx-select="#contenido-principal"
-                                        hx-push-url="true">
+                                    hx-target="#contenido-principal"
+                                    hx-select="#contenido-principal"
+                                    hx-push-url="true">
                                     {% csrf_token %}
-                                    <button type="submit" class="btn btn-danger" data-bs-dismiss="modal" onclick="this.innerHTML='Eliminando...';">
+                                    <button type="submit" 
+                                            class="bg-red-600 hover:bg-red-500 text-white px-5 py-2.5 rounded-xl font-bold transition-all" 
+                                            data-bs-dismiss="modal" 
+                                            onclick="this.innerHTML='Eliminando...';">
                                         Sí, eliminar versión
                                     </button>
                                 </form>
@@ -207,13 +195,18 @@
 </div>
 
 {% if proyecto_seleccionado %}
-<div class="modal fade" id="modalNuevaVersion" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title">Subir Versión para {{ proyecto_seleccionado.nombre }}</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+<div class="modal fade" id="modalNuevaVersion" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-gray-800 border border-gray-700 shadow-2xl rounded-3xl overflow-hidden">
+            
+            <div class="modal-header border-b border-gray-700 px-6 py-3">
+                <h5 class="modal-title text-white font-bold flex items-center gap-2">
+                    <i class="bi bi-upload text-green-500"></i>
+                    Subir Nueva Versión
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+
             <form hx-post="{{ request.path }}" 
                   hx-encoding="multipart/form-data"
                   hx-target="#contenido-principal"
@@ -222,38 +215,51 @@
                 {% csrf_token %}
                 <input type="hidden" name="action" value="nueva_version">
                 <input type="hidden" name="proyecto_id" value="{{ proyecto_seleccionado.id }}">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Versión</label>
-                        <input type="text" name="version" class="form-control" 
-                            placeholder="Ej: 010000 o 020507GD00" 
-                            required 
-                            pattern="[A-Za-z0-9]+" 
-                            title="Formato inválido. Usa solo números y letras, sin espacios ni puntos (ej. 020507GD00).">
+                
+                <div class="modal-body px-6 py-3 space-y-4">
+                    <div>
+                        <label class="block text-gray-400 text-xs font-bold uppercase mb-2">Versión</label>
+                        <input type="text" name="version" 
+                               class="w-full bg-gray-900 border border-gray-600 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-green-500 outline-none transition-all"
+                               placeholder="Ej: 010000" required pattern="[A-Za-z0-9]+" 
+                               title="Solo números y letras">
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Archivo Binario (.bin)</label>
-                        <input type="file" name="archivo_bin" class="form-control" accept=".bin" required>
+
+                    <div>
+                        <label class="block text-gray-400 text-xs font-bold uppercase mb-2">Archivo Binario (.bin)</label>
+                        <input type="file" name="archivo_bin" 
+                               class="w-full bg-gray-900 border border-gray-600 rounded-xl px-4 py-2 text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-gray-700 file:text-white file:hover:bg-gray-600 transition-all"
+                               accept=".bin" required>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">¿Para qué componente es esta actualización?</label>
-                        <select name="tipo_modulo" class="form-select" required>
-                            <option value="" disabled selected>-- Elige el destino del .bin --</option>
+
+                    <div>
+                        <label class="block text-gray-400 text-xs font-bold uppercase mb-2">Destino de la actualización</label>
+                        <select name="tipo_modulo" class="w-full bg-gray-900 border border-gray-600 rounded-xl px-4 py-2.5 text-white outline-none focus:ring-2 focus:ring-green-500" required>
+                            <option value="" disabled selected>-- Seleccionar --</option>
                             <option value="ismart">Módulo iSmart (ESP32)</option>
                             <option value="impresora">Impresora Fiscal</option>
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Notas de la versión</label>
-                        <textarea name="notas_version" class="form-control" rows="3"></textarea>
+
+                    <div>
+                        <label class="block text-gray-400 text-xs font-bold uppercase mb-2">Notas de la versión</label>
+                        <textarea name="notas_version" 
+                                  class="w-full bg-gray-900 border border-gray-600 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-green-500 outline-none" 
+                                  rows="2"></textarea>
                     </div>
-                    <div class="form-check form-switch mt-3">
-                        <input class="form-check-input" type="checkbox" name="es_obligatoria" id="checkForzada">
-                        <label class="form-check-label" for="checkForzada">Actualización obligatoria</label>
+
+                    <div class="flex items-center gap-3 pt-2">
+                        <input class="w-10 h-6 appearance-none bg-gray-700 rounded-full cursor-pointer checked:bg-green-600 transition-all relative before:content-[''] before:absolute before:top-1 before:left-1 before:w-4 before:h-4 before:bg-white before:rounded-full checked:before:translate-x-4" 
+                               type="checkbox" name="es_obligatoria" id="checkForzada">
+                        <label class="text-gray-300 text-sm font-medium cursor-pointer" for="checkForzada">Actualización obligatoria</label>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-success">Subir .bin</button>
+
+                <div class="modal-footer border-t border-gray-700 px-6 py-4">
+                    <button type="button" class="px-4 py-2 text-gray-400 hover:text-white transition-colors" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="bg-green-600 hover:bg-green-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-green-900/20">
+                        Subir Versión
+                    </button>
                 </div>
             </form>
         </div>

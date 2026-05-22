@@ -1,0 +1,3 @@
+web: python manage.py runserver 0.0.0.0:8000
+mqtt: python manage.py listen_mqtt
+css: python manage.py tailwind start
