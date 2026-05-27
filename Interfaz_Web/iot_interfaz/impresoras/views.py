@@ -84,28 +84,75 @@ def disparar_ota_mqtt(request, dispositivo_id):
             client.connect(BROKER, PORT, 10)
             client.loop_start()
 
-            info_envio = client.publish(topic_comando, json.dumps(payload), qos=1)
+            info_envio = client.publish(topic_comando, json.dumps(payload), qos=1)        
+            info_envio.wait_for_publish(timeout=5)
 
-            try:
-                info_envio.wait_for_publish(timeout=5)
-            except RuntimeError:
-                print("❌ Error: El mensaje no se pudo publicar (Timeout)")
-                messages.error(request, "El broker MQTT no confirmó el envío. Inténtalo de nuevo.")
-                client.loop_stop()
-                return redirect('dispositivos_lista')
-
-            client.loop_stop()
-            client.disconnect()
-
-            print(f"✅ EXITO: Comando OTA enviado al topic {topic_comando}")
-            messages.success(request, f"📡 Comando OTA ({fw_destino.version}) enviado exitosamente al equipo {equipo.serial}.")
+            equipo.ultima_ota = timezone.now()
+            equipo.ota_en_curso = True  # Activamos la bandera para que el servidor sepa que hay OTA
+            equipo.save()
             
+            fecha_formateada = equipo.ultima_ota.strftime("%d/%m/%Y %H:%M")
+            
+            # Devolvemos un 200 OK genérico, pero inyectamos el JSON en el HX-Trigger
+            response = HttpResponse("OK", status=200)
+            trigger_data = {"id": equipo.id, "fecha": fecha_formateada}
+            response['HX-Trigger'] = json.dumps({"otaExitosa": trigger_data})
+            return response
+        
         except Exception as e:
 
-            print(f"❌ ERROR MQTT FATAL: {e}")
-            messages.error(request, f"❌ Error de conexión MQTT: {e}")
+            print(f"ERROR MQTT FATAL: {e}")
+            return HttpResponse("Error", status=500)
 
     return redirect('dispositivos_lista')
+
+@login_required
+def verificar_progreso_ota(request, id):
+    equipo = get_object_or_404(Dispositivo, id=id)
+    datos = equipo.ultimo_log_datos if equipo.ultimo_log_datos else {}
+    
+    # 1. Verificar si el LWT detectó una desconexión
+    # (El worker guardó "st": "offline" cuando se fue la luz/internet)
+    if datos.get("st") == "offline" or not equipo.ota_en_curso:
+        # Aseguramos que la bandera se apague
+        if equipo.ota_en_curso:
+            equipo.ota_en_curso = False
+            equipo.save()
+            
+        response = HttpResponse("") # Devolver vacío elimina el porcentaje de la pantalla
+        response['HX-Trigger'] = json.dumps({
+            "mostrarErrorOTA": f"Conexión perdida con {equipo.serial}. Reintente."
+        })
+        return response
+
+    # 2. Obtener el progreso real del JSON del MQTT
+    # NOTA: Cambia "progreso_ota" por la llave exacta que tu firmware envíe en el JSON
+    try:
+        progreso = int(datos.get("progreso_ota", 0))
+    except (ValueError, TypeError):
+        progreso = 0
+
+    # 3. Si terminó exitosamente
+    if progreso >= 100:
+        equipo.ota_en_curso = False
+        equipo.save()
+        
+        response = HttpResponse("") # Borra el componente de la pantalla
+        response['HX-Trigger'] = json.dumps({
+            "mostrarExitoOTA": f"Actualización completada en {equipo.serial}."
+        })
+        return response
+
+    # 4. Si sigue en proceso, devolvemos el HTML con el hx-trigger para que vuelva a consultar
+    html_progreso = f"""
+        <span class="px-2 py-1 bg-yellow-900/50 text-yellow-500 text-xs font-bold rounded border border-yellow-700/50"
+              hx-get="/dispositivos/ota/progreso/{equipo.id}/" 
+              hx-trigger="every 3s" 
+              hx-swap="outerHTML">
+            {progreso}%
+        </span>
+    """
+    return HttpResponse(html_progreso)
 
 @login_required
 def eliminar_version_firmware(request, v_id):

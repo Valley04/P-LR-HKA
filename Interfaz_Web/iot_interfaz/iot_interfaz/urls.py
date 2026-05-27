@@ -12,7 +12,7 @@ from impresoras.views import (
     eliminar_grupo, eliminar_modelo, exportar_dispositivos_excel, 
     log_capture_view, descargar_logs_dispositivos, gestion_firmware_view, 
     api_ultimo_firmware, eliminar_version_firmware, disparar_ota_mqtt, 
-    eliminar_proyecto_firmware
+    eliminar_proyecto_firmware, verificar_progreso_ota, 
 )
 
 urlpatterns = [
@@ -45,6 +45,8 @@ urlpatterns = [
     path('firmware/version/eliminar/<int:v_id>/', eliminar_version_firmware, name='eliminar_version'),
     path('dispositivos/ota/<int:dispositivo_id>/', disparar_ota_mqtt, name='disparar_ota'),
     path('firmware/proyecto/eliminar/<int:p_id>/', eliminar_proyecto_firmware, name='eliminar_proyecto'),
+
+    path('dispositivos/ota/progreso/<int:id>/', verificar_progreso_ota, name='verificar_progreso_ota'),
 ]
 
 if settings.DEBUG:

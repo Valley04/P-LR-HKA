@@ -45,10 +45,10 @@
                     <p class="text-gray-400 text-sm max-w-2xl">{{ proyecto_seleccionado.descripcion|default:"Sin descripción." }}</p>
                 </div>
                 <div class="flex gap-4 ml-6 shrink-0 mt-1">
-                    <button class="border border-red-900/50 text-red-400 hover:bg-red-900/20 px-5 py-2.5 rounded-xl font-bold transition-all text-sm flex items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalEliminarProyecto">
+                    <button class="border border-red-900/50 text-red-400 hover:bg-red-900/20 px-4 py-2.5 rounded-xl font-bold transition-all text-sm flex items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalEliminarProyecto">
                         <i class="bi bi-trash"></i> Eliminar Proyecto
                     </button>
-                    <button class="bg-green-600 hover:bg-green-500 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-green-900/20 transition-all text-sm flex items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalNuevaVersion">
+                    <button class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-900/20 transition-all text-sm flex items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalNuevaVersion">
                         <i class="bi bi-upload"></i> Subir Versión
                     </button>
                 </div>
@@ -77,13 +77,12 @@
                                         </span>
                                     </td>
                                     <td class="p-4 text-sm text-gray-400 max-w-[200px] truncate">{{ v.notas_version|default:"-" }}</td>
-                                    <td class="p-4 text-right">
+                                    <td class="p-4 text-center">
                                         <div class="flex justify-end gap-2">
                                             <a href="{{ v.archivo_bin.url }}" 
                                             class="inline-flex items-center gap-2 px-3 py-2 text-blue-400 bg-blue-900/40 hover:bg-blue-900/70 rounded-lg transition-all text-sm font-bold"
                                             title="Descargar archivo">
                                                 <i class="bi bi-download"></i>
-                                                <span>Descargar</span>
                                             </a>
 
                                             <button class="inline-flex items-center gap-2 px-3 py-2 text-red-400 bg-red-900/40 hover:bg-red-900/70 rounded-lg transition-all text-sm font-bold"
@@ -91,7 +90,6 @@
                                                     data-bs-target="#modalEliminarV-{{ v.id }}"
                                                     title="Eliminar versión">
                                                 <i class="bi bi-trash"></i>
-                                                <span>Eliminar</span>
                                             </button>
                                         </div>
                                     </td>
@@ -157,13 +155,18 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalNuevoProyecto" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">Crear Proyecto Firmware</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+<div class="modal fade" id="modalNuevoProyecto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-gray-800 border border-gray-700 shadow-2xl rounded-3xl overflow-hidden">
+            
+            <div class="modal-header border-b border-gray-700 px-6 py-3">
+                <h5 class="modal-title text-white font-bold flex items-center gap-2">
+                    <i class="bi bi-folder-plus text-blue-500"></i>
+                    Crear Nuevo Proyecto
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+
             <form hx-post="{{ request.path }}" 
                   hx-encoding="multipart/form-data"
                   hx-target="#contenido-principal"
@@ -171,23 +174,36 @@
                   hx-push-url="true">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="nuevo_proyecto">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Nombre del Proyecto</label>
-                        <input type="text" name="nombre" class="form-control" placeholder="Ej: Módulo iSmart Principal" required>
+                
+                <div class="modal-body px-6 py-3 space-y-4">
+                    <div>
+                        <label class="block text-gray-400 text-xs font-bold uppercase mb-2">Nombre del Proyecto</label>
+                        <input type="text" name="nombre" 
+                               class="w-full bg-gray-900 border border-gray-600 rounded-xl px-3 py-2.5 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                               placeholder="Ej: Módulo iSmart Principal" required>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Icono (Opcional)</label>
-                        <input type="file" name="icono" class="form-control" accept="image/png, image/jpeg">
-                        <small class="text-muted">Se mostrará en la lista lateral.</small>
+
+                    <div>
+                        <label class="block text-gray-400 text-xs font-bold uppercase mb-2">Icono del Proyecto (Opcional)</label>
+                        <input type="file" name="icono" 
+                               class="w-full bg-gray-900 border border-gray-600 rounded-xl px-2 py-2 text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-gray-700 file:text-white file:hover:bg-gray-600 transition-all"
+                               accept="image/png, image/jpeg">
+                        <small class="text-gray-500 text-xs mt-1 block">Se mostrará en la lista lateral.</small>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Descripción breve</label>
-                        <textarea name="descripcion" class="form-control" rows="2"></textarea>
+
+                    <div>
+                        <label class="block text-gray-400 text-xs font-bold uppercase mb-2">Descripción breve</label>
+                        <textarea name="descripcion" 
+                                  class="w-full bg-gray-900 border border-gray-600 rounded-xl px-3 py-2.5 text-white focus:ring-2 focus:ring-blue-500 outline-none" 
+                                  rows="2"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">Crear Proyecto</button>
+
+                <div class="modal-footer border-t border-gray-700 px-6 py-4">
+                    <button type="button" class="bg-gray-900 hover:bg-gray-600 px-4 py-2 text-gray-400 hover:text-white transition-colors" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-blue-900/20">
+                        Crear Proyecto
+                    </button>
                 </div>
             </form>
         </div>
@@ -220,7 +236,7 @@
                     <div>
                         <label class="block text-gray-400 text-xs font-bold uppercase mb-2">Versión</label>
                         <input type="text" name="version" 
-                               class="w-full bg-gray-900 border border-gray-600 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-green-500 outline-none transition-all"
+                               class="w-full bg-gray-900 border border-gray-600 rounded-xl px-3 py-2.5 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                                placeholder="Ej: 010000" required pattern="[A-Za-z0-9]+" 
                                title="Solo números y letras">
                     </div>
@@ -228,13 +244,13 @@
                     <div>
                         <label class="block text-gray-400 text-xs font-bold uppercase mb-2">Archivo Binario (.bin)</label>
                         <input type="file" name="archivo_bin" 
-                               class="w-full bg-gray-900 border border-gray-600 rounded-xl px-4 py-2 text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-gray-700 file:text-white file:hover:bg-gray-600 transition-all"
+                               class="w-full bg-gray-900 border border-gray-600 rounded-xl px-2 py-2 text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-gray-700 file:text-white file:hover:bg-gray-600 transition-all"
                                accept=".bin" required>
                     </div>
 
                     <div>
                         <label class="block text-gray-400 text-xs font-bold uppercase mb-2">Destino de la actualización</label>
-                        <select name="tipo_modulo" class="w-full bg-gray-900 border border-gray-600 rounded-xl px-4 py-2.5 text-white outline-none focus:ring-2 focus:ring-green-500" required>
+                        <select name="tipo_modulo" class="w-full bg-gray-900 border border-gray-600 rounded-xl px-3 py-2.5 text-white outline-none focus:ring-2 focus:ring-blue-500" required>
                             <option value="" disabled selected>-- Seleccionar --</option>
                             <option value="ismart">Módulo iSmart (ESP32)</option>
                             <option value="impresora">Impresora Fiscal</option>
@@ -244,20 +260,20 @@
                     <div>
                         <label class="block text-gray-400 text-xs font-bold uppercase mb-2">Notas de la versión</label>
                         <textarea name="notas_version" 
-                                  class="w-full bg-gray-900 border border-gray-600 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-green-500 outline-none" 
+                                  class="w-full bg-gray-900 border border-gray-600 rounded-xl px-3 py-2.5 text-white focus:ring-2 focus:ring-blue-500 outline-none" 
                                   rows="2"></textarea>
                     </div>
 
                     <div class="flex items-center gap-3 pt-2">
-                        <input class="w-10 h-6 appearance-none bg-gray-700 rounded-full cursor-pointer checked:bg-green-600 transition-all relative before:content-[''] before:absolute before:top-1 before:left-1 before:w-4 before:h-4 before:bg-white before:rounded-full checked:before:translate-x-4" 
+                        <input class="w-10 h-6 appearance-none bg-gray-700 rounded-full cursor-pointer checked:bg-blue-600 transition-all relative before:content-[''] before:absolute before:top-1 before:left-1 before:w-4 before:h-4 before:bg-white before:rounded-full checked:before:translate-x-4" 
                                type="checkbox" name="es_obligatoria" id="checkForzada">
                         <label class="text-gray-300 text-sm font-medium cursor-pointer" for="checkForzada">Actualización obligatoria</label>
                     </div>
                 </div>
 
                 <div class="modal-footer border-t border-gray-700 px-6 py-4">
-                    <button type="button" class="px-4 py-2 text-gray-400 hover:text-white transition-colors" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="bg-green-600 hover:bg-green-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-green-900/20">
+                    <button type="button" class="bg-gray-900 hover:bg-gray-600 px-4 py-2 text-gray-400 hover:text-white transition-colors" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-blue-900/20">
                         Subir Versión
                     </button>
                 </div>
@@ -266,27 +282,43 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalEliminarProyecto" tabindex="-1">
-    <div class="modal-dialog text-start">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">⚠️ Advertencia Crítica</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+<div class="modal fade" id="modalEliminarProyecto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-gray-800 border border-gray-700 shadow-2xl rounded-3xl overflow-hidden">
+            
+            <div class="modal-header border-b border-gray-700 px-6 py-3">
+                <h5 class="modal-title text-white font-bold flex items-center gap-2">
+                    <i class="bi bi-exclamation-octagon text-red-500"></i>
+                    Eliminar Proyecto
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <p>¿Estás completamente seguro de que deseas eliminar el proyecto <strong>{{ proyecto_seleccionado.nombre }}</strong>?</p>
-                <div class="alert alert-danger small mb-0">
-                    <strong>¡Peligro!</strong> Esto eliminará permanentemente el proyecto y <strong>TODAS</strong> las versiones de firmware (.bin) que contenga. Esta acción no se puede deshacer.
+
+            <div class="modal-body px-6 py-3 text-gray-300">
+                <p>¿Estás seguro de eliminar el proyecto <strong>{{ proyecto_seleccionado.nombre }}</strong>?</p>
+                
+                <div class="mt-4 p-4 bg-red-900/20 border border-red-900/50 rounded-xl">
+                    <div class="flex gap-3 text-red-200 text-sm">
+                        <i class="bi bi-shield-exclamation text-xl"></i>
+                        <p class="m-0">
+                            <strong>¡Peligro!</strong> Esto eliminará permanentemente el proyecto y <strong>TODAS</strong> las versiones de firmware asociadas. Esta acción no se puede deshacer.
+                        </p>
+                    </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+
+            <div class="modal-footer border-t border-gray-700 px-6 py-4">
+                <button type="button" class="bg-gray-900 hover:bg-gray-600 px-4 py-2 text-gray-400 hover:text-white transition-colors" data-bs-dismiss="modal">Cancelar</button>
+                
                 <form hx-post="{% url 'eliminar_proyecto' proyecto_seleccionado.id %}"
                       hx-target="#contenido-principal"
                       hx-select="#contenido-principal"
                       hx-push-url="true">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-danger" data-bs-dismiss="modal" onclick="this.innerHTML='Destruyendo...';">
+                    <button type="submit" 
+                            class="bg-red-600 hover:bg-red-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-red-900/20" 
+                            data-bs-dismiss="modal" 
+                            onclick="this.innerHTML='Destruyendo...';">
                         Sí, destruir proyecto
                     </button>
                 </form>

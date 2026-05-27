@@ -87,8 +87,20 @@ class Dispositivo(models.Model):
     )
 
     serial = models.CharField(max_length=50, unique=True, validators=[validar_serial], help_text="Ingrese el serial exacto del equipo.")
-    modelo = models.ForeignKey(ModeloEquipo, on_delete=models.CASCADE, related_name='dispositivos', null=True, blank=True)
-    grupo = models.ForeignKey(Grupo, on_delete=models.SET_NULL,null=True, blank=True)
+    modelo = models.ForeignKey(
+        ModeloEquipo, 
+        on_delete=models.SET_NULL, 
+        related_name='dispositivos', 
+        null=True, 
+        blank=True
+    )
+    grupo = models.ForeignKey(
+        Grupo, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True
+    )
+    
     fecha_registro = models.DateTimeField(auto_now_add=True)
     ultimo_sts1 = models.IntegerField(null=True, blank=True)
     ultimo_sts2 = models.IntegerField(null=True, blank=True)
@@ -96,7 +108,8 @@ class Dispositivo(models.Model):
     fw_ismart_instalado = models.CharField(max_length=20, default="Desconocida", blank=True)
     fw_printer_instalado = models.CharField(max_length=20, default="Desconocida", blank=True)
     firmware_actual = models.ForeignKey(VersionFirmware, on_delete=models.SET_NULL, null=True, blank=True, related_name='equipos_instalados')
-
+    ota_en_curso = models.BooleanField(default=False)
+    
     def formatear_version_hka(self, v):
         # v = "020507GD00"
         if v and len(v) >= 6 and v[:6].isdigit():

@@ -2,124 +2,107 @@
 {% load json_filters %}
 
 {% block dispositivos_content %}
-<div id="vista-log-capture" class="p-4"
+<div id="vista-log-capture" class="p-4 md:p-8"
      hx-get="{% url 'log_capture' %}?buscar={{ request.GET.buscar }}" 
      hx-trigger="mqttNuevoLog from:body" 
      hx-target="#vista-log-capture" 
      hx-swap="outerHTML">
      
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4>Historial por Dispositivo</h4>
-        <small class="text-muted">Conservación automática: 90 días</small>
-    </div>
-
-    <div class="mb-4">
-        <form hx-get="{% url 'log_capture' %}" 
-              hx-target="#contenido-principal" 
-              hx-select="#contenido-principal" 
-              hx-push-url="true"
-              class="d-flex" style="max-width: 400px;">
-            <input type="text" name="buscar" class="form-control form-control-sm me-2" placeholder="Buscar por serial..." value="{{ request.GET.buscar }}">
-            <button class="btn btn-sm btn-primary" type="submit">🔍</button>
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+            <h3 class="text-2xl font-extrabold text-white">Historial de Capturas</h3>
+            <p class="text-gray-400 text-sm italic"><i class="bi bi-clock-history"></i> Conservación automática: 90 días</p>
+        </div>
+        
+        <form hx-get="{% url 'log_capture' %}" hx-target="#contenido-principal" hx-select="#contenido-principal" hx-push-url="true" class="w-full md:w-auto">
+            <div class="relative">
+                <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                <input type="text" name="buscar" class="w-full md:w-64 bg-gray-900 border border-gray-600 rounded-xl py-2.5 pl-11 pr-4 text-sm text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Buscar por serial..." value="{{ request.GET.buscar }}">
+            </div>
         </form>
     </div>
 
-    <div class="table-responsive shadow-sm border rounded bg-white">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>Serial</th>
-                    <th>Modelo / Grupo</th>
-                    <th>Último Estado (STS1 / STS2)</th>
-                    <th class="text-end">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for equipo in dispositivos %}
-                <tr>
-                    <td>
-                        <a href="#" class="fw-bold text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalLogs-{{ equipo.id }}">
-                            {{ equipo.serial }}
-                        </a>
-                    </td>
-                    <td>
-                        <small class="text-muted">{{ equipo.modelo.nombre|default:"-" }}</small><br>
-                        <span class="badge bg-light text-dark border" style="font-size: 0.7rem;">{{ equipo.grupo.nombre|default:"Sin grupo" }}</span>
-                    </td>
-                    <td>
-                        <span class="badge bg-secondary" title="Estado (STS1)">{{ equipo.ultimo_log_datos.sts1|default:"--" }}</span>
-                        <span class="badge bg-secondary" title="Error (STS2)">{{ equipo.ultimo_log_datos.sts2|default:"--" }}</span>
-                    </td>
-                    <td class="text-end">
-                        <a href="{% url 'descargar_logs_equipo' equipo.id %}" class="btn btn-sm btn-outline-success">📥</a>
-                    </td>
-                </tr>
-
-                <div class="modal fade" id="modalLogs-{{ equipo.id }}" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                        <div class="modal-content border-0 shadow-lg">
-                            <div class="modal-header bg-dark text-white">
-                                <h5 class="modal-title">Historial: {{ equipo.serial }}</h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    <div class="bg-gray-800 rounded-3xl border border-gray-700 shadow-2xl overflow-hidden mb-12">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-gray-300">
+                <thead class="bg-gray-900/50 text-gray-400 text-[10px] uppercase tracking-wider">
+                    <tr>
+                        <th class="p-4 font-semibold">Serial</th>
+                        <th class="p-4 font-semibold">Modelo / Grupo</th>
+                        <th class="p-4 font-semibold">Último Estado (STS1/STS2)</th>
+                        <th class="p-4 font-semibold text-right">Exportar Registros</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-700">
+                    {% for equipo in dispositivos %}
+                    <tr class="hover:bg-gray-700/50 transition-colors">
+                        <td class="p-4">
+                            <button class="font-mono font-bold text-blue-400 hover:text-blue-300 transition-colors" data-bs-toggle="modal" data-bs-target="#modalLogs-{{ equipo.id }}">
+                                {{ equipo.serial }}
+                            </button>
+                        </td>
+                        <td class="p-4">
+                            <span class="block text-xs text-white font-bold">{{ equipo.modelo.nombre|default:"-" }}</span>
+                            <span class="text-[10px] bg-gray-900 border border-gray-600 px-2 py-0.5 rounded text-gray-400">{{ equipo.grupo.nombre|default:"Sin grupo" }}</span>
+                        </td>
+                        <td class="p-4">
+                            <div class="flex gap-2">
+                                <span class="bg-gray-900 px-2 py-1 rounded text-xs font-mono" title="STS1">{{ equipo.ultimo_log_datos.sts1|default:"--" }}</span>
+                                <span class="bg-gray-900 px-2 py-1 rounded text-xs font-mono" title="STS2">{{ equipo.ultimo_log_datos.sts2|default:"--" }}</span>
                             </div>
-                            <div class="modal-body bg-light">
-                                <ul class="list-group list-group-flush">
-                                    {% for log in equipo.logs.all|slice:":50" %}
-                                    <li class="list-group-item bg-transparent border-0 border-bottom mb-3 pb-3">
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <span class="small text-muted fw-bold"><i class="bi bi-clock"></i> {{ log.fecha|date:"d/m/Y H:i:s" }}</span>
-                                            <span class="badge {% if log.evento == 'Cambio de Error' %}bg-danger{% else %}bg-primary{% endif %}">
-                                                {{ log.evento }}
-                                            </span>
-                                        </div>
-                                        
-                                        {% with log_json=log.detalles|parse_json %}
-                                        <div class="bg-white p-3 border rounded shadow-sm">
-                                            <div class="row g-2 text-center">
-                                                <div class="col-4">
-                                                    <div class="border rounded p-1 bg-light">
-                                                        <small class="d-block text-muted" style="font-size: 0.6rem;">STS1</small>
-                                                        <strong class="text-dark">{{ log_json.sts1|default:"0" }}</strong>
-                                                    </div>
-                                                </div>
-                                                <div class="col-4">
-                                                    <div class="border rounded p-1 bg-light">
-                                                        <small class="d-block text-muted" style="font-size: 0.6rem;">STS2</small>
-                                                        <strong class="text-danger">{{ log_json.sts2|default:"0" }}</strong>
-                                                    </div>
-                                                </div>
-                                                <div class="col-4">
-                                                    <div class="border rounded p-1 bg-light">
-                                                        <small class="d-block text-muted" style="font-size: 0.6rem;">Reportes Z</small>
-                                                        <strong class="text-primary">{{ log_json.z_cnt|default:"0" }}</strong>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="mt-2 text-end">
-                                                <button class="btn btn-sm btn-link text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#raw-{{ log.id }}" style="font-size: 0.7rem;">
-                                                    ver json completo ↓
-                                                </button>
-                                                <div class="collapse mt-2" id="raw-{{ log.id }}">
-                                                    <pre class="mb-0 bg-dark text-success p-2 rounded text-start" style="font-size: 0.65rem;">{{ log.detalles }}</pre>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {% endwith %}
-                                    </li>
-                                    {% empty %}
-                                        <li class="text-center py-4 text-muted">No hay registros para este equipo.</li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% empty %}
-                <tr><td colspan="4" class="text-center text-muted p-4">No se encontraron dispositivos en el sistema.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        </td>
+                        <td class="p-4 text-center">
+                            <a href="{% url 'descargar_logs_equipo' equipo.id %}" 
+                            class="inline-flex items-center justify-center w-9 h-9 text-green-400 bg-green-900/20 hover:bg-green-900/50 rounded-lg transition-all" 
+                            title="Descargar Logs">
+                                <i class="bi bi-download text-lg"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center py-12 text-gray-500">No hay dispositivos registrados.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
+
+{% for equipo in dispositivos %}
+<div class="modal fade" id="modalLogs-{{ equipo.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content bg-gray-800 border border-gray-700 shadow-2xl rounded-3xl overflow-hidden">
+            <div class="modal-header border-b border-gray-700 px-6 py-3">
+                <h5 class="text-white font-bold">Historial: {{ equipo.serial }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <ul class="list-none m-0 p-4 space-y-3">
+                    {% for log in equipo.logs.all|slice:":50" %}
+                    <li class="bg-gray-900 p-4 rounded-xl border border-gray-700">
+                        <div class="flex justify-between mb-3 text-[10px] text-gray-400 uppercase tracking-widest">
+                            <span><i class="bi bi-clock"></i> {{ log.fecha|date:"d/m/Y H:i:s" }}</span>
+                            <span class="{% if log.evento == 'Cambio de Error' %}text-red-400{% else %}text-blue-400{% endif %} font-bold">{{ log.evento }}</span>
+                        </div>
+                        
+                        {% with log_json=log.detalles|parse_json %}
+                        <div class="grid grid-cols-3 gap-2 text-center mb-3">
+                            <div class="bg-gray-800 p-2 rounded-lg border border-gray-700"><small class="text-gray-500 block text-[9px]">STS1</small><b class="text-white">{{ log_json.sts1|default:"0" }}</b></div>
+                            <div class="bg-gray-800 p-2 rounded-lg border border-gray-700"><small class="text-gray-500 block text-[9px]">STS2</small><b class="text-red-400">{{ log_json.sts2|default:"0" }}</b></div>
+                            <div class="bg-gray-800 p-2 rounded-lg border border-gray-700"><small class="text-gray-500 block text-[9px]">Z_CNT</small><b class="text-blue-400">{{ log_json.z_cnt|default:"0" }}</b></div>
+                        </div>
+                        
+                        <div class="text-right">
+                            <button class="text-[10px] text-gray-500 hover:text-white transition-colors" data-bs-toggle="collapse" data-bs-target="#raw-{{ log.id }}">Ver JSON completo ↓</button>
+                            <pre id="raw-{{ log.id }}" class="collapse mt-2 bg-black text-green-500 p-3 rounded-lg text-[10px] text-left overflow-x-auto">{{ log.detalles }}</pre>
+                        </div>
+                        {% endwith %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
 {% endblock %}

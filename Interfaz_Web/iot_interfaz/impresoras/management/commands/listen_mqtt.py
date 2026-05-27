@@ -51,10 +51,12 @@ class Command(BaseCommand):
             equipo = Dispositivo.objects.filter(serial=serial_msg).first()
 
             if equipo:
-
                 if tipo_mensaje == "alertas_conexion":
                     if payload.get("st") == "offline":
                         evento_tipo = "Desconexión Abrupta (LWT)"
+
+                        equipo.ota_en_curso = False
+                        equipo.save()
                         
                         # Rescatamos la última "foto" conocida de los datos del equipo
                         datos_viejos = equipo.ultimo_log_datos if equipo.ultimo_log_datos else {}
