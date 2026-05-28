@@ -78,21 +78,23 @@ class Command(BaseCommand):
 
                 elif tipo_mensaje == "json_completo":
 
-                    viejo_fw_ismart = str(equipo.fw_ismart_instalado)
-                    viejo_fw_printer = str(equipo.fw_printer_instalado)
+                    datos_viejos = equipo.ultimo_log_datos if equipo.ultimo_log_datos else {}
+                    viejo_fw_ismart = str(equipo.fw_ismart_instalado or "Desconocida")
+                    viejo_fw_printer = str(equipo.fw_printer_instalado or "Desconocida")
+                    viejo_st = datos_viejos.get('st', 'online')
+                    viejo_sts1 = str(datos_viejos.get('sts1', ''))
+                    viejo_sts2 = str(datos_viejos.get('sts2', ''))
 
                     # Actualizamos los datos vitales del equipo
                     equipo.ultima_conexion = timezone.now()
 
-                    nuevo_fw_ismart = payload.get('fw_ismart')
-                    nuevo_fw_printer = payload.get('fw_printer')
-
                     if payload.get('fw_ismart'):
-                        equipo.fw_ismart_instalado = str(nuevo_fw_ismart)
+                        equipo.fw_ismart_instalado = str(payload['fw_ismart'])
 
                     if payload.get('fw_printer'):
-                        equipo.fw_printer_instalado = str(nuevo_fw_printer)
-
+                        equipo.fw_printer_instalado = str(payload['fw_printer'])
+                    
+                    equipo.ultimo_log_datos = payload
                     equipo.save()                
 
                     # Obtenemos el diccionario con el último historial guardado
@@ -101,10 +103,7 @@ class Command(BaseCommand):
                     viejo_st = datos_viejos.get('st', 'online')
 
                     nuevo_sts1 = str(payload.get('sts1', ''))
-                    viejo_sts1 = str(datos_viejos.get('sts1', ''))
-
                     nuevo_sts2 = str(payload.get('sts2', ''))
-                    viejo_sts2 = str(datos_viejos.get('sts2', ''))
 
                     eventos_detectados = []
 
@@ -112,16 +111,16 @@ class Command(BaseCommand):
                     if viejo_st == "offline":
                         eventos_detectados.append("Reconexión Exitosa")
                     
-                    if nuevo_fw_ismart and str(nuevo_fw_ismart) != viejo_fw_ismart and viejo_fw_ismart not in ["Desconocida", "None"]:
+                    if str(payload['fw_ismart']) != viejo_fw_ismart and viejo_fw_ismart not in ["Desconocida", "None"]:
                         eventos_detectados.append("Actualización Firmware iSmart")
                     
-                    if nuevo_fw_printer and str(nuevo_fw_printer) != viejo_fw_printer and viejo_fw_printer not in ["Desconocida", "None"]:
+                    if str(payload['fw_printer']) != viejo_fw_printer and viejo_fw_printer not in ["Desconocida", "None"]:
                         eventos_detectados.append("Actualización Firmware Impresora")
                     
-                    if nuevo_sts2 and nuevo_sts2 != viejo_sts2:
+                    if nuevo_sts2 != viejo_sts2:
                         eventos_detectados.append("Cambio de Error")
                     
-                    if nuevo_sts1 and nuevo_sts1 != viejo_sts1:
+                    if nuevo_sts1 != viejo_sts1:
                         eventos_detectados.append("Cambio de Estado")
                     
                     if not datos_viejos:

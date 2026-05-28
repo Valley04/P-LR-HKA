@@ -107,54 +107,6 @@ def disparar_ota_mqtt(request, dispositivo_id):
     return redirect('dispositivos_lista')
 
 @login_required
-def verificar_progreso_ota(request, id):
-    equipo = get_object_or_404(Dispositivo, id=id)
-    datos = equipo.ultimo_log_datos if equipo.ultimo_log_datos else {}
-    
-    # 1. Verificar si el LWT detectó una desconexión
-    # (El worker guardó "st": "offline" cuando se fue la luz/internet)
-    if datos.get("st") == "offline" or not equipo.ota_en_curso:
-        # Aseguramos que la bandera se apague
-        if equipo.ota_en_curso:
-            equipo.ota_en_curso = False
-            equipo.save()
-            
-        response = HttpResponse("") # Devolver vacío elimina el porcentaje de la pantalla
-        response['HX-Trigger'] = json.dumps({
-            "mostrarErrorOTA": f"Conexión perdida con {equipo.serial}. Reintente."
-        })
-        return response
-
-    # 2. Obtener el progreso real del JSON del MQTT
-    # NOTA: Cambia "progreso_ota" por la llave exacta que tu firmware envíe en el JSON
-    try:
-        progreso = int(datos.get("progreso_ota", 0))
-    except (ValueError, TypeError):
-        progreso = 0
-
-    # 3. Si terminó exitosamente
-    if progreso >= 100:
-        equipo.ota_en_curso = False
-        equipo.save()
-        
-        response = HttpResponse("") # Borra el componente de la pantalla
-        response['HX-Trigger'] = json.dumps({
-            "mostrarExitoOTA": f"Actualización completada en {equipo.serial}."
-        })
-        return response
-
-    # 4. Si sigue en proceso, devolvemos el HTML con el hx-trigger para que vuelva a consultar
-    html_progreso = f"""
-        <span class="px-2 py-1 bg-yellow-900/50 text-yellow-500 text-xs font-bold rounded border border-yellow-700/50"
-              hx-get="/dispositivos/ota/progreso/{equipo.id}/" 
-              hx-trigger="every 3s" 
-              hx-swap="outerHTML">
-            {progreso}%
-        </span>
-    """
-    return HttpResponse(html_progreso)
-
-@login_required
 def eliminar_version_firmware(request, v_id):
     if request.method == 'POST':
         version = get_object_or_404(VersionFirmware, id=v_id)
@@ -259,14 +211,15 @@ def gestion_firmware_view(request, proyecto_id=None):
 @login_required
 def log_capture_view(request):
     query = request.GET.get('buscar')
-    
     logs_recientes = Prefetch('logs', queryset=LogDispositivo.objects.order_by('-fecha'))
     dispositivos = Dispositivo.objects.select_related('modelo', 'grupo').prefetch_related(logs_recientes).all()
     
     if query:
         dispositivos = dispositivos.filter(serial__icontains=query)
-        
-    return render(request, 'log_capture.html', {'dispositivos': dispositivos})
+
+    context = {'dispositivos': dispositivos}
+    
+    return render(request, 'log_capture.html', context)
 
 @login_required
 def descargar_logs_dispositivos(request, dispositivo_id):

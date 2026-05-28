@@ -214,64 +214,26 @@
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
     <script>
-        // 1. FUNCIÓN DE RESPUESTA INMEDIATA AL CLIC
-        function marcarActivo(botonClickeado) {
-            // ¡CORRECCIÓN! Solo buscamos '.menu-item'
+        // 1. FUNCIÓN INTELIGENTE PARA MARCAR EL MENÚ POR URL
+        function marcarActivo() {
+            let rutaActual = window.location.pathname;
             let botones = document.querySelectorAll('.menu-item');
             
-            // Apaga todos
             botones.forEach(boton => {
-                boton.classList.remove('activo');
+                boton.classList.remove('activo'); // Apaga todos
+                
+                let rutaBoton = boton.getAttribute('hx-get');
+                // Si la URL actual coincide con la ruta del botón, lo enciende
+                if (rutaBoton && (rutaActual === rutaBoton || rutaActual.includes(rutaBoton.replace(/\/$/, '')))) {
+                    boton.classList.add('activo');
+                }
             });
-            
-            // Enciende solo el que tocaste
-            if (botonClickeado) {
-                botonClickeado.classList.add('activo');
-            }
         }
 
         // 2. AUTO-MARCAR AL HACER F5
         document.addEventListener("DOMContentLoaded", function() {
-            let rutaActual = window.location.pathname;
-            // ¡CORRECCIÓN! Solo buscamos '.menu-item'
-            let botones = document.querySelectorAll('.menu-item');
-            
-            botones.forEach(boton => {
-                let rutaBoton = boton.getAttribute('hx-get');
-                if (rutaBoton && (rutaActual === rutaBoton || rutaActual.includes(rutaBoton.replace(/\/$/, '')))) {
-                    marcarActivo(boton);
-                }
-            });
-        });
-
-        // 3. EVENTO HTMX LIMPIO (Solo para modales y OTA, ya no maneja el menú)
-        document.body.addEventListener('htmx:afterSwap', function(evt) {
-            
-            // TU CÓDIGO ORIGINAL: Limpieza del Modal
-            const sombras = document.querySelectorAll('.modal-backdrop');
-            sombras.forEach(sombra => sombra.remove());
-            document.body.classList.remove('modal-open');
-            document.body.style.overflow = '';
-            document.body.style.paddingRight = '';
-
-            // TU CÓDIGO ORIGINAL: Restauración inmediata de la Interfaz OTA
-            const ahora = Date.now();
-            for (const serial in memoriaEquipos) {
-                const equipo = memoriaEquipos[serial];
-                const celdaIndicador = document.getElementById(`indicador-${serial}`);
-                const badgeProgreso = document.getElementById(`progreso-ota-${serial}`);
-
-                if (equipo.actualizando) {
-                    if (celdaIndicador) celdaIndicador.innerHTML = `<span title="Actualizando (Freno de mano activado)">🟡</span>`;
-                    if (badgeProgreso) {
-                        badgeProgreso.classList.remove('d-none');
-                        badgeProgreso.innerText = `⏳ ${equipo.porcentaje || 0}%`;
-                    }
-                } else if (ahora - equipo.ultimoLatido > equipo.limiteSilencio) {
-                    if (celdaIndicador) celdaIndicador.innerHTML = `<span title="Desconectado (Sin señal)">🔴</span>`;
-                }
-            }
-        });         
+            marcarActivo();
+        });     
 
         // FUNCIÓN PARA CREAR NOTIFICACIONES FLOTANTES
         function mostrarToast(titulo, mensaje, tipo = 'danger') {
@@ -447,12 +409,13 @@
                             indicadorTabla.innerHTML = `<i class="bi bi-wifi-off text-muted fs-5" title="Equipo Offline"></i>`;
                         }
 
-                        // 3. SOLUCIÓN: SOLO mostramos el error y ocultamos el porcentaje SI estaba en medio de una OTA
                         if (estabaActualizando) {
-                            const badgeProgreso = document.getElementById(`progreso-ota-${serialEntrante}`);
-                            if (badgeProgreso) {
-                                badgeProgreso.classList.add('d-none');
-                                badgeProgreso.innerText = '0%';
+                            const contenedorProgreso = document.getElementById(`progreso-ota-${serialEntrante}`);
+                            const barraProgreso = document.getElementById(`barra-ota-${serialEntrante}`);
+                            
+                            if (contenedorProgreso) {
+                                contenedorProgreso.classList.add('d-none');
+                                if (barraProgreso) barraProgreso.style.width = '0%';
                             }
 
                             if (typeof mostrarToast === "function") {
@@ -475,7 +438,9 @@
                     }
                 }
                 else if (tipoMensaje === "ota") {
-                    const badgeProgreso = document.getElementById(`progreso-ota-${serialEntrante}`);
+                    const contenedorProgreso = document.getElementById(`progreso-ota-${serialEntrante}`);
+                    const barraProgreso = document.getElementById(`barra-ota-${serialEntrante}`);
+                    const textoProgreso = document.getElementById(`texto-ota-${serialEntrante}`);
 
                     if (data.st === "iniciado" || data.st === "actualizando") {
                         memoriaEquipos[serialEntrante].actualizando = true;
@@ -487,9 +452,10 @@
                         }
 
                         // Mostramos el porcentaje al lado del botón
-                        if (badgeProgreso) {
-                            badgeProgreso.classList.remove('d-none');
-                            badgeProgreso.innerText = `⏳ ${data.pr}%`;
+                        if (contenedorProgreso) {
+                            contenedorProgreso.classList.remove('d-none');
+                            if (barraProgreso) barraProgreso.style.width = `${data.pr}%`;
+                            if (textoProgreso) textoProgreso.innerText = `${data.pr}%`;
                         }
                     } 
                     else if (data.st === "exito") {
@@ -500,8 +466,10 @@
                         if (celdaIndicador) {
                             celdaIndicador.innerHTML = `<span title="En línea (Recién actualizado)">🟢</span>`
                         }
-                        if (badgeProgreso) {
-                            badgeProgreso.classList.add('d-none');
+                        // Ocultamos la barra al terminar
+                        if (contenedorProgreso) {
+                            contenedorProgreso.classList.add('d-none');
+                            if (barraProgreso) barraProgreso.style.width = `0%`;
                         }
 
                         mostrarToast("Actualización Completada", `El equipo ${serialEntrante} actualizó ${data.tg} con éxito.`, "success")
@@ -513,22 +481,19 @@
                         if (celdaIndicador) {
                             celdaIndicador.innerHTML = `<span title="¡Error en actualización de ${data.tg}! (Falló al ${data.pr}%)">❗</span>`;
                         }
-                        if (badgeProgreso) {
-                            badgeProgreso.classList.add('d-none');
+                        // Ocultamos la nueva barra y la reseteamos
+                        if (contenedorProgreso) {
+                            contenedorProgreso.classList.add('d-none');
+                            if (barraProgreso) barraProgreso.style.width = '0%';
                         }
 
-                        mostrarToast("Alerta OTA", `El equipo ${serialEntrante} falló al actualizar ${data.tg} (${data.pr}%).`, "danger");
+                        mostrarToast("Alerta de actualización", `El equipo ${serialEntrante} falló al actualizar ${data.tg} (${data.pr}%).`, "danger");
                     }
                 }
                 else if (tipoMensaje === "json_completo") {
 
                     if (memoriaEquipos[serialEntrante].offline) {
                         memoriaEquipos[serialEntrante].offline = false;
-                    }
-                    
-                    // Si por alguna razón envía telemetría normal, asumimos que ya no está actualizando
-                    if (memoriaEquipos[serialEntrante].actualizando) {
-                        memoriaEquipos[serialEntrante].actualizando = false;
                     }
 
                     const tiempoTranscurrido = data.ts - memoriaEquipos[serialEntrante].ultimoTS;
@@ -594,7 +559,7 @@
                     }
 
                     if (!document.body.classList.contains('modal-open')) {
-                        document.body.dispatchEvent(new CustomEvent('mqtt-update', { bubbles: true }));
+                        document.body.dispatchEvent(new CustomEvent('mqttNuevoLog', { bubbles: true }));
                     }
                 }
 
@@ -608,25 +573,30 @@
                 marcarActivo();
             }
 
-            // 2. TU CÓDIGO ORIGINAL: Limpieza del Modal
             const sombras = document.querySelectorAll('.modal-backdrop');
             sombras.forEach(sombra => sombra.remove());
             document.body.classList.remove('modal-open');
             document.body.style.overflow = '';
             document.body.style.paddingRight = '';
 
-            // 3. TU CÓDIGO ORIGINAL: Restauración inmediata de la Interfaz OTA
             const ahora = Date.now();
             for (const serial in memoriaEquipos) {
                 const equipo = memoriaEquipos[serial];
                 const celdaIndicador = document.getElementById(`indicador-${serial}`);
-                const badgeProgreso = document.getElementById(`progreso-ota-${serial}`);
+                
+                // Buscamos los elementos de la nueva barra
+                const contenedorProgreso = document.getElementById(`progreso-ota-${serial}`);
+                const barraProgreso = document.getElementById(`barra-ota-${serial}`);
+                const textoProgreso = document.getElementById(`texto-ota-${serial}`);
 
                 if (equipo.actualizando) {
                     if (celdaIndicador) celdaIndicador.innerHTML = `<span title="Actualizando (Freno de mano activado)">🟡</span>`;
-                    if (badgeProgreso) {
-                        badgeProgreso.classList.remove('d-none');
-                        badgeProgreso.innerText = `⏳ ${equipo.porcentaje || 0}%`;
+                    
+                    // Restauramos la nueva barra sin destruir el HTML
+                    if (contenedorProgreso) {
+                        contenedorProgreso.classList.remove('d-none');
+                        if (barraProgreso) barraProgreso.style.width = `${equipo.porcentaje || 0}%`;
+                        if (textoProgreso) textoProgreso.innerText = `${equipo.porcentaje || 0}%`;
                     }
                 } else if (ahora - equipo.ultimoLatido > equipo.limiteSilencio) {
                     if (celdaIndicador) celdaIndicador.innerHTML = `<span title="Desconectado (Sin señal)">🔴</span>`;
@@ -634,6 +604,5 @@
             }
         });
     </script>
-
 </body>
 </html>
