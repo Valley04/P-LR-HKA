@@ -12,6 +12,7 @@
 #include "mqtt5_client.h"
 #include "esp_crt_bundle.h"
 #include "esp_mac.h"
+#include "esp_random.h"
 
 // VARIABLES ESTÁTICAS
 static const char* TAG_MQTT = "mqtt_events";
@@ -221,14 +222,15 @@ void mqtt_app_start(void) {
     static char lwt_topic[64];
     prepare_mqtt_topic(lwt_topic, sizeof(lwt_topic), mqtt_data.register_number, "alertas_conexion");
     const char* lwt_msg = "{\"st\":\"offline\", \"alerta\":\"conexion_perdida_abruptamente\"}";
-    uint8_t mac[6];
-    char client_id_seguro[32];
+    static char client_id_seguro[32] = {0}; 
+    uint8_t mac[6] = {0};
 
     esp_read_mac(mac, ESP_MAC_WIFI_STA);
 
-    // Ensamblamos un ID temporal pero absolutamente único
-    snprintf(client_id_seguro, sizeof(client_id_seguro), "iSmart_%02X%02X%02X%02X%02X%02X", 
-            mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    snprintf(client_id_seguro, sizeof(client_id_seguro), "iSmart_%02X%02X%02X%02X%02X%02X_%ld", 
+             mac[0], mac[1], mac[2], mac[3], mac[4], mac[5], esp_random() % 1000);
+    
+    ESP_LOGW("MQTT_INIT", "🔑 Client ID asignado a este equipo: %s", client_id_seguro);
     
     // CONFIGURACIÓN CORRECTA para ESP-IDF v5.5.2
     esp_mqtt_client_config_t mqtt_cfg = {

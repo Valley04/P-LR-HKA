@@ -109,6 +109,17 @@ class Dispositivo(models.Model):
     fw_printer_instalado = models.CharField(max_length=20, default="Desconocida", blank=True)
     firmware_actual = models.ForeignKey(VersionFirmware, on_delete=models.SET_NULL, null=True, blank=True, related_name='equipos_instalados')
     ota_en_curso = models.BooleanField(default=False)
+
+    def get_ultima_ota_formateada(self):
+        try:
+            ultimo_log = self.logs.filter(evento__icontains="Actualización").order_by('-fecha').first()
+            
+            if ultimo_log:
+                fecha_str = ultimo_log.fecha.strftime('%d/%m/%Y %H:%M:%S')
+                return f"{fecha_str} - {ultimo_log.evento}"
+        except Exception:
+            pass        
+        return "Nunca"
     
     def formatear_version_hka(self, v):
         # v = "020507GD00"

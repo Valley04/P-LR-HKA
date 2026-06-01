@@ -279,10 +279,20 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="py-2 block text-gray-400 text-xs font-bold uppercase mb-2">
+                        <div class="flex items-center gap-3 pt-3 mb-3">
+                            <input class="w-10 h-6 appearance-none bg-gray-700 rounded-full cursor-pointer checked:bg-green-600 transition-all relative before:content-[''] before:absolute before:top-1 before:left-1 before:w-4 before:h-4 before:bg-white before:rounded-full checked:before:translate-x-4" 
+                                type="checkbox" 
+                                name="actualizar_grupo" 
+                                id="checkActualizarGrupo-{{ equipo.id }}"
+                                value="true">
+                            <label class="text-gray-300 text-sm font-medium cursor-pointer" for="checkActualizarGrupo-{{ equipo.id }}">
+                                Actualizar todos los equipos del grupo
+                            </label>
+                        </div>
+                        <div class="py-1 block text-gray-400 text-xs font-bold uppercase mb-2">
                             <p>Última actualización: 
                                 <span id="fecha-ota-{{ equipo.id }}">
-                                    {{ equipo.ultima_ota|date:"d/m/Y H:i"|default:"Nunca" }}
+                                    {{ equipo.get_ultima_ota_formateada }}
                                 </span>
                             </p>
                         </div>
@@ -293,11 +303,13 @@
                                 class="bg-green-600 hover:bg-green-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-green-900/20" 
                                 data-bs-dismiss="modal"
                                 hx-on::after-request="
-                                    if(!event.detail.successful) {
-                                        mostrarToast('Error', 'No se pudo conectar con el servidor', 'danger');
+                                    if(event.detail.successful) {
+                                        mostrarToast('Éxito', 'Comando de actualización enviado correctamente', 'success');
+                                    } else {
+                                        mostrarToast('Error', 'No se pudo enviar el comando', 'danger');
                                     }
                                 ">
-                            Disparar OTA
+                            Enviar comando
                         </button>
                     </div>
                 </form>

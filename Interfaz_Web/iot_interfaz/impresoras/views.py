@@ -55,43 +55,56 @@ def disparar_ota_mqtt(request, dispositivo_id):
         fw_destino = get_object_or_404(VersionFirmware, id=fw_id)
         tipo_guardado = fw_destino.tipo_modulo 
 
-        if tipo_guardado == "impresora":
-            objetivo_hardware = "printer"
+        es_grupal = request.POST.get('actualizar_grupo') == 'true'
+
+        if es_grupal and equipo.grupo:
+            dispositivos_a_actualizar = Dispositivo.objects.filter(grupo=equipo.grupo)
         else:
-            objetivo_hardware = "ismart"
+            dispositivos_a_actualizar = [equipo]
 
-        url_descarga = request.build_absolute_uri(fw_destino.archivo_bin.url)
-
-        payload = {
-            "comando": "INICIAR_OTA",
-            "objetivo": objetivo_hardware,
-            "version": fw_destino.version,
-            "url_descarga": url_descarga,
-        }
-
-        topic_comando = f"comandos/{equipo.serial}/ota"
+        BROKER = "832b8689599f4045be005c116bc416f0.s1.eu.hivemq.cloud"
+        PORT = 8883
+        USER = "workerpython"
+        PASS = "Worker12"
 
         try:
-            BROKER = "832b8689599f4045be005c116bc416f0.s1.eu.hivemq.cloud"
-            PORT = 8883
-            USER = "workerpython"
-            PASS = "Worker12"
 
             client = mqtt.Client(client_id=f"django_web_cmd_{equipo.serial}")
             client.tls_set(tls_version=ssl.PROTOCOL_TLS)
             client.username_pw_set(USER, PASS)
-
             client.connect(BROKER, PORT, 10)
             client.loop_start()
 
-            info_envio = client.publish(topic_comando, json.dumps(payload), qos=1)        
-            info_envio.wait_for_publish(timeout=5)
+            for equipo in dispositivos_a_actualizar:
+                print(f"Disparando OTA para: {equipo.serial}")
 
-            equipo.ultima_ota = timezone.now()
-            equipo.ota_en_curso = True  # Activamos la bandera para que el servidor sepa que hay OTA
-            equipo.save()
+                if tipo_guardado == "impresora":
+                    objetivo_hardware = "printer"
+                else:
+                    objetivo_hardware = "ismart"
+
+                url_descarga = request.build_absolute_uri(fw_destino.archivo_bin.url)
+
+                payload = {
+                    "comando": "INICIAR_OTA",
+                    "objetivo": objetivo_hardware,
+                    "version": fw_destino.version,
+                    "url_descarga": url_descarga,
+                }
+
+                topic_comando = f"comandos/{equipo.serial}/ota"
+
+                info_envio = client.publish(topic_comando, json.dumps(payload), qos=1)        
+                info_envio.wait_for_publish(timeout=5)
+
+                equipo.ultima_ota = timezone.now()
+                equipo.ota_en_curso = True  # Activamos la bandera para que el servidor sepa que hay OTA
+                equipo.save()
             
-            fecha_formateada = equipo.ultima_ota.strftime("%d/%m/%Y %H:%M")
+                fecha_formateada = equipo.ultima_ota.strftime("%d/%m/%Y %H:%M")
+            
+            client.loop_stop()
+            client.disconnect()
             
             # Devolvemos un 200 OK genérico, pero inyectamos el JSON en el HX-Trigger
             response = HttpResponse("OK", status=200)

@@ -26,9 +26,9 @@
 #define PIN_NUM_CS   32
 
 // Comandos que espera recibir del Master (Basado en tu printer_config.h)
-#define SPI_CMD_START  0x01
-#define SPI_CMD_PACKET 0x04
-#define SPI_CMD_END    0x07
+#define SPI_CMD_START  0x07
+#define SPI_CMD_PACKET 0x08
+#define SPI_CMD_END    0x09
 
 #define SPI_BUFFER_SIZE 1056
 
@@ -123,11 +123,9 @@ void app_main(void) {
                 }
             }
 
-            // Si todo el buffer era basura (ceros o FF), limpiamos y seguimos esperando
             if (start_idx == -1) {
-                memset(sendbuf, 0, SPI_BUFFER_SIZE);
-
                 if (pending_response == PENDING_S1) {
+                    memset(sendbuf, 0, SPI_BUFFER_SIZE);
                     ESP_LOGI("MOCK_PRINTER", "⏳ Master leyó el ACK. Cargando trama S1...");
                     char *payload = "S100\n00000264819849029\n00000000\n00000\n00000000\n00000\n00000000\n00000\n00000000\n00000\n0020\n0017\nJ-312171197\nZ1A8779988\n164000\n310326\n";
                     int payload_len = strlen(payload);
@@ -139,10 +137,11 @@ void app_main(void) {
                     pending_response = PENDING_NONE;
                 }
                 else if (pending_response == PENDING_SV2) {
+                    memset(sendbuf, 0, SPI_BUFFER_SIZE);
                     ESP_LOGI("MOCK_PRINTER", "⏳ Master leyó el ACK. Cargando trama SV2...");
                     char payload[100];
                     
-                    snprintf(payload, sizeof(payload), "SV2\nZ7C\nVE\n%02d%02d%02d%s\n",
+                    snprintf(payload, sizeof(payload), "SV2\nZ7C\nVE\n%02d%02d%02d%s",
                               fw_version, fw_update, fw_revision, fw_chip);
 
                     int payload_len = strlen(payload);
@@ -178,85 +177,88 @@ void app_main(void) {
                 sendbuf[4] = lrc;
             } else if (primer_byte == STX) {
                 // Extraemos hasta 3 bytes para poder identificar tanto "S1" como "SV2"
-                char cmd[5] = {0};
-                if (start_idx + 3 < bytes_recibidos) {
-                    memcpy(cmd, &recvbuf[start_idx + 1], 3); 
+                uint8_t cmd_interno = recvbuf[start_idx + 1];
+                if (cmd_interno == SPI_CMD_START) {
+                    ESP_LOGI(TAG, "📥 Recibido: CMD_START encapsulado (Iniciando OTA)");
+                    ota_in_progress = true;
+                    ota_integrity_error = false;
+                    next_expected_packet = 1;
+                    ota_bytes_received = 0;
+
+                    memset(sendbuf, 0, SPI_BUFFER_SIZE);
+                    sendbuf[0] = ACK; // Confirmamos inicio
+                }
+                else if (cmd_interno == SPI_CMD_PACKET) {
+                    // ¡OJO! Todo se desplazó un índice a la derecha por culpa del STX
+                    uint8_t pkg_num = recvbuf[start_idx + 2];
+                    uint16_t pkg_size = (recvbuf[start_idx + 3] << 8) | recvbuf[start_idx + 4];
+                    uint8_t *pkg_data = &recvbuf[start_idx + 5];
+                    uint8_t received_chk = recvbuf[start_idx + 5 + pkg_size];
+                    
+                    uint8_t local_chk = calcular_lrc(pkg_data, pkg_size);
+
+                    if (local_chk != received_chk) {
+                        ESP_LOGE(TAG, "❌ Error de Checksum en paquete %d. Calc: 0x%02X, Recibido: 0x%02X", 
+                                 pkg_num, local_chk, received_chk);
+                        ota_integrity_error = true;
+                    }
+
+                    if (pkg_num != next_expected_packet) {
+                        ESP_LOGE(TAG, "❌ Error de secuencia. Esperado: %d, Recibido: %d", 
+                                 next_expected_packet, pkg_num);
+                        ota_integrity_error = true;
+                    }
+
+                    memset(sendbuf, 0, SPI_BUFFER_SIZE);
+
+                    if (!ota_integrity_error) {
+                        ota_bytes_received += pkg_size;
+                        next_expected_packet++;
+                        ESP_LOGI(TAG, "📦 Paquete %d recibido OK (%d bytes)", pkg_num, pkg_size);
+                        sendbuf[0] = ACK; // Confirmamos éxito al Master
+                    } else {
+                        sendbuf[0] = NAK; // Informamos del fallo al Master
+                    }
+                }
+                else if (cmd_interno == SPI_CMD_END) {
+                    if (ota_in_progress && !ota_integrity_error && next_expected_packet > 0) {
+                        if (fw_revision < 8) fw_revision++; 
+                        ESP_LOGI(TAG, "🏁 OTA SUCCESS: Sistema actualizado a %02d%02d%02d%s", 
+                                fw_version, fw_update, fw_revision, fw_chip);
+                    } else {
+                        ESP_LOGE(TAG, "🏁 OTA FAIL: Actualización abortada por errores.");
+                    }
+                    ota_in_progress = false;
+                    memset(sendbuf, 0, SPI_BUFFER_SIZE);
+                    sendbuf[0] = ACK;
                 }
                 
-                if (strncmp(cmd, "S1", 2) == 0) {
-                    ESP_LOGI(TAG, "📥 Recibido: Comando S1 -> Preparando trama de 133 bytes");
-                    memset(sendbuf, 0, SPI_BUFFER_SIZE);
-                    sendbuf[0] = ACK;
-                    pending_response = PENDING_S1;
-                }
-                else if (strncmp(cmd, "SV2", 3) == 0) {
-                    ESP_LOGI(TAG, "📥 Recibido: Comando SV2 -> Preparando versiones");
-                    memset(sendbuf, 0, SPI_BUFFER_SIZE);
-                    sendbuf[0] = ACK;
-                    pending_response = PENDING_SV2;
-                }
                 else {
-                    ESP_LOGW(TAG, "Comando fiscal no implementado: %s", cmd);
+                    char cmd_texto[5] = {0};
+                    if (start_idx + 3 < bytes_recibidos) {
+                        memcpy(cmd_texto, &recvbuf[start_idx + 1], 3); 
+                    }
+                    
+                    if (strncmp(cmd_texto, "S1", 2) == 0) {
+                        ESP_LOGI(TAG, "📥 Recibido: Comando S1 -> Preparando trama de 133 bytes");
+                        memset(sendbuf, 0, SPI_BUFFER_SIZE);
+                        sendbuf[0] = ACK;
+                        pending_response = PENDING_S1;
+                    }
+                    else if (strncmp(cmd_texto, "SV2", 3) == 0) {
+                        ESP_LOGI(TAG, "📥 Recibido: Comando SV2 -> Preparando versiones");
+                        memset(sendbuf, 0, SPI_BUFFER_SIZE);
+                        sendbuf[0] = ACK;
+                        pending_response = PENDING_SV2;
+                    }
+                    else {
+                        ESP_LOGW(TAG, "❓ Comando fiscal no reconocido: 0x%02X / Texto: %s", cmd_interno, cmd_texto);
+                    }
                 }
             }
             else if (primer_byte == ACK) {
                 ESP_LOGI(TAG, "📥 Recibido: ACK del Master");
                 memset(sendbuf, 0, SPI_BUFFER_SIZE);
-            }
-            else if (primer_byte == SPI_CMD_START) {
-                ESP_LOGI(TAG, "📥 Recibido: CMD_START (Iniciando OTA)");
-                ota_in_progress = true;
-                ota_integrity_error = false;
-                next_expected_packet = 1;
-                ota_bytes_received = 0;
-
-                memset(sendbuf, 0, SPI_BUFFER_SIZE);
-                sendbuf[0] = ACK; // Confirmamos inicio
-            } 
-            else if (primer_byte == SPI_CMD_PACKET) {
-                uint8_t pkg_num = recvbuf[start_idx + 1];
-                uint16_t pkg_size = (recvbuf[start_idx + 2] << 8) | recvbuf[start_idx + 3];
-                uint8_t *pkg_data = &recvbuf[start_idx + 4];
-                uint8_t received_chk = recvbuf[start_idx + 4 + pkg_size];
-                
-                // Validar Checksum localmente
-                uint8_t local_chk = calcular_lrc(pkg_data, pkg_size);
-
-                if (local_chk != received_chk) {
-                    ESP_LOGE(TAG, "❌ Error de Checksum en paquete %d. Calc: 0x%02X, Recibido: 0x%02X", 
-                             pkg_num, local_chk, received_chk);
-                    ota_integrity_error = true;
-                }
-
-                if (pkg_num != next_expected_packet) {
-                    ESP_LOGE(TAG, "❌ Error de secuencia. Esperado: %d, Recibido: %d", 
-                             next_expected_packet, pkg_num);
-                    ota_integrity_error = true;
-                }
-
-                memset(sendbuf, 0, SPI_BUFFER_SIZE);
-
-                if (!ota_integrity_error) {
-                    ota_bytes_received += pkg_size;
-                    next_expected_packet++;
-                    ESP_LOGI(TAG, "📦 Paquete %d recibido OK (%d bytes)", pkg_num, pkg_size);
-                    sendbuf[0] = ACK; // Confirmamos éxito al Master
-                } else {
-                    sendbuf[0] = NAK; // Informamos del fallo al Master
-                }
-            } 
-            else if (primer_byte == SPI_CMD_END) {
-                if (ota_in_progress && !ota_integrity_error && next_expected_packet > 0) {
-                    if (fw_revision < 8) {
-                        fw_revision++; 
-                    } // Incrementamos el formato 020507 -> 020508
-                    ESP_LOGI(TAG, "🏁 OTA SUCCESS: Sistema actualizado a %02d%02d%02d%s", 
-                            fw_version, fw_update, fw_revision, fw_chip);
-                } else {
-                    ESP_LOGE(TAG, "🏁 OTA FAIL: La actualización fue abortada por errores de integridad.");
-                }
-                ota_in_progress = false;
-                sendbuf[0] = ACK;
             }
             else {
                 ESP_LOGW("MOCK_PRINTER", "❓ Dato desconocido: 0x%02X en índice [%d]", primer_byte, start_idx);
