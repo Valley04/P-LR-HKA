@@ -1,3 +1,4 @@
+# json_filters.py
 from django import template
 import json
 

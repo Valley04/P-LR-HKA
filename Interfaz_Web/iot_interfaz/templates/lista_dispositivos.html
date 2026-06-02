@@ -216,7 +216,14 @@
                 </div>
                 <form hx-post="{% url 'disparar_ota' equipo.id %}" 
                         hx-target="this" 
-                        hx-swap="none">
+                        hx-swap="none"
+                        hx-on::after-request="
+                            if(event.detail.successful) {
+                                mostrarToast('Éxito', 'Comando de actualización enviado correctamente', 'success');
+                            } else {
+                                mostrarToast('Error', 'No se pudo enviar el comando', 'danger');
+                            }
+                        ">
                     {% csrf_token %}
                     <div class="modal-body px-6 py-3">
                         
@@ -297,18 +304,13 @@
                             </p>
                         </div>
                     </div>
+                    
                     <div class="modal-footer border-t border-gray-700 px-6 py-4">
                         <button type="button" class="bg-gray-900 hover:bg-gray-700 px-4 py-2 text-gray-400 hover:text-white transition-colors" data-bs-dismiss="modal">Cancelar</button>
+                        
                         <button type="submit" 
                                 class="bg-green-600 hover:bg-green-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-green-900/20" 
-                                data-bs-dismiss="modal"
-                                hx-on::after-request="
-                                    if(event.detail.successful) {
-                                        mostrarToast('Éxito', 'Comando de actualización enviado correctamente', 'success');
-                                    } else {
-                                        mostrarToast('Error', 'No se pudo enviar el comando', 'danger');
-                                    }
-                                ">
+                                data-bs-dismiss="modal">
                             Enviar comando
                         </button>
                     </div>
