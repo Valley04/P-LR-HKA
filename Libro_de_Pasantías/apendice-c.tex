@@ -1,0 +1,246 @@
+\chapter{Código Fuente del Sistema}
+\label{apx:codigo}
+
+\par En este apartado se recopila el código fuente completo de los módulos desarrollados para el sistema de monitoreo remoto de equipos fiscales. El material se organiza en cuatro bloques: el firmware del Módulo de Transmisión IoT (MT-IoT) en lenguaje C, las estructuras de mensajería en formato JSON, las herramientas de simulación y el \textit{worker} de servidor en Python, y la capa de interfaz reactiva en HTML. Cada bloque conserva los comentarios originales que facilitan su interpretación por terceros.
+
+\section{Firmware del Módulo de Transmisión IoT (MT-IoT)}
+
+\subsection{Sanitización y Parseo de la Trama SV2}
+
+\begin{lstlisting}[language=C, caption={Mitigación del error Off-By-One durante el parseo de la trama SV2.}, label={code:offbyone}, frame=single, basicstyle=\footnotesize\ttfamily, keywordstyle=\bfseries]
+int bytes_leidos = receive_response(rx_buffer, sizeof(rx_buffer), 1000);
+
+if (bytes_leidos > 15 && validate_frame(rx_buffer, bytes_leidos)) {
+    int etx_pos = bytes_leidos - 2; // Ajuste para esquivar salto de linea
+    int fw_len = 10; // Ejemplo: 020507GD00
+    
+    if (etx_pos >= fw_len + 1) {
+        int start_idx = etx_pos - fw_len - 1;
+        if (xSemaphoreTake(mqtt_data_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+            memset(mqtt_data.fw_printer, 0, sizeof(mqtt_data.fw_printer));
+            // Copiado seguro hacia la estructura
+            strncpy(mqtt_data.fw_printer, (char*)&rx_buffer[start_idx], fw_len);
+            mqtt_data.fw_printer[fw_len] = '\0'; // Terminador nulo manual
+            
+            ESP_LOGI(TAG_PRINTER, "Version detectada via SV2: %s", 
+                     mqtt_data.fw_printer);
+            xSemaphoreGive(mqtt_data_mutex);
+        }
+        return true;
+    }
+}
+\end{lstlisting}
+
+\subsection{Interrogación Serial No Bloqueante}
+
+\begin{lstlisting}[language=C, caption={Lógica no bloqueante de la tarea de interrogación serial (Polling).}, label={code:task_delay}, frame=single, basicstyle=\footnotesize\ttfamily, keywordstyle=\bfseries]
+void printer_polling_task(void *pvParameters) {
+    uint8_t enq_cmd = 0x05; // Caracter ENQ segun el manual
+    
+    while(1) {
+        // Transmision asincrona del byte de estado
+        uart_write_bytes(UART_NUM_1, (const char*)&enq_cmd, 1);
+        
+        // El hilo cede voluntariamente el control al Scheduler por 5 segundos
+        vTaskDelay(pdMS_TO_TICKS(5000)); 
+    }
+}
+\end{lstlisting}
+
+\subsection{Validación de Integridad de Trama}
+
+\begin{lstlisting}[language=C, caption={Lógica de validación de trama e intercepción de ruido electromagnético.}, label={code:validate_frame}]
+// Validar integridad estructural y matematica (LRC) de la trama
+if (!validate_frame(rx_buffer, received)) {
+    ESP_LOGW(TAG_PRINTER, "Trama invalida detectada por ruido/Checksum");
+    printer_handle_error(ERROR_INVALID_RESPONSE);
+    // Liberacion del semaforo para evitar bloqueos del sistema
+    xSemaphoreGive(spi_bus_mutex);
+    continue;
+}
+\end{lstlisting}
+
+\subsection{Exclusión Mutua de Memoria y Bus Físico}
+
+\begin{lstlisting}[language=C, caption={Uso de doble exclusión mutua para proteger RAM y hardware físico.}, label={code:mutex_bus}]
+// 1. Tomar el control exclusivo del cable fisico sincrono
+if (xSemaphoreTake(bus_local_mutex, portMAX_DELAY) == pdTRUE) {
+    
+    // Validar integridad estructural y matematica de la trama
+    if (validate_frame(rx_buffer, received)) {
+        
+        // 2. Tomar el control de la memoria RAM para escritura
+        if (xSemaphoreTake(mqtt_data_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+            strncpy(mqtt_data.fw_printer, (char*)&rx_buffer[start_idx], fw_len);
+            mqtt_data.fw_printer[fw_len] = '\0';
+            xSemaphoreGive(mqtt_data_mutex); // Liberar RAM
+        }
+    }
+    xSemaphoreGive(bus_local_mutex); // Liberar cable fisico
+}
+\end{lstlisting}
+
+\subsection{Resiliencia y Reconexión MQTT}
+
+\begin{lstlisting}[language=C, caption={Lógica de resiliencia y reconexión en la tarea MQTT.}, label={code:mqtt_reconnect}]
+// VERIFICACION DE CONEXION DENTRO DE LA TAREA ASINCRONA
+if (!mqtt_connected) {
+    LOG_W(TAG_MQTT, "MQTT desconectado, reintentando en breve...");
+    // Delay de cortesia para no saturar la red (Retardo exponencial)
+    vTaskDelay(pdMS_TO_TICKS(RECONNECT_DELAY_MS)); 
+    continue;
+}
+\end{lstlisting}
+
+\subsection{Configuración Segura del Cliente MQTT}
+
+\begin{lstlisting}[language=C, caption={Configuración de inicialización del cliente MQTT con seguridad TLS estricta.}, label={code:mqtt_tls}]
+esp_mqtt_client_config_t mqtt_cfg = {
+    .broker.address.hostname = "832b8689599f4045be005c116bc416f0.s1.eu.hivemq.cloud",
+    .broker.address.port = 8883,
+    .broker.address.transport = MQTT_TRANSPORT_OVER_SSL,
+    .broker.verification.crt_bundle_attach = esp_crt_bundle_attach,
+    // ... configuracion de credenciales y sesion ...
+};
+\end{lstlisting}
+
+\subsection{Inyección de Metadatos mediante User Properties}
+
+\begin{lstlisting}[language=C, caption={Inyección dinámica de metadatos mediante User Properties de MQTT v5.0.}, label={code:user_props}]
+esp_mqtt5_user_property_item_t user_prop_items[] = {
+    {"modelo_dispositivo", "HKA80"},
+    {"firmware_version", ISMART_VERSION},
+    {"serial", serial_seguro},
+    {"tipo_dato", tipo_dato},
+    {"wifi_rssi", rssi_str} // Capturado via esp_wifi_sta_get_ap_info
+};
+
+mqtt5_user_property_handle_t user_prop_handle = NULL;
+esp_mqtt5_client_set_user_property(&user_prop_handle, user_prop_items, 5);
+\end{lstlisting}
+
+\subsection{Testamento (Last Will and Testament)}
+
+\begin{lstlisting}[language=json, caption={Mensaje de última voluntad (\textit{Last Will and Testament}) registrado en el broker.}, label={code:lwt_payload}, frame=single, basicstyle=\footnotesize\ttfamily]
+{"st": "offline", "alerta": "conexion_perdida_abruptamente"}
+\end{lstlisting}
+
+\subsection{Reanudación de Descargas mediante HTTP Range}
+
+\begin{lstlisting}[language=C, caption={Inyección de cabecera HTTP Range para reanudación de descargas interrumpidas.}, label={code:http_range}]
+if (total_bytes_recibidos > 0) {
+    char range_header[32];
+    // Solicitamos al servidor continuar desde el byte de corte exacto
+    snprintf(range_header, sizeof(range_header), "bytes=%d-", total_bytes_recibidos);
+    esp_http_client_set_header(client, "Range", range_header);
+}
+esp_err_t err = esp_http_client_open(client, 0);
+\end{lstlisting}
+
+\subsection{Empaquetado de Firmware Segmentado hacia el Periférico}
+
+\begin{lstlisting}[language=C, caption={Empaquetado y transmisión de firmware segmentado hacia el periférico local.}, label={code:local_ota}]
+// Empaquetado estricto de capa fisica
+transaccionar_byte_bus(CMD_PACKET); // Comando de insercion
+enviar_chunk_bus((uint8_t*)&num_pack, 4); // Secuencial del paquete
+enviar_chunk_bus((uint8_t*)&total_packs, 4); // Total esperado
+uint16_t tam_actual = (uint16_t)len;
+enviar_chunk_bus((uint8_t*)&tam_actual, 2); // Longitud del fragmento
+enviar_chunk_bus(data, len); // Bloque de datos crudos
+enviar_chunk_bus((uint8_t*)&checksum_paquete, 4); // Redundancia
+
+if (transaccionar_byte_bus(0x00) == ACK_BYTE) {
+    return ESP_OK; // Bloque integrado exitosamente
+}
+\end{lstlisting}
+
+\section{Estructuras de Mensajería (JSON)}
+
+\subsection{Telemetría del Status S1}
+
+\begin{lstlisting}[language=json, caption={Estructura JSON del Status S1 publicado por el MT-IoT hacia el broker MQTT.}, label={code:json_mqtt}, frame=single, basicstyle=\footnotesize\ttfamily, keywordstyle=\bfseries]
+{
+  "timestamp": 164370,
+  "sts1": "0x60",
+  "sts2": "0x40",
+  "estado": "Modo Fiscal y en Espera",
+  "error": "Ningun error",
+  "cajero": "0010",
+  "ventas": "00000000000000000",
+  "fact_emitidas": "00000",
+  "rif": "J3121711970",
+  "registro": "Z1F9999988"
+}
+\end{lstlisting}
+
+\subsection{Comando de Actualización Remota}
+
+\begin{lstlisting}[language=json, caption={Estructura del payload MQTT para iniciar un proceso de actualización remota.}, label={code:json_ota}, frame=single, basicstyle=\footnotesize\ttfamily, keywordstyle=\bfseries]
+{
+  "comando": "INICIAR_OTA",
+  "objetivo": "ismart",
+  "version": "v020100",
+  "url_descarga": "https://servidor-seguro.com/media/firmwares/update.bin"
+}
+\end{lstlisting}
+
+\section{Herramientas de Simulación}
+
+\begin{lstlisting}[language=Python, caption={Simulador fiscal con cálculo de redundancia (LRC) y manejo de estados.}, label={code:simulador_python}, frame=single, basicstyle=\footnotesize\ttfamily, keywordstyle=\bfseries]
+def procesar_trama_completa(ser, trama):
+    # Extraccion de datos y byte de comprobacion LRC
+    data_etx = trama[1:-1] 
+    lrc_rx = trama[-1] 
+    lrc_calc = calcular_lrc(data_etx) 
+    
+    if lrc_rx == lrc_calc: 
+        ser.write(bytes([0x06])) # Enviar ACK (0x06)
+        comando = data_etx[:-1].decode('utf-8', errors='ignore')
+        
+        if comando == "S1": 
+            enviar_respuesta_s1(ser) # Trama con variables fiscales
+        elif comando == "SV2": 
+            enviar_respuesta_sv2(ser) # Version de firmware
+    else: 
+        ser.write(bytes([0x15])) # Enviar NAK por error de LRC
+\end{lstlisting}
+
+\section{Worker de Telemetría en el Servidor}
+
+\begin{lstlisting}[language=Python, caption={Lógica de suscripción y manejo de desconexiones LWT en el Worker MQTT.}, label={code:listen_mqtt}, frame=single, basicstyle=\footnotesize\ttfamily, keywordstyle=\bfseries]
+def on_message(client, userdata, msg):
+    partes_topico = msg.topic.split('/')
+    serial = partes_topico[2]
+    tipo = partes_topico[3] # ej. 'alertas_conexion' o 'json_completo'
+    
+    payload = json.loads(msg.payload.decode('utf-8'))
+    
+    # Interceptacion de Alertas de Red (Testamento LWT)
+    if tipo == "alertas_conexion" and payload.get("st") == "offline":
+        # Clonacion transaccional del ultimo log valido para no perder el estado
+        dispositivo = Dispositivo.objects.get(serial=serial)
+        LogDispositivo.objects.create(
+            dispositivo=dispositivo,
+            evento="Desconexion Abrupta (LWT)",
+            detalles=payload
+        )
+\end{lstlisting}
+
+\section{Interfaz Reactiva Web}
+
+\begin{lstlisting}[language=HTML, caption={Captura reactiva de eventos MQTT mediante atributos declarativos de HTMX.}, label={code:htmx_log}, frame=single, basicstyle=\footnotesize\ttfamily, keywordstyle=\bfseries]
+<!-- log_capture.html -->
+<!-- hx-trigger escucha el evento despachado por el cliente WebSockets (MQTT.js) -->
+<div id="vista-log-capture" class="p-4"
+    hx-get="/log_capture/?buscar={{ request.GET.buscar }}"
+    hx-trigger="mqttNuevoLog from:body"
+    hx-target="#vista-log-capture"
+    hx-swap="outerHTML">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4>Historial de Auditoria por Dispositivo</h4>
+        <small class="text-muted">Conservacion automatica: 90 dias</small>
+    </div>
+    <!-- ... renderizado dinamico de la tabla ... -->
+</div>
+\end{lstlisting}

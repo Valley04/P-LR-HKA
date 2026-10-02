@@ -1,0 +1,30 @@
+\chapter*{INTRODUCCIÓN}
+
+\section*{Antecedentes}
+
+Históricamente, la fiscalización en Venezuela ha dependido de equipos físicos estáticos (impresoras fiscales) que operan bajo protocolos de comunicación punto a punto, predominantemente el estándar RS232 (UART). Si bien estos equipos han evolucionado en capacidad de almacenamiento de memorias fiscales, su arquitectura de comunicación se ha mantenido aislada de las redes corporativas. Tradicionalmente, la única forma de interactuar con el equipo para diagnóstico o auditoría ha sido la conexión física de un técnico mediante herramientas de depuración serial locales. Con la masificación del Internet de las Cosas (IoT) y el uso de microcontroladores de alto rendimiento como el ESP32, surge la posibilidad de transformar estos periféricos \say{mudos}\ en nodos inteligentes. La empresa The Factory HKA, líder en el sector, ha iniciado una transición hacia la digitalización de estos procesos, buscando centralizar la información que antes residía únicamente en el hardware físico de cada contribuyente.
+
+\section*{Planteamiento del problema}
+
+El laboratorio de desarrollo y la unidad de soporte de The Factory HKA enfrentan limitaciones operativas debido a que el monitoreo de los estados de la impresora (como el Status S1) depende de la presencia física o de conexiones seriales punto a punto. Esta arquitectura dificulta la detección temprana de errores críticos, tales como \say{fin de papel}\, \say{memoria fiscal llena}\ o fallos mecánicos, que pueden interrumpir la actividad comercial de forma imprevista. Además, la visualización actual de los datos fiscales es fragmentada; los técnicos solo pueden observar el estado de un equipo a la vez mediante herramientas de depuración serial, lo que impide tener una visión global y simultánea del parque de máquinas instaladas.
+
+\section*{Justificaci\'on}
+
+El diseño de un dispositivo basado en el microcontrolador ESP32 funciona como un instrumento de medición digital que moderniza la interacción con los equipos fiscales. Esta solución es beneficiosa en tres aspectos fundamentales: en primer lugar, ofrece una usabilidad superior al eliminar la dependencia de cables seriales hacia una PC local; en segundo lugar, permite una visualización centralizada mediante un dashboard web que muestra múltiples equipos en simultáneo, facilitando el análisis de patrones; y finalmente, representa una evolución digital para la empresa, integrando protocolos industriales modernos como MQTT v5.0. La implementación de una base de datos de series de tiempo para almacenar los históricos de ventas y errores permite, además, realizar mantenimiento preventivo basado en datos reales.
+
+\section*{Objetivo general}
+
+Diseñar, implementar y validar un sistema basado en microcontroladores (ESP32) que permita el monitoreo remoto y en tiempo real de los datos operativos de equipos fiscales, garantizando la confiabilidad y robustez del sistema de comunicación.
+
+\section*{Objetivos espec\'ificos}
+
+\begin{itemize}
+    \item Diseñar la arquitectura del sistema IoT que integre los microcontroladores, los protocolos de comunicación y la plataforma de monitoreo remoto.
+    \item Desarrollar el firmware embebido para los microcontroladores ESP32.
+    \item Integrar el sistema con sensores o interfaces de los equipos fiscales, garantizando la captura de datos relevantes.
+    \item Implementar la comunicación mediante MQTT con un servidor externo.
+    \item Implementar un servidor MQTT para recibir, almacenar y distribuir los datos enviados por los dispositivos.
+    \item Desarrollar una interfaz web o móvil (dashboard) que permita visualizar en tiempo real el estado de los equipos fiscales.
+    \item Validar el sistema, evaluando la confiabilidad de la comunicación, la latencia, la frecuencia de actualización y la robustez ante fallos de red o energía.
+    \item Documentar el proceso de desarrollo, incluyendo diagramas de arquitectura, flujos de datos, scripts de prueba y resultados de validación.
+\end{itemize}

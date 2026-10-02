@@ -1,0 +1,57 @@
+\chapter*{Notación matemática}
+
+\section*{Símbolos Latinos}
+\begin{tabular}{@{}l@{\hspace{1.5em}}p{0.72\textwidth}@{}}
+$B$ & Contador de bytes recibidos durante la descarga $[\text{bytes}]$ \\
+$b_i$ & $i$-ésimo byte de la trama fiscal $[\text{byte}]$ \\
+$C_{ef}$ & Capacitancia efectiva conmutada del circuito $[\text{F}]$ \\
+$f$ & Frecuencia de operación del núcleo $[\text{MHz}]$ \\
+$i_0$ & Índice inicial del campo de versión en el búfer $[-]$ \\
+$L_{fw}$ & Longitud del campo de versión del \textit{firmware} $[\text{caracteres}]$ \\
+$n$ & Longitud total de la trama fiscal $[\text{bytes}]$ \\
+$O(1)$ & Complejidad temporal constante $[-]$ \\
+$P$ & Potencia total disipada por el SoC $[\text{W}]$ \\
+$P_{din}$ & Potencia dinámica disipada $[\text{W}]$ \\
+$p_{ETX}$ & Posición del carácter terminador ETX en el búfer $[\text{índice}]$ \\
+$R_{\theta j-a}$ & Resistencia térmica unión-ambiente $[\text{°C/W}]$ \\
+$T_{E2E}$ & Latencia extremo a extremo del ciclo de telemetría $[\text{ms}]$ \\
+$T_{JSON\_pack}$ & Tiempo de empaquetado y serialización del \textit{payload} $[\text{ms}]$ \\
+$T_{MQTT\_pub}$ & Tiempo de publicación y tránsito por el \textit{broker} $[\text{ms}]$ \\
+$T_{TLS\_handshake}$ & Tiempo de establecimiento seguro del canal TLS $[\text{ms}]$ \\
+$T_{UART\_poll}$ & Tiempo de sondeo del registro \textit{Status S1} en el bus local $[\text{ms}]$ \\
+$T_{WS\_render}$ & Tiempo de renderizado reactivo del DOM $[\text{ms}]$ \\
+$T_{r}$ & Retardo de cortesía antes de reintentar la reconexión $[\text{ms}]$ \\
+$T_{s}$ & Intervalo de sondeo fiscal $[\text{ms}]$ \\
+$V_{dd}$ & Tensión de alimentación del núcleo $[\text{V}]$ \\
+\end{tabular}
+
+\section*{Símbolos Griegos}
+\begin{tabular}{@{}l@{\hspace{1.5em}}p{0.72\textwidth}@{}}
+$\Delta T_{j-a}$ & Salto térmico entre la unión y el ambiente $[\text{°C}]$ \\
+$\eta_{\text{banda}}$ & Eficiencia de reducción del ancho de banda $[\%]$ \\
+$\sigma$ & Desviación estándar de una medición $[\text{ms}]$ \\
+$\sigma_{E2E}$ & Desviación estándar de la latencia extremo a extremo $[\text{ms}]$ \\
+$\sigma_i$ & Desviación estándar de la $i$-ésima etapa $[\text{ms}]$ \\
+\end{tabular}
+
+\section*{Subíndices y Superíndices}
+\begin{tabular}{@{}l@{\hspace{1.5em}}p{0.72\textwidth}@{}}
+banda & Magnitud referida al ancho de banda \\
+calc & Valor calculado por el \textit{firmware} \\
+dd & Alimentación del núcleo (\textit{drain-to-drain}) \\
+din & Naturaleza dinámica de la magnitud \\
+E2E & Extremo a extremo (\textit{end-to-end}) \\
+ef & Valor efectivo \\
+ETX & Carácter de fin de trama (\textit{End of Text}) \\
+fw & Referido al \textit{firmware} \\
+i & Índice de etapa o de byte \\
+j-a & Unión-ambiente (\textit{junction-to-ambient}) \\
+JSON\_pack & Empaquetado del mensaje JSON \\
+MQTT\_pub & Publicación MQTT \\
+r & Reconexión \\
+rx & Valor recibido \\
+s & Sondeo (\textit{polling}) \\
+TLS\_handshake & Establecimiento del canal TLS \\
+UART\_poll & Sondeo del bus local \\
+WS\_render & Renderizado del DOM \\
+\end{tabular}

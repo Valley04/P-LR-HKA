@@ -1,0 +1,1914 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12 Portable) (preloaded format=pdflatex 2026.10.2)  2 OCT 2026 16:56
+entering extended mode
+ restricted \write18 enabled.
+ %&-line parsing enabled.
+**./main.tex
+(main.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2025-12-24>
+(tesis-usb.cls
+Document Class: tesis-usb 2015/07/20 v4.2Clase para documentos de LaTeX no ofic
+ial para libros de tesis USB
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/fancyhdr\fa
+ncyhdr.sty
+Package: fancyhdr 2025/02/07 v5.2 Extensive control of page headers and footers
+
+\f@nch@headwidth=\skip49
+\f@nch@offset@elh=\skip50
+\f@nch@offset@erh=\skip51
+\f@nch@offset@olh=\skip52
+\f@nch@offset@orh=\skip53
+\f@nch@offset@elf=\skip54
+\f@nch@offset@erf=\skip55
+\f@nch@offset@olf=\skip56
+\f@nch@offset@orf=\skip57
+\f@nch@height=\skip58
+\f@nch@footalignment=\skip59
+\f@nch@widthL=\skip60
+\f@nch@widthC=\skip61
+\f@nch@widthR=\skip62
+\@temptokenb=\toks17
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/base\bk12.c
+lo
+File: bk12.clo 2025/01/22 v1.4n Standard LaTeX file (size option)
+)
+\c@part=\count275
+\c@chapter=\count276
+\c@chaptert=\count277
+\c@section=\count278
+\c@subsection=\count279
+\c@subsubsection=\count280
+\c@paragraph=\count281
+\c@subparagraph=\count282
+\c@figure=\count283
+\c@table=\count284
+\abovecaptionskip=\skip63
+\belowcaptionskip=\skip64
+\bibindent=\dimen148
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/geometry\ge
+ometry.sty
+Package: geometry 2026/03/07 v6.0 Page Geometry
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/graphics\ke
+yval.sty
+Package: keyval 2022/05/29 v1.15 key=value parser (DPC)
+\KV@toks@=\toks18
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/iftex\ifv
+tex.sty
+Package: ifvtex 2019/10/25 v1.7 ifvtex legacy package. Use iftex instead.
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/iftex\ift
+ex.sty
+Package: iftex 2024/12/12 v1.0g TeX engine tests
+))
+\Gm@cnth=\count285
+\Gm@cntv=\count286
+\c@Gm@tempcnt=\count287
+\Gm@bindingoffset=\dimen149
+\Gm@wd@mp=\dimen150
+\Gm@odd@mp=\dimen151
+\Gm@even@mp=\dimen152
+\Gm@layoutwidth=\dimen153
+\Gm@layoutheight=\dimen154
+\Gm@layouthoffset=\dimen155
+\Gm@layoutvoffset=\dimen156
+\Gm@dimlist=\toks19
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/geometry\ge
+ometry.cfg))
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/babel\bab
+el.sty
+Package: babel 2025/12/11 v25.17 The multilingual framework for LuaLaTeX, pdfLa
+TeX and XeLaTeX
+\babel@savecnt=\count288
+LaTeX Encoding Info:    Redeclaring text command \ij (encoding OT1) on input li
+ne 2068.
+LaTeX Encoding Info:    Redeclaring text command \IJ (encoding OT1) on input li
+ne 2070.
+LaTeX Encoding Info:    Redeclaring text command \ij (encoding T1) on input lin
+e 2072.
+LaTeX Encoding Info:    Redeclaring text command \IJ (encoding T1) on input lin
+e 2073.
+LaTeX Encoding Info:    Ignoring declaration for text command \ij (encoding ?) 
+on input line 2074.
+LaTeX Encoding Info:    Ignoring declaration for text command \IJ (encoding ?) 
+on input line 2076.
+LaTeX Encoding Info:    Ignoring declaration for text command \SS (encoding ?) 
+on input line 2101.
+\U@D=\dimen157
+\l@unhyphenated=\language79
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/babel\txt
+babel.def)
+\bbl@readstream=\read2
+\bbl@dirlevel=\count289
+Package babel Info: Configuration files are deprecated, as
+(babel)             they can break document portability.
+(babel)             Reported on input line 4196.
+
+*************************************
+* Local config file bblopts.cfg used
+*
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/arabi\bblop
+ts.cfg
+File: bblopts.cfg 2005/09/08 v0.1 add Arabic and Farsi to "declared" options of
+ babel
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/babel/loc
+ale/es\babel-spanish.tex)
+Package babel Info: Importing font and identification data for spanish
+(babel)             from babel-es.ini. Reported on input line 4320.
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/babel-spani
+sh\spanish.ldf
+Language: spanish.ldf 2021/05/27 v5.0q Spanish support from the babel system
+\es@quottoks=\toks20
+\es@quotdepth=\count290
+Package babel Info: Making " an active character on input line 570.
+Package babel Info: Making ' an active character on input line 740.
+))
+LaTeX Encoding Info:    Redeclaring text command \guillemotleft (encoding OT1) 
+on input line 1034.
+LaTeX Encoding Info:    Redeclaring text command \guillemotright (encoding OT1)
+ on input line 1034.
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/setspace\se
+tspace.sty
+Package: setspace 2022/12/04 v6.7b set line spacing
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/graphics\gr
+aphicx.sty
+Package: graphicx 2024/12/31 v1.2e Enhanced LaTeX Graphics (DPC,SPQR)
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/graphics\gr
+aphics.sty
+Package: graphics 2024/08/06 v1.4g Standard LaTeX Graphics (DPC,SPQR)
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/graphics\tr
+ig.sty
+Package: trig 2023/12/02 v1.11 sin cos tan (DPC)
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/graphics-cf
+g\graphics.cfg
+File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
+)
+Package graphics Info: Driver file: pdftex.def on input line 106.
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/graphics-de
+f\pdftex.def
+File: pdftex.def 2025/09/29 v1.2d Graphics/color driver for pdftex
+))
+\Gin@req@height=\dimen158
+\Gin@req@width=\dimen159
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/caption\cap
+tion.sty
+Package: caption 2023/08/05 v3.6o Customizing captions (AR)
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/caption\cap
+tion3.sty
+Package: caption3 2023/07/31 v2.4d caption3 kernel (AR)
+\caption@tempdima=\dimen160
+\captionmargin=\dimen161
+\caption@leftmargin=\dimen162
+\caption@rightmargin=\dimen163
+\caption@width=\dimen164
+\caption@indent=\dimen165
+\caption@parindent=\dimen166
+\caption@hangindent=\dimen167
+Package caption Info: Standard document class detected.
+)
+\c@caption@flags=\count291
+\c@continuedfloat=\count292
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/graphics\ro
+tating.sty
+Package: rotating 2025/01/14 v2.16e rotated objects in LaTeX
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/base\ifthen
+.sty
+Package: ifthen 2024/03/16 v1.1e Standard LaTeX ifthen package (DPC)
+)
+\c@r@tfl@t=\count293
+\rotFPtop=\skip65
+\rotFPbot=\skip66
+\rot@float@box=\box53
+\rot@mess@toks=\toks21
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/textcase\te
+xtcase.sty
+Package: textcase 2025/02/16 v1.05 Text only upper/lower case changing (DPC)
+Package textcase Info: Defining Legacy names on input line 20.
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/pgf/fronten
+dlayer\tikz.sty
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/pgf/basicla
+yer\pgf.sty
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/pgf/utiliti
+es\pgfrcs.sty
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/utili
+ties\pgfutil-common.tex
+\pgfutil@everybye=\toks22
+\pgfutil@tempdima=\dimen168
+\pgfutil@tempdimb=\dimen169
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/utili
+ties\pgfutil-latex.def
+\pgfutil@abb=\box54
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/utili
+ties\pgfrcs.code.tex
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf\pgf.r
+evision.tex)
+Package: pgfrcs 2025-08-29 v3.1.11a (3.1.11a)
+))
+Package: pgf 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/pgf/basicla
+yer\pgfcore.sty
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/pgf/systeml
+ayer\pgfsys.sty
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/syste
+mlayer\pgfsys.code.tex
+Package: pgfsys 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/utili
+ties\pgfkeys.code.tex
+\pgfkeys@pathtoks=\toks23
+\pgfkeys@temptoks=\toks24
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/utili
+ties\pgfkeyslibraryfiltered.code.tex
+\pgfkeys@tmptoks=\toks25
+))
+\pgf@x=\dimen170
+\pgf@y=\dimen171
+\pgf@xa=\dimen172
+\pgf@ya=\dimen173
+\pgf@xb=\dimen174
+\pgf@yb=\dimen175
+\pgf@xc=\dimen176
+\pgf@yc=\dimen177
+\pgf@xd=\dimen178
+\pgf@yd=\dimen179
+\w@pgf@writea=\write3
+\r@pgf@reada=\read3
+\c@pgf@counta=\count294
+\c@pgf@countb=\count295
+\c@pgf@countc=\count296
+\c@pgf@countd=\count297
+\t@pgf@toka=\toks26
+\t@pgf@tokb=\toks27
+\t@pgf@tokc=\toks28
+\pgf@sys@id@count=\count298
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/syste
+mlayer\pgf.cfg
+File: pgf.cfg 2025-08-29 v3.1.11a (3.1.11a)
+)
+Driver file for pgf: pgfsys-pdftex.def
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/syste
+mlayer\pgfsys-pdftex.def
+File: pgfsys-pdftex.def 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/syste
+mlayer\pgfsys-common-pdf.def
+File: pgfsys-common-pdf.def 2025-08-29 v3.1.11a (3.1.11a)
+)))
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/syste
+mlayer\pgfsyssoftpath.code.tex
+File: pgfsyssoftpath.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfsyssoftpath@smallbuffer@items=\count299
+\pgfsyssoftpath@bigbuffer@items=\count300
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/syste
+mlayer\pgfsysprotocol.code.tex
+File: pgfsysprotocol.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+))
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/xcolor\xcol
+or.sty
+Package: xcolor 2024/09/29 v3.02 LaTeX color extensions (UK)
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/graphics-cf
+g\color.cfg
+File: color.cfg 2016/01/02 v1.6 sample color configuration
+)
+Package xcolor Info: Driver file: pdftex.def on input line 274.
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/graphics\ma
+thcolor.ltx)
+Package xcolor Info: Model `cmy' substituted by `cmy0' on input line 1349.
+Package xcolor Info: Model `hsb' substituted by `rgb' on input line 1353.
+Package xcolor Info: Model `RGB' extended on input line 1365.
+Package xcolor Info: Model `HTML' substituted by `rgb' on input line 1367.
+Package xcolor Info: Model `Hsb' substituted by `hsb' on input line 1368.
+Package xcolor Info: Model `tHsb' substituted by `hsb' on input line 1369.
+Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1370.
+Package xcolor Info: Model `Gray' substituted by `gray' on input line 1371.
+Package xcolor Info: Model `wave' substituted by `hsb' on input line 1372.
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/basic
+layer\pgfcore.code.tex
+Package: pgfcore 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/math\
+pgfmath.code.tex
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/math\
+pgfmathutil.code.tex)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/math\
+pgfmathparser.code.tex
+\pgfmath@dimen=\dimen180
+\pgfmath@count=\count301
+\pgfmath@box=\box55
+\pgfmath@toks=\toks29
+\pgfmath@stack@operand=\toks30
+\pgfmath@stack@operation=\toks31
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/math\
+pgfmathfunctions.code.tex)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/math\
+pgfmathfunctions.basic.code.tex)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/math\
+pgfmathfunctions.trigonometric.code.tex)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/math\
+pgfmathfunctions.random.code.tex)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/math\
+pgfmathfunctions.comparison.code.tex)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/math\
+pgfmathfunctions.base.code.tex)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/math\
+pgfmathfunctions.round.code.tex)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/math\
+pgfmathfunctions.misc.code.tex)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/math\
+pgfmathfunctions.integerarithmetics.code.tex)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/math\
+pgfmathcalc.code.tex)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/math\
+pgfmathfloat.code.tex
+\c@pgfmathroundto@lastzeros=\count302
+))
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/math\
+pgfint.code.tex)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/basic
+layer\pgfcorepoints.code.tex
+File: pgfcorepoints.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@picminx=\dimen181
+\pgf@picmaxx=\dimen182
+\pgf@picminy=\dimen183
+\pgf@picmaxy=\dimen184
+\pgf@pathminx=\dimen185
+\pgf@pathmaxx=\dimen186
+\pgf@pathminy=\dimen187
+\pgf@pathmaxy=\dimen188
+\pgf@xx=\dimen189
+\pgf@xy=\dimen190
+\pgf@yx=\dimen191
+\pgf@yy=\dimen192
+\pgf@zx=\dimen193
+\pgf@zy=\dimen194
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/basic
+layer\pgfcorepathconstruct.code.tex
+File: pgfcorepathconstruct.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@path@lastx=\dimen195
+\pgf@path@lasty=\dimen196
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/basic
+layer\pgfcorepathusage.code.tex
+File: pgfcorepathusage.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@shorten@end@additional=\dimen197
+\pgf@shorten@start@additional=\dimen198
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/basic
+layer\pgfcorescopes.code.tex
+File: pgfcorescopes.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfpic=\box56
+\pgf@hbox=\box57
+\pgf@layerbox@main=\box58
+\pgf@picture@serial@count=\count303
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/basic
+layer\pgfcoregraphicstate.code.tex
+File: pgfcoregraphicstate.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgflinewidth=\dimen199
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/basic
+layer\pgfcoretransformations.code.tex
+File: pgfcoretransformations.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@pt@x=\dimen256
+\pgf@pt@y=\dimen257
+\pgf@pt@temp=\dimen258
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/basic
+layer\pgfcorequick.code.tex
+File: pgfcorequick.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/basic
+layer\pgfcoreobjects.code.tex
+File: pgfcoreobjects.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/basic
+layer\pgfcorepathprocessing.code.tex
+File: pgfcorepathprocessing.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/basic
+layer\pgfcorearrows.code.tex
+File: pgfcorearrows.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfarrowsep=\dimen259
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/basic
+layer\pgfcoreshade.code.tex
+File: pgfcoreshade.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@max=\dimen260
+\pgf@sys@shading@range@num=\count304
+\pgf@shadingcount=\count305
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/basic
+layer\pgfcoreimage.code.tex
+File: pgfcoreimage.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/basic
+layer\pgfcoreexternal.code.tex
+File: pgfcoreexternal.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfexternal@startupbox=\box59
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/basic
+layer\pgfcorelayers.code.tex
+File: pgfcorelayers.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/basic
+layer\pgfcoretransparency.code.tex
+File: pgfcoretransparency.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/basic
+layer\pgfcorepatterns.code.tex
+File: pgfcorepatterns.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/basic
+layer\pgfcorerdf.code.tex
+File: pgfcorerdf.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)))
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/modul
+es\pgfmoduleshapes.code.tex
+File: pgfmoduleshapes.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfnodeparttextbox=\box60
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/modul
+es\pgfmoduleplot.code.tex
+File: pgfmoduleplot.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/pgf/compati
+bility\pgfcomp-version-0-65.sty
+Package: pgfcomp-version-0-65 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@nodesepstart=\dimen261
+\pgf@nodesepend=\dimen262
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/pgf/compati
+bility\pgfcomp-version-1-18.sty
+Package: pgfcomp-version-1-18 2025-08-29 v3.1.11a (3.1.11a)
+))
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/pgf/utiliti
+es\pgffor.sty
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/pgf/utiliti
+es\pgfkeys.sty
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/utili
+ties\pgfkeys.code.tex))
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/pgf/math\pg
+fmath.sty
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/math\
+pgfmath.code.tex))
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/utili
+ties\pgffor.code.tex
+Package: pgffor 2025-08-29 v3.1.11a (3.1.11a)
+\pgffor@iter=\dimen263
+\pgffor@skip=\dimen264
+\pgffor@stack=\toks32
+\pgffor@toks=\toks33
+))
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/front
+endlayer/tikz\tikz.code.tex
+Package: tikz 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/libra
+ries\pgflibraryplothandlers.code.tex
+File: pgflibraryplothandlers.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@plot@mark@count=\count306
+\pgfplotmarksize=\dimen265
+)
+\tikz@lastx=\dimen266
+\tikz@lasty=\dimen267
+\tikz@lastxsaved=\dimen268
+\tikz@lastysaved=\dimen269
+\tikz@lastmovetox=\dimen270
+\tikz@lastmovetoy=\dimen271
+\tikzleveldistance=\dimen272
+\tikzsiblingdistance=\dimen273
+\tikz@figbox=\box61
+\tikz@figbox@bg=\box62
+\tikz@tempbox=\box63
+\tikz@tempbox@bg=\box64
+\tikztreelevel=\count307
+\tikznumberofchildren=\count308
+\tikznumberofcurrentchild=\count309
+\tikz@fig@count=\count310
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/modul
+es\pgfmodulematrix.code.tex
+File: pgfmodulematrix.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfmatrixcurrentrow=\count311
+\pgfmatrixcurrentcolumn=\count312
+\pgf@matrix@numberofcolumns=\count313
+)
+\tikz@expandcount=\count314
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/front
+endlayer/tikz/libraries\tikzlibrarytopaths.code.tex
+File: tikzlibrarytopaths.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+))))
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/base\inpute
+nc.sty
+Package: inputenc 2024/02/08 v1.3d Input encoding file
+\inpenc@prehook=\toks34
+\inpenc@posthook=\toks35
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/base\fonten
+c.sty
+Package: fontenc 2025/07/18 v2.1d Standard LaTeX package
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/tools\verba
+tim.sty
+Package: verbatim 2024-01-22 v1.5x LaTeX2e package for verbatim enhancements
+\every@verbatim=\toks36
+\verbatim@line=\toks37
+\verbatim@in@stream=\read4
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/acronym\acr
+onym.sty
+Package: acronym 2025/01/17 v1.50 Support for acronyms (Tobias Oetiker)
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/bigfoot\suf
+fix.sty
+Package: suffix 2006/07/15 1.5a Variant command support
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/xstring\xst
+ring.sty
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/xstring\x
+string.tex
+\xs_counta=\count315
+\xs_countb=\count316
+)
+Package: xstring 2023/08/22 v1.86 String manipulations (CT)
+)
+\AC@clearlist=\toks38
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/amsmath\ams
+math.sty
+Package: amsmath 2025/07/09 v2.17z AMS math features
+\@mathmargin=\skip67
+
+For additional information on amsmath, use the `?' option.
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/amsmath\ams
+text.sty
+Package: amstext 2024/11/17 v2.01 AMS text
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/amsmath\ams
+gen.sty
+File: amsgen.sty 1999/11/30 v2.0 generic functions
+\@emptytoks=\toks39
+\ex@=\dimen274
+))
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/amsmath\ams
+bsy.sty
+Package: amsbsy 1999/11/29 v1.2d Bold Symbols
+\pmbraise@=\dimen275
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/amsmath\ams
+opn.sty
+Package: amsopn 2022/04/08 v2.04 operator names
+)
+\inf@bad=\count317
+LaTeX Info: Redefining \frac on input line 233.
+\uproot@=\count318
+\leftroot@=\count319
+LaTeX Info: Redefining \overline on input line 398.
+LaTeX Info: Redefining \colon on input line 409.
+\classnum@=\count320
+\DOTSCASE@=\count321
+LaTeX Info: Redefining \ldots on input line 495.
+LaTeX Info: Redefining \dots on input line 498.
+LaTeX Info: Redefining \cdots on input line 619.
+\Mathstrutbox@=\box65
+\strutbox@=\box66
+LaTeX Info: Redefining \big on input line 721.
+LaTeX Info: Redefining \Big on input line 722.
+LaTeX Info: Redefining \bigg on input line 723.
+LaTeX Info: Redefining \Bigg on input line 724.
+\big@size=\dimen276
+LaTeX Font Info:    Redeclaring font encoding OML on input line 742.
+LaTeX Font Info:    Redeclaring font encoding OMS on input line 743.
+\macc@depth=\count322
+LaTeX Info: Redefining \bmod on input line 904.
+LaTeX Info: Redefining \pmod on input line 909.
+LaTeX Info: Redefining \smash on input line 939.
+LaTeX Info: Redefining \relbar on input line 969.
+LaTeX Info: Redefining \Relbar on input line 970.
+\c@MaxMatrixCols=\count323
+\dotsspace@=\muskip17
+\c@parentequation=\count324
+\dspbrk@lvl=\count325
+\tag@help=\toks40
+\row@=\count326
+\column@=\count327
+\maxfields@=\count328
+\andhelp@=\toks41
+\eqnshift@=\dimen277
+\alignsep@=\dimen278
+\tagshift@=\dimen279
+\tagwidth@=\dimen280
+\totwidth@=\dimen281
+\lineht@=\dimen282
+\@envbody=\toks42
+\multlinegap=\skip68
+\multlinetaggap=\skip69
+\mathdisplay@stack=\toks43
+LaTeX Info: Redefining \[ on input line 2950.
+LaTeX Info: Redefining \] on input line 2951.
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/amsfonts\am
+sfonts.sty
+Package: amsfonts 2013/01/14 v3.01 Basic AMSFonts support
+\symAMSa=\mathgroup4
+\symAMSb=\mathgroup5
+LaTeX Font Info:    Redeclaring math symbol \hbar on input line 98.
+LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
+(Font)                  U/euf/m/n --> U/euf/b/n on input line 106.
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/amsfonts\am
+ssymb.sty
+Package: amssymb 2013/01/14 v3.01 AMS font symbols
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/listings\li
+stings.sty
+\lst@mode=\count329
+\lst@gtempboxa=\box67
+\lst@token=\toks44
+\lst@length=\count330
+\lst@currlwidth=\dimen283
+\lst@column=\count331
+\lst@pos=\count332
+\lst@lostspace=\dimen284
+\lst@width=\dimen285
+\lst@newlines=\count333
+\lst@lineno=\count334
+\lst@maxwidth=\dimen286
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/listings\ls
+tpatch.sty
+File: lstpatch.sty 2025/11/14 1.11b (Carsten Heinz)
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/listings\ls
+tmisc.sty
+File: lstmisc.sty 2025/11/14 1.11b (Carsten Heinz)
+\c@lstnumber=\count335
+\lst@skipnumbers=\count336
+\lst@framebox=\box68
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/listings\li
+stings.cfg
+File: listings.cfg 2025/11/14 1.11b listings configuration
+))
+Package: listings 2025/11/14 1.11b (Carsten Heinz)
+
+==> First Aid for listings.sty no longer applied!
+    Expected:
+        2024/09/23 1.10c (Carsten Heinz)
+    but found:
+        2025/11/14 1.11b (Carsten Heinz)
+    so I'm assuming it got fixed.
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/front
+endlayer/tikz/libraries\tikzlibraryshapes.code.tex
+File: tikzlibraryshapes.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/front
+endlayer/tikz/libraries\tikzlibraryshapes.geometric.code.tex
+File: tikzlibraryshapes.geometric.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/libra
+ries/shapes\pgflibraryshapes.geometric.code.tex
+File: pgflibraryshapes.geometric.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+))
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/front
+endlayer/tikz/libraries\tikzlibraryshapes.misc.code.tex
+File: tikzlibraryshapes.misc.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/libra
+ries/shapes\pgflibraryshapes.misc.code.tex
+File: pgflibraryshapes.misc.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+))
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/front
+endlayer/tikz/libraries\tikzlibraryshapes.symbols.code.tex
+File: tikzlibraryshapes.symbols.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/libra
+ries/shapes\pgflibraryshapes.symbols.code.tex
+File: pgflibraryshapes.symbols.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+))
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/front
+endlayer/tikz/libraries\tikzlibraryshapes.arrows.code.tex
+File: tikzlibraryshapes.arrows.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/libra
+ries/shapes\pgflibraryshapes.arrows.code.tex
+File: pgflibraryshapes.arrows.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+))
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/front
+endlayer/tikz/libraries\tikzlibraryshapes.callouts.code.tex
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/libra
+ries/shapes\pgflibraryshapes.callouts.code.tex))
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/front
+endlayer/tikz/libraries\tikzlibraryshapes.multipart.code.tex
+File: tikzlibraryshapes.multipart.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/libra
+ries/shapes\pgflibraryshapes.multipart.code.tex
+File: pgflibraryshapes.multipart.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfnodepartlowerbox=\box69
+\pgfnodeparttwobox=\box70
+\pgfnodepartthreebox=\box71
+\pgfnodepartfourbox=\box72
+\pgfnodeparttwentybox=\box73
+\pgfnodepartnineteenbox=\box74
+\pgfnodeparteighteenbox=\box75
+\pgfnodepartseventeenbox=\box76
+\pgfnodepartsixteenbox=\box77
+\pgfnodepartfifteenbox=\box78
+\pgfnodepartfourteenbox=\box79
+\pgfnodepartthirteenbox=\box80
+\pgfnodeparttwelvebox=\box81
+\pgfnodepartelevenbox=\box82
+\pgfnodeparttenbox=\box83
+\pgfnodepartninebox=\box84
+\pgfnodeparteightbox=\box85
+\pgfnodepartsevenbox=\box86
+\pgfnodepartsixbox=\box87
+\pgfnodepartfivebox=\box88
+)))
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/front
+endlayer/tikz/libraries\tikzlibraryarrows.code.tex
+File: tikzlibraryarrows.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/libra
+ries\pgflibraryarrows.code.tex
+File: pgflibraryarrows.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\arrowsize=\dimen287
+))
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/pgf/front
+endlayer/tikz/libraries\tikzlibrarypositioning.code.tex
+File: tikzlibrarypositioning.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/booktabs\bo
+oktabs.sty
+Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
+\heavyrulewidth=\dimen288
+\lightrulewidth=\dimen289
+\cmidrulewidth=\dimen290
+\belowrulesep=\dimen291
+\belowbottomsep=\dimen292
+\aboverulesep=\dimen293
+\abovetopsep=\dimen294
+\cmidrulesep=\dimen295
+\cmidrulekern=\dimen296
+\defaultaddspace=\dimen297
+\@cmidla=\count337
+\@cmidlb=\count338
+\@aboverulesep=\dimen298
+\@belowrulesep=\dimen299
+\@thisruleclass=\count339
+\@lastruleclass=\count340
+\@thisrulewidth=\dimen300
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/tools\tabul
+arx.sty
+Package: tabularx 2023/12/11 v2.12a `tabularx' package (DPC)
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/tools\array
+.sty
+Package: array 2025/09/25 v2.6n Tabular extension package (FMi)
+\col@sep=\dimen301
+\ar@mcellbox=\box89
+\extrarowheight=\dimen302
+\NC@list=\toks45
+\extratabsurround=\skip70
+\backup@length=\skip71
+\ar@cellbox=\box90
+)
+\TX@col@width=\dimen303
+\TX@old@table=\dimen304
+\TX@old@col=\dimen305
+\TX@target=\dimen306
+\TX@delta=\dimen307
+\TX@cols=\count341
+\TX@ftn=\toks46
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/algorithms\
+algorithm.sty
+Package: algorithm 2009/08/24 v0.1 Document Style `algorithm' - floating enviro
+nment
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/float\float
+.sty
+Package: float 2001/11/08 v1.3d Float enhancements (AL)
+\c@float@type=\count342
+\float@exts=\toks47
+\float@box=\box91
+\@float@everytoks=\toks48
+\@floatcapt=\box92
+)
+\@float@every@algorithm=\toks49
+\c@algorithm=\count343
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/algorithmic
+x\algpseudocode.sty
+Package: algpseudocode 
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/algorithmic
+x\algorithmicx.sty
+Package: algorithmicx 2005/04/27 v1.2 Algorithmicx
+
+Document Style algorithmicx 1.2 - a greatly improved `algorithmic' style
+\c@ALG@line=\count344
+\c@ALG@rem=\count345
+\c@ALG@nested=\count346
+\ALG@tlm=\skip72
+\ALG@thistlm=\skip73
+\c@ALG@Lnr=\count347
+\c@ALG@blocknr=\count348
+\c@ALG@storecount=\count349
+\c@ALG@tmpcounter=\count350
+\ALG@tmplength=\skip74
+)
+Document Style - pseudocode environments for use with the `algorithmicx' style
+) (babelbib-and.sty
+Package: babelbib-and 2009/10/10 v1.29 babelbib: multilingual bibliographies (H
+H)
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/csquotes\cs
+quotes.sty
+Package: csquotes 2026-05-19 v5.2p context-sensitive quotations (JAW)
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/etoolbox\et
+oolbox.sty
+Package: etoolbox 2025/10/02 v2.5m e-TeX tools for LaTeX (JAW)
+\etb@tempcnta=\count351
+)
+\csq@reset=\count352
+\csq@gtype=\count353
+\csq@glevel=\count354
+\csq@qlevel=\count355
+\csq@maxlvl=\count356
+\csq@tshold=\count357
+\csq@ltx@everypar=\toks50
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/csquotes\cs
+quotes.def
+File: csquotes.def 2026-05-19 v5.2p csquotes generic definitions (JAW)
+)
+Package csquotes Info: Trying to load configuration file 'csquotes.cfg'...
+Package csquotes Info: ... configuration file loaded successfully.
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/csquotes\cs
+quotes.cfg
+File: csquotes.cfg 
+)
+Package csquotes Info: Disabling multilingual quotes.
+)
+Package csquotes Info: Redefining alias 'default' -> 'english'.
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/url\url.sty
+\Urlmuskip=\muskip18
+Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/titlesec\ti
+tlesec.sty
+Package: titlesec 2025/01/04 v2.17 Sectioning titles
+\ttl@box=\box93
+\beforetitleunit=\skip75
+\aftertitleunit=\skip76
+\ttl@plus=\dimen308
+\ttl@minus=\dimen309
+\ttl@toksa=\toks51
+\titlewidth=\dimen310
+\titlewidthlast=\dimen311
+\titlewidthfirst=\dimen312
+)
+TESIS-USB: Usando cotutor
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/l3backend\l
+3backend-pdftex.def
+File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
+\l__color_backend_stack_int=\count358
+) (main.aux
+LaTeX Info: Redefining \. on input line 8.
+LaTeX Info: Redefining \% on input line 8.
+Package babel Info: 'spanish' activates 'spanish' shorthands.
+(babel)             Reported on input line 8.
+LaTeX Info: Redefining \. on input line 399.
+LaTeX Info: Redefining \% on input line 399.
+LaTeX Info: Redefining \. on input line 400.
+LaTeX Info: Redefining \% on input line 400.
+LaTeX Info: Redefining \. on input line 406.
+LaTeX Info: Redefining \% on input line 406.
+LaTeX Info: Redefining \. on input line 407.
+LaTeX Info: Redefining \% on input line 407.
+)
+\openout1 = `main.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 114.
+LaTeX Font Info:    ... okay on input line 114.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 114.
+LaTeX Font Info:    ... okay on input line 114.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 114.
+LaTeX Font Info:    ... okay on input line 114.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 114.
+LaTeX Font Info:    ... okay on input line 114.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 114.
+LaTeX Font Info:    ... okay on input line 114.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 114.
+LaTeX Font Info:    ... okay on input line 114.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 114.
+LaTeX Font Info:    ... okay on input line 114.
+
+*geometry* driver: auto-detecting
+*geometry* detected driver: pdftex
+*geometry* verbose mode - [ preamble ] result:
+* driver: pdftex
+* paper: letterpaper
+* layout: <same size as paper>
+* layoutoffset:(h,v)=(0.0pt,0.0pt)
+* modes: 
+* h-part:(L,W,R)=(85.35826pt, 457.80486pt, 71.13188pt)
+* v-part:(T,H,B)=(71.13188pt, 652.70622pt, 71.13188pt)
+* \paperwidth=614.295pt
+* \paperheight=794.96999pt
+* \textwidth=457.80486pt
+* \textheight=652.70622pt
+* \oddsidemargin=13.08827pt
+* \evensidemargin=13.08827pt
+* \topmargin=-33.0119pt
+* \headheight=16.0pt
+* \headsep=19.8738pt
+* \topskip=12.0pt
+* \footskip=30.0pt
+* \marginparwidth=7.0pt
+* \marginparsep=7.0pt
+* \columnsep=10.0pt
+* \skip\footins=10.8pt plus 4.0pt minus 2.0pt
+* \hoffset=0.0pt
+* \voffset=0.0pt
+* \mag=1000
+* \@twocolumnfalse
+* \@twosidefalse
+* \@mparswitchfalse
+* \@reversemarginfalse
+* (1in=72.27pt=25.4mm, 1cm=28.453pt)
+
+LaTeX Info: Redefining \. on input line 114.
+LaTeX Info: Redefining \% on input line 114.
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/context/base/mkii
+\supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+\scratchcounter=\count359
+\scratchdimen=\dimen313
+\scratchbox=\box94
+\nofMPsegments=\count360
+\nofMParguments=\count361
+\everyMPshowfont=\toks52
+\MPscratchCnt=\count362
+\MPscratchDim=\dimen314
+\MPnumerator=\count363
+\makeMPintoPDFobject=\count364
+\everyMPtoPDFconversion=\toks53
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/epstopdf-pk
+g\epstopdf-base.sty
+Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
+Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
+85.
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/00miktex\ep
+stopdf-sys.cfg
+File: epstopdf-sys.cfg 2021/03/18 v2.0 Configuration of epstopdf for MiKTeX
+))
+Package caption Info: Begin \AtBeginDocument code.
+Package caption Info: float package is loaded.
+Package caption Info: listings package is loaded.
+Package caption Info: rotating package is loaded.
+Package caption Info: End \AtBeginDocument code.
+\c@lstlisting=\count365
+
+babelbib: Set bibliography fall-back language to spanish
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/babelbib\sp
+anish.bdf
+File: spanish.bdf 2021/01/06 v1.34 babelbib: multilingual bibliographies
+
+babelbib extension \btxifchangecaseoff added to \extrasspanish
+)
+babelbib: Load BibTeX extensions \bibsspanish for spanish
+babelbib: Set language for keywords in the bibliography fixed to spanish
+babelbib: Set language for keywords in the bibliography fixed to spanish
+[1
+
+
+
+{C:/Users/lrojas/scoop/apps/miktex/current/texmfs/data/fonts/map/pdftex/pdftex.
+map}]
+LaTeX Font Info:    Trying to load font information for U+msa on input line 117
+.
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/amsfonts\um
+sa.fd
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+)
+LaTeX Font Info:    Trying to load font information for U+msb on input line 117
+.
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/amsfonts\um
+sb.fd
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+) [2] [1
+
+] (dedicatoria.tex [2]
+Underfull \hbox (badness 10000) in paragraph at lines 3--4
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5--6
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 7--8
+
+ []
+
+) (agradecimientos.tex [3
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 3--4
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5--6
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 7--8
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 9--10
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 11--12
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 13--14
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 15--16
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 17--18
+
+ []
+
+) [4
+
+] [5
+
+] (main.toc
+LaTeX Info: Redefining \. on input line 1.
+LaTeX Info: Redefining \% on input line 1.
+ [6
+
+]
+Overfull \hbox (6.3323pt too wide) in paragraph at lines 44--44
+ [][] []\T1/cmr/m/n/12 Justificación del Fra-me-work Na-ti-vo: De-ter-mi-nis-mo
+ vs. La-ten-cia (ESP- 
+ []
+
+[7]
+LaTeX Info: Redefining \. on input line 89.
+LaTeX Info: Redefining \% on input line 89.
+LaTeX Info: Redefining \. on input line 90.
+LaTeX Info: Redefining \% on input line 90.
+LaTeX Info: Redefining \. on input line 91.
+LaTeX Info: Redefining \% on input line 91.
+LaTeX Info: Redefining \. on input line 92.
+LaTeX Info: Redefining \% on input line 92.
+)
+\tf@toc=\write4
+\openout4 = `main.toc'.
+
+ [8] (main.lof
+LaTeX Info: Redefining \. on input line 1.
+LaTeX Info: Redefining \% on input line 1.
+ [9
+
+]
+LaTeX Info: Redefining \. on input line 40.
+LaTeX Info: Redefining \% on input line 40.
+LaTeX Info: Redefining \. on input line 41.
+LaTeX Info: Redefining \% on input line 41.
+LaTeX Info: Redefining \. on input line 42.
+LaTeX Info: Redefining \% on input line 42.
+LaTeX Info: Redefining \. on input line 43.
+LaTeX Info: Redefining \% on input line 43.
+)
+\tf@lof=\write5
+\openout5 = `main.lof'.
+
+ [10] (main.lot
+LaTeX Info: Redefining \. on input line 1.
+LaTeX Info: Redefining \% on input line 1.
+LaTeX Info: Redefining \. on input line 16.
+LaTeX Info: Redefining \% on input line 16.
+LaTeX Info: Redefining \. on input line 17.
+LaTeX Info: Redefining \% on input line 17.
+LaTeX Info: Redefining \. on input line 18.
+LaTeX Info: Redefining \% on input line 18.
+LaTeX Info: Redefining \. on input line 19.
+LaTeX Info: Redefining \% on input line 19.
+)
+\tf@lot=\write6
+\openout6 = `main.lot'.
+
+
+TESIS-USB: package acronym was detected
+TESIS-USB: acronyms will be reset at chapter level
+(acronimos.tex [11
+
+]
+TESIS-USB: resetting all acronyms
+[12
+
+] [13]) (notacion.tex
+TESIS-USB: resetting all acronyms
+[14
+
+
+]) [15] (introduccion.tex
+TESIS-USB: resetting all acronyms
+[1
+
+
+] [2]) (usodelaclase.tex [3]
+TESIS-USB: resetting all acronyms
+Cap\'{\i }tulo 1.
+
+Underfull \hbox (badness 10000) in paragraph at lines 5--6
+
+ []
+
+<Img/iiot_diagram.png, id=82, 661.72218pt x 328.22626pt>
+File: Img/iiot_diagram.png Graphic file (type png)
+<use Img/iiot_diagram.png>
+Package pdftex.def Info: Img/iiot_diagram.png  used on input line 11.
+(pdftex.def)             Requested size: 366.24527pt x 181.66188pt.
+
+Underfull \hbox (badness 10000) in paragraph at lines 22--23
+
+ []
+
+[4
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 24--25
+
+ []
+
+[5 <./Img/iiot_diagram.png>]
+<Img/printer_diagram.png, id=92, 564.60938pt x 341.77687pt>
+File: Img/printer_diagram.png Graphic file (type png)
+<use Img/printer_diagram.png>
+Package pdftex.def Info: Img/printer_diagram.png  used on input line 36.
+(pdftex.def)             Requested size: 412.02156pt x 249.41159pt.
+ [6 <./Img/printer_diagram.png>]
+Underfull \hbox (badness 10000) in paragraph at lines 53--54
+
+ []
+
+
+Overfull \hbox (16.90973pt too wide) in paragraph at lines 63--64
+[]\T1/cmr/m/n/12 A di-fe-ren-cia del mo-de-lo tra-di-cio-nal de con-sul-ta (req
+uest-response), el pa-trón \T1/cmr/bx/n/12 Publicación-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 63--64
+
+ []
+
+[7]
+<Img/pubsub_diagram.png, id=100, 837.1275pt x 366.61969pt>
+File: Img/pubsub_diagram.png Graphic file (type png)
+<use Img/pubsub_diagram.png>
+Package pdftex.def Info: Img/pubsub_diagram.png  used on input line 67.
+(pdftex.def)             Requested size: 434.91321pt x 190.46991pt.
+
+Underfull \hbox (badness 10000) in paragraph at lines 82--83
+
+ []
+
+[8 <./Img/pubsub_diagram.png>]
+Underfull \hbox (badness 10000) in paragraph at lines 88--89
+
+ []
+
+[9]
+<Img/esp32_physic.png, id=109, 682.55pt x 682.55pt>
+File: Img/esp32_physic.png Graphic file (type png)
+<use Img/esp32_physic.png>
+Package pdftex.def Info: Img/esp32_physic.png  used on input line 98.
+(pdftex.def)             Requested size: 228.90242pt x 228.89781pt.
+ [10 <./Img/esp32_physic.png (PNG copy)>]
+Underfull \hbox (badness 10000) in paragraph at lines 118--119
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 129--130
+
+ []
+
+[11]
+Underfull \hbox (badness 10000) in paragraph at lines 139--140
+
+ []
+
+<Img/scheuler_diagram.png, id=116, 768.62157pt x 261.97874pt>
+File: Img/scheuler_diagram.png Graphic file (type png)
+<use Img/scheuler_diagram.png>
+Package pdftex.def Info: Img/scheuler_diagram.png  used on input line 145.
+(pdftex.def)             Requested size: 412.02156pt x 140.43906pt.
+[12 <./Img/scheuler_diagram.png>]
+Underfull \hbox (badness 10000) in paragraph at lines 162--163
+
+ []
+
+[13]
+Underfull \hbox (badness 10000) in paragraph at lines 168--169
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 174--175
+
+ []
+
+[14]
+Underfull \hbox (badness 10000) in paragraph at lines 180--181
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 190--191
+
+ []
+
+[15]
+Underfull \hbox (badness 10000) in paragraph at lines 196--197
+
+ []
+
+[16]
+Underfull \hbox (badness 10000) in paragraph at lines 216--217
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 227--228
+
+ []
+
+[17]) (capitulo-4.tex [18]
+TESIS-USB: resetting all acronyms
+Cap\'{\i }tulo 2.
+
+Underfull \hbox (badness 10000) in paragraph at lines 6--7
+
+ []
+
+[19
+
+]
+<Img/arquitectura_iiot.png, id=145, 643.6547pt x 367.3725pt>
+File: Img/arquitectura_iiot.png Graphic file (type png)
+<use Img/arquitectura_iiot.png>
+Package pdftex.def Info: Img/arquitectura_iiot.png  used on input line 39.
+(pdftex.def)             Requested size: 434.91321pt x 248.2404pt.
+<Img/arquitectura_mqtt.png, id=146, 962.84718pt x 620.3175pt>
+File: Img/arquitectura_mqtt.png Graphic file (type png)
+<use Img/arquitectura_mqtt.png>
+Package pdftex.def Info: Img/arquitectura_mqtt.png  used on input line 48.
+(pdftex.def)             Requested size: 434.91321pt x 280.19095pt.
+ [20]
+Underfull \hbox (badness 10000) in paragraph at lines 57--58
+
+ []
+
+[21 <./Img/arquitectura_iiot.png> <./Img/arquitectura_mqtt.png>]
+Underfull \hbox (badness 10000) in paragraph at lines 59--60
+
+ []
+
+<Img/esp32_pinlayout.png, id=156, 3303.77142pt x 1358.676pt>
+File: Img/esp32_pinlayout.png Graphic file (type png)
+<use Img/esp32_pinlayout.png>
+Package pdftex.def Info: Img/esp32_pinlayout.png  used on input line 63.
+(pdftex.def)             Requested size: 366.24527pt x 150.6158pt.
+[22 <./Img/esp32_pinlayout.png>]
+<Img/menuconfig_optimizacion_wifi.png, id=161, 311.1625pt x 52.195pt>
+File: Img/menuconfig_optimizacion_wifi.png Graphic file (type png)
+<use Img/menuconfig_optimizacion_wifi.png>
+Package pdftex.def Info: Img/menuconfig_optimizacion_wifi.png  used on input li
+ne 72.
+(pdftex.def)             Requested size: 228.90242pt x 38.3967pt.
+<Img/menuconfig_optimizacion_under.png, id=162, 508.90125pt x 91.34125pt>
+File: Img/menuconfig_optimizacion_under.png Graphic file (type png)
+<use Img/menuconfig_optimizacion_under.png>
+Package pdftex.def Info: Img/menuconfig_optimizacion_under.png  used on input l
+ine 81.
+(pdftex.def)             Requested size: 320.46199pt x 57.52159pt.
+<Img/hka80.png, id=163, 358.33875pt x 324.46219pt>
+File: Img/hka80.png Graphic file (type png)
+<use Img/hka80.png>
+Package pdftex.def Info: Img/hka80.png  used on input line 92.
+(pdftex.def)             Requested size: 274.6857pt x 248.73259pt.
+
+Underfull \hbox (badness 10000) in paragraph at lines 97--98
+
+ []
+
+[23 <./Img/menuconfig_optimizacion_wifi.png (PNG copy)> <./Img/menuconfig_optim
+izacion_under.png (PNG copy)>]
+Underfull \hbox (badness 10000) in paragraph at lines 123--124
+
+ []
+
+[24 <./Img/hka80.png>]
+Underfull \hbox (badness 10000) in paragraph at lines 141--142
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 143--144
+
+ []
+
+[25]
+<Img/cmakelist_dirs.png, id=175, 500.62032pt x 45.16875pt>
+File: Img/cmakelist_dirs.png Graphic file (type png)
+<use Img/cmakelist_dirs.png>
+Package pdftex.def Info: Img/cmakelist_dirs.png  used on input line 149.
+(pdftex.def)             Requested size: 412.02156pt x 37.17644pt.
+ [26 <./Img/cmakelist_dirs.png>]
+<Img/enq_realterm.png, id=181, 1487.5575pt x 446.66875pt>
+File: Img/enq_realterm.png Graphic file (type png)
+<use Img/enq_realterm.png>
+Package pdftex.def Info: Img/enq_realterm.png  used on input line 171.
+(pdftex.def)             Requested size: 434.91321pt x 130.58704pt.
+
+Underfull \hbox (badness 10000) in paragraph at lines 216--217
+
+ []
+
+[27 <./Img/enq_realterm.png (PNG copy)>]
+Underfull \hbox (badness 10000) in paragraph at lines 218--219
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 220--221
+
+ []
+
+[28]
+Underfull \hbox (badness 10000) in paragraph at lines 252--253
+
+ []
+
+[29]
+<Img/iram_crisis.png, id=191, 520.94624pt x 291.0875pt>
+File: Img/iram_crisis.png Graphic file (type png)
+<use Img/iram_crisis.png>
+Package pdftex.def Info: Img/iram_crisis.png  used on input line 258.
+(pdftex.def)             Requested size: 343.35364pt x 191.85628pt.
+ [30 <./Img/iram_crisis.png (PNG copy)>]
+Underfull \hbox (badness 10000) in paragraph at lines 273--274
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 275--276
+
+ []
+
+[31] [32]
+Underfull \hbox (badness 10000) in paragraph at lines 334--335
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 352--353
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 354--355
+
+ []
+
+[33]
+LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <12> not available
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 363.
+
+Underfull \hbox (badness 10000) in paragraph at lines 394--395
+
+ []
+
+[34]
+Underfull \hbox (badness 10000) in paragraph at lines 396--397
+
+ []
+
+[35]
+Underfull \hbox (badness 10000) in paragraph at lines 421--422
+
+ []
+
+[36]
+Overfull \hbox (52.17606pt too wide) in paragraph at lines 426--427
+\T1/cmr/m/n/12 to es-tán-dar 8883 (\T1/cmtt/m/n/12 secure-mqtt\T1/cmr/m/n/12 ),
+ es-ta-ble-cien-do el trans-por-te co-mo \T1/cmtt/m/n/12 MQTT_TRANSPORT_OVER_SS
+L\T1/cmr/m/n/12 .
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 452--453
+
+ []
+
+[37]
+Underfull \hbox (badness 10000) in paragraph at lines 473--474
+
+ []
+
+[38]
+Underfull \hbox (badness 10000) in paragraph at lines 479--480
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 501--502
+
+ []
+
+[39]
+Underfull \hbox (badness 10000) in paragraph at lines 515--516
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 517--518
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 519--520
+
+ []
+
+[40] [41] [42]
+Underfull \hbox (badness 10000) in paragraph at lines 607--608
+
+ []
+
+[43]
+Underfull \hbox (badness 10000) in paragraph at lines 639--640
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 645--646
+
+ []
+
+[44]
+Underfull \hbox (badness 10000) in paragraph at lines 647--648
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 649--650
+
+ []
+
+) (capitulo-5.tex [45]
+TESIS-USB: resetting all acronyms
+Cap\'{\i }tulo 3.
+
+Underfull \hbox (badness 10000) in paragraph at lines 7--8
+
+ []
+
+<Img/prototipo_funcional.jpg, id=253, 1446.40375pt x 1510.64375pt>
+File: Img/prototipo_funcional.jpg Graphic file (type jpg)
+<use Img/prototipo_funcional.jpg>
+Package pdftex.def Info: Img/prototipo_funcional.jpg  used on input line 13.
+(pdftex.def)             Requested size: 297.57036pt x 310.7904pt.
+[46
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 41--42
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 43--44
+
+ []
+
+[47 <./Img/prototipo_funcional.jpg>] [48]
+Underfull \hbox (badness 10000) in paragraph at lines 76--77
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 78--79
+
+ []
+
+[49]
+Underfull \hbox (badness 10000) in paragraph at lines 80--81
+
+ []
+
+<Img/log_terminal_s1.png, id=267, 550.30594pt x 292.84406pt>
+File: Img/log_terminal_s1.png Graphic file (type png)
+<use Img/log_terminal_s1.png>
+Package pdftex.def Info: Img/log_terminal_s1.png  used on input line 84.
+(pdftex.def)             Requested size: 389.13692pt x 207.08513pt.
+
+Underfull \hbox (badness 10000) in paragraph at lines 89--90
+
+ []
+
+[50 <./Img/log_terminal_s1.png>]
+Underfull \hbox (badness 10000) in paragraph at lines 99--100
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 101--102
+
+ []
+
+[51]
+Underfull \hbox (badness 10000) in paragraph at lines 107--108
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 109--110
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 111--112
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 113--114
+
+ []
+
+[52] [53]
+Overfull \hbox (2.22562pt too wide) in paragraph at lines 160--160
+[]|\T1/cmr/bx/n/10.95 Mejoramiento 
+ []
+
+
+Overfull \hbox (6.30795pt too wide) in paragraph at lines 160--160
+[]|$\OT1/cmr/m/n/10.95 328[]$|  
+ []
+
+
+Overfull \hbox (2.68715pt too wide) in paragraph at lines 160--160
+[]|$\OT1/cmr/m/n/10.95 142[]$|  
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 165--166
+
+ []
+
+<Img/prueba_lwt.png, id=282, 613.54219pt x 473.51906pt>
+File: Img/prueba_lwt.png Graphic file (type png)
+<use Img/prueba_lwt.png>
+Package pdftex.def Info: Img/prueba_lwt.png  used on input line 171.
+(pdftex.def)             Requested size: 320.46199pt x 247.32956pt.
+[54]
+Underfull \hbox (badness 10000) in paragraph at lines 199--200
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 201--202
+
+ []
+
+[55 <./Img/prueba_lwt.png>]
+Underfull \hbox (badness 10000) in paragraph at lines 203--204
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 205--206
+
+ []
+
+[56] [57]
+Overfull \hbox (3.67871pt too wide) in paragraph at lines 238--239
+[]\T1/cmr/m/n/12 Cada tér-mino re-pre-sen-ta una con-tri-bu-ción tem-po-ral me-
+di-ble e in-de-pen-dien-te: $\OML/cmm/m/it/12 T[]$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 238--239
+
+ []
+
+
+Overfull \hbox (4.10638pt too wide) in paragraph at lines 258--258
+[]|$\OML/cmm/m/it/12 T[]$|  
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 261--262
+
+ []
+
+[58]
+<Img/dashboard_tiempo_real.png, id=300, 1433.355pt x 682.80093pt>
+File: Img/dashboard_tiempo_real.png Graphic file (type png)
+<use Img/dashboard_tiempo_real.png>
+Package pdftex.def Info: Img/dashboard_tiempo_real.png  used on input line 271.
+
+(pdftex.def)             Requested size: 434.91321pt x 207.17564pt.
+<Img/log_capture_error.png, id=301, 612.78937pt x 654.94687pt>
+File: Img/log_capture_error.png Graphic file (type png)
+<use Img/log_capture_error.png>
+Package pdftex.def Info: Img/log_capture_error.png  used on input line 280.
+(pdftex.def)             Requested size: 343.35364pt x 366.97762pt.
+ [59]
+<Img/ota_mt_iot.png, id=305, 394.47375pt x 518.6878pt>
+File: Img/ota_mt_iot.png Graphic file (type png)
+<use Img/ota_mt_iot.png>
+Package pdftex.def Info: Img/ota_mt_iot.png  used on input line 324.
+(pdftex.def)             Requested size: 251.79407pt x 331.08055pt.
+
+Underfull \hbox (badness 10000) in paragraph at lines 331--332
+
+ []
+
+[60 <./Img/dashboard_tiempo_real.png>] [61 <./Img/log_capture_error.png>]
+Underfull \hbox (badness 10000) in paragraph at lines 333--334
+
+ []
+
+[62] [63 <./Img/ota_mt_iot.png>]
+Underfull \hbox (badness 10000) in paragraph at lines 335--336
+
+ []
+
+<Img/ota_printer_exito.png, id=322, 1135.24126pt x 679.03688pt>
+File: Img/ota_printer_exito.png Graphic file (type png)
+<use Img/ota_printer_exito.png>
+Package pdftex.def Info: Img/ota_printer_exito.png  used on input line 341.
+(pdftex.def)             Requested size: 389.13692pt x 232.75523pt.
+[64]
+<Img/iram_78.png, id=326, 520.94624pt x 291.0875pt>
+File: Img/iram_78.png Graphic file (type png)
+<use Img/iram_78.png>
+Package pdftex.def Info: Img/iram_78.png  used on input line 374.
+(pdftex.def)             Requested size: 343.35364pt x 191.85628pt.
+<Img/iram_52.png, id=327, 530.98375pt x 296.10625pt>
+File: Img/iram_52.png Graphic file (type png)
+<use Img/iram_52.png>
+Package pdftex.def Info: Img/iram_52.png  used on input line 381.
+(pdftex.def)             Requested size: 343.35364pt x 191.47728pt.
+ [65 <./Img/ota_printer_exito.png>] [66 <./Img/iram_78.png (PNG copy)>]
+Underfull \hbox (badness 10000) in paragraph at lines 402--403
+
+ []
+
+[67 <./Img/iram_52.png (PNG copy)>]
+Underfull \hbox (badness 10000) in paragraph at lines 423--424
+
+ []
+
+
+Overfull \hbox (30.57309pt too wide) in paragraph at lines 425--426
+\T1/cmr/m/n/12 iden-ti-fi-ca-do de for-ma uní-vo-ca por su nú-me-ro de se-rie, 
+y su bi-tá-co-ra de even-tos (\T1/cmtt/m/n/12 LogDispositivo\T1/cmr/m/n/12 ),
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 425--426
+
+ []
+
+[68]) (conclusiones.tex [69]
+TESIS-USB: resetting all acronyms
+) (main.bbl [70
+
+]
+TESIS-USB: resetting all acronyms
+babelbib: Using the BibTeX style's default font for `name'.
+babelbib: Using the BibTeX style's default font for `lastname'.
+babelbib: Using the BibTeX style's default font for `title'.
+babelbib: Using the BibTeX style's default font for `jtitle'.
+babelbib: Using the BibTeX style's default font for `etal'.
+babelbib: Using the BibTeX style's default font for `journal'.
+babelbib: Using the BibTeX style's default font for `volume'.
+babelbib: Using the BibTeX style's default font for `ISBN'.
+babelbib: Using the BibTeX style's default font for `ISSN'.
+babelbib: Using the BibTeX style's default font for `url'.
+babelbib: Using the BibTeX style's default font for `numeral'.
+LaTeX Info: Redefining \. on input line 13.
+LaTeX Info: Redefining \% on input line 13.
+LaTeX Info: Redefining \. on input line 15.
+LaTeX Info: Redefining \% on input line 15.
+LaTeX Info: Redefining \. on input line 20.
+LaTeX Info: Redefining \% on input line 20.
+LaTeX Info: Redefining \. on input line 27.
+LaTeX Info: Redefining \% on input line 27.
+LaTeX Info: Redefining \. on input line 30.
+LaTeX Info: Redefining \% on input line 30.
+
+Underfull \hbox (badness 1701) in paragraph at lines 49--54
+[]\T1/cmr/m/n/12 Espressif Sys-tems: \T1/cmr/m/it/12 ESP-IDF Pro-ject Con-fi-gu
+-ra-tion Gui-de: SDK Con-fi-gu-ra-tion
+ []
+
+LaTeX Info: Redefining \. on input line 59.
+LaTeX Info: Redefining \% on input line 59.
+LaTeX Info: Redefining \. on input line 63.
+LaTeX Info: Redefining \% on input line 63.
+LaTeX Info: Redefining \. on input line 80.
+LaTeX Info: Redefining \% on input line 80.
+LaTeX Info: Redefining \. on input line 95.
+LaTeX Info: Redefining \% on input line 95.
+
+Underfull \hbox (badness 1675) in paragraph at lines 99--103
+[]\T1/cmr/m/n/12 OASIS Open: \T1/cmr/m/it/12 MQTT Ver-sion 5.0. OA-SIS Stan-dar
+d\T1/cmr/m/n/12 , 2019.  $\T1/cmtt/m/n/12 https : / / docs .
+ []
+
+[71
+
+]
+LaTeX Info: Redefining \. on input line 105.
+LaTeX Info: Redefining \% on input line 105.
+LaTeX Info: Redefining \. on input line 138.
+LaTeX Info: Redefining \% on input line 138.
+LaTeX Info: Redefining \. on input line 141.
+LaTeX Info: Redefining \% on input line 141.
+LaTeX Info: Redefining \. on input line 141.
+LaTeX Info: Redefining \% on input line 141.
+) (apendice-c.tex [72]
+TESIS-USB: resetting all acronyms
+Ap\'{e}ndice A.
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/listings\ls
+tlang1.sty
+File: lstlang1.sty 2025/11/14 1.11b listings language file
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/listings\ls
+tmisc.sty
+File: lstmisc.sty 2025/11/14 1.11b (Carsten Heinz)
+)
+LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10> not available
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 11.
+ [73
+
+] [74] [75] [76] [77] [78]
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/listings\ls
+tlang1.sty
+File: lstlang1.sty 2025/11/14 1.11b listings language file
+) [79]
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/listings\ls
+tlang1.sty
+File: lstlang1.sty 2025/11/14 1.11b listings language file
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/listings\ls
+tmisc.sty
+File: lstmisc.sty 2025/11/14 1.11b (Carsten Heinz)
+)) [80] (main.aux
+LaTeX Info: Redefining \. on input line 8.
+LaTeX Info: Redefining \% on input line 8.
+LaTeX Info: Redefining \. on input line 399.
+LaTeX Info: Redefining \% on input line 399.
+LaTeX Info: Redefining \. on input line 400.
+LaTeX Info: Redefining \% on input line 400.
+LaTeX Info: Redefining \. on input line 406.
+LaTeX Info: Redefining \% on input line 406.
+LaTeX Info: Redefining \. on input line 407.
+LaTeX Info: Redefining \% on input line 407.
+)
+ ***********
+LaTeX2e <2025-11-01>
+L3 programming layer <2025-12-24>
+ ***********
+ ) 
+Here is how much of TeX's memory you used:
+ 25976 strings out of 467871
+ 509571 string characters out of 5412550
+ 1332721 words of memory out of 5000000
+ 54377 multiletter control sequences out of 15000+600000
+ 650398 words of font info for 98 fonts, out of 8000000 for 9000
+ 1141 hyphenation exceptions out of 8191
+ 99i,15n,118p,1837b,1917s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ <C:\Users\lrojas\scoop\apps\miktex\current\texmfs/data\fonts/pk/ljfour/jknap
+pen/ec/dpi600\ecit1200.pk> <C:\Users\lrojas\scoop\apps\miktex\current\texmfs/da
+ta\fonts/pk/ljfour/jknappen/ec/dpi600\ecit1000.pk> <C:\Users\lrojas\scoop\apps\
+miktex\current\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1000.pk> <C:\
+Users\lrojas\scoop\apps\miktex\current\texmfs/data\fonts/pk/ljfour/jknappen/ec/
+dpi600\ecti0800.pk> <C:\Users\lrojas\scoop\apps\miktex\current\texmfs/data\font
+s/pk/ljfour/jknappen/ec/dpi600\ecbx0800.pk> <C:\Users\lrojas\scoop\apps\miktex\
+current\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1095.pk> <C:\Users\l
+rojas\scoop\apps\miktex\current\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\
+ecti1095.pk> <C:\Users\lrojas\scoop\apps\miktex\current\texmfs/data\fonts/pk/lj
+four/jknappen/ec/dpi600\ectt0800.pk> <C:\Users\lrojas\scoop\apps\miktex\current
+\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1095.pk> <C:\Users\lrojas\s
+coop\apps\miktex\current\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\ecbi120
+0.pk> <C:\Users\lrojas\scoop\apps\miktex\current\texmfs/data\fonts/pk/ljfour/jk
+nappen/ec/dpi600\ecrm1000.pk> <C:\Users\lrojas\scoop\apps\miktex\current\texmfs
+/data\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1095.pk> <C:\Users\lrojas\scoop\ap
+ps\miktex\current\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1095.pk> <
+C:\Users\lrojas\scoop\apps\miktex\current\texmfs/data\fonts/pk/ljfour/jknappen/
+ec/dpi600\ecbx1440.pk> <C:\Users\lrojas\scoop\apps\miktex\current\texmfs/data\f
+onts/pk/ljfour/jknappen/ec/dpi600\ecrm0800.pk> <C:\Users\lrojas\scoop\apps\mikt
+ex\current\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1200.pk> <C:\User
+s\lrojas\scoop\apps\miktex\current\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi6
+00\ectt1200.pk> <C:\Users\lrojas\scoop\apps\miktex\current\texmfs/data\fonts/pk
+/ljfour/jknappen/ec/dpi600\ecti1200.pk> <C:\Users\lrojas\scoop\apps\miktex\curr
+ent\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm2488.pk> <C:\Users\lroja
+s\scoop\apps\miktex\current\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm
+1200.pk> <C:\Users\lrojas\scoop\apps\miktex\current\texmfs/data\fonts/pk/ljfour
+/jknappen/ec/dpi600\ecbx1200.pk> <C:\Users\lrojas\scoop\apps\miktex\current\tex
+mfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1440.pk><C:/Users/lrojas/scoop/
+apps/miktex/current/texmfs/install/fonts/type1/public/amsfonts/cm/cmex10.pfb><C
+:/Users/lrojas/scoop/apps/miktex/current/texmfs/install/fonts/type1/public/amsf
+onts/cm/cmmi10.pfb><C:/Users/lrojas/scoop/apps/miktex/current/texmfs/install/fo
+nts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Users/lrojas/scoop/apps/miktex/curr
+ent/texmfs/install/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/lrojas/sc
+oop/apps/miktex/current/texmfs/install/fonts/type1/public/amsfonts/cm/cmr10.pfb
+><C:/Users/lrojas/scoop/apps/miktex/current/texmfs/install/fonts/type1/public/a
+msfonts/cm/cmr12.pfb><C:/Users/lrojas/scoop/apps/miktex/current/texmfs/install/
+fonts/type1/public/amsfonts/cm/cmr6.pfb><C:/Users/lrojas/scoop/apps/miktex/curr
+ent/texmfs/install/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/lrojas/sco
+op/apps/miktex/current/texmfs/install/fonts/type1/public/amsfonts/cm/cmsy10.pfb
+><C:/Users/lrojas/scoop/apps/miktex/current/texmfs/install/fonts/type1/public/a
+msfonts/cm/cmsy8.pfb>
+Output written on main.pdf (97 pages, 2345596 bytes).
+PDF statistics:
+ 1435 PDF objects out of 1440 (max. 8388607)
+ 0 named destinations out of 1000 (max. 500000)
+ 128 words of extra memory for PDF output out of 10000 (max. 10000000)
+

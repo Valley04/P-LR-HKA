@@ -1,0 +1,20 @@
+\babel@toc {spanish}{}\relax 
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {2.1}{\ignorespaces Análisis comparativo de entornos de desarrollo para el nodo Gateway.}}{25}{}%
+\contentsline {table}{\numberline {2.2}{\ignorespaces Estructura del mensaje JSON del \texttt {Status S1} publicado hacia el \textit {broker} MQTT.}}{29}{}%
+\contentsline {table}{\numberline {2.3}{\ignorespaces Parámetros de configuración del cliente MQTT con seguridad TLS estricta.}}{37}{}%
+\contentsline {table}{\numberline {2.4}{\ignorespaces Propiedades de usuario (\textit {User Properties}) inyectadas en cada publicación MQTT v5.0.}}{38}{}%
+\contentsline {table}{\numberline {2.5}{\ignorespaces Estructura del mensaje JSON de comando para iniciar una actualización remota.}}{39}{}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {3.1}{\ignorespaces Niveles de defensa implementados para la inmunidad electromagnética del bus local.}}{53}{}%
+\contentsline {table}{\numberline {3.2}{\ignorespaces Comparativa cuantitativa del consumo de ancho de banda por trama de telemetría fiscal.}}{54}{}%
+\contentsline {table}{\numberline {3.3}{\ignorespaces Validación de casos borde y recuperación de estado ante fallas de energía y red.}}{57}{}%
+\contentsline {table}{\numberline {3.4}{\ignorespaces Matriz de latencias, propagación de incertidumbre y tiempos de respuesta E2E del ciclo de telemetría.}}{59}{}%
+\contentsline {table}{\numberline {3.5}{\ignorespaces Perfilado de recursos de memoria IRAM y DRAM en el SoC ESP32 ante optimizaciones de \texttt {menuconfig}.}}{66}{}%
+\contentsline {table}{\numberline {3.6}{\ignorespaces Compromiso térmico-energético del subclocking del SoC ESP32.}}{68}{}%
+\babel@toc {spanish}{}\relax 
+\babel@toc {spanish}{}\relax 
+\babel@toc {spanish}{}\relax 
+\babel@toc {spanish}{}\relax 
+\addvspace {10\p@ }

@@ -1,0 +1,51 @@
+This is BibTeX, Version 0.99e
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: main.aux
+Reallocating 'name_of_file' (item size: 1) to 12 items.
+The style file: babplain-lf.bst
+Reallocating 'name_of_file' (item size: 1) to 12 items.
+Database file #1: referencias.bib
+Reallocating 'singl_function' (item size: 4) to 100 items.
+Warning--empty language in FreeRTOS_Kernel_Ref
+You've used 17 entries,
+            2783 wiz_defined-function locations,
+            732 strings with 8641 characters,
+and the built_in function-call counts, 4588 in all, are:
+= -- 414
+> -- 158
+< -- 4
++ -- 67
+- -- 48
+* -- 393
+:= -- 742
+add.period$ -- 35
+call.type$ -- 17
+change.case$ -- 70
+chr.to.int$ -- 0
+cite$ -- 18
+duplicate$ -- 244
+empty$ -- 449
+format.name$ -- 76
+if$ -- 947
+int.to.chr$ -- 0
+int.to.str$ -- 17
+missing$ -- 4
+newline$ -- 85
+num.names$ -- 34
+pop$ -- 102
+preamble$ -- 1
+purify$ -- 58
+quote$ -- 0
+skip$ -- 136
+stack$ -- 0
+substring$ -- 87
+swap$ -- 78
+text.length$ -- 4
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 66
+warning$ -- 1
+while$ -- 34
+width$ -- 19
+write$ -- 180
+(There was 1 warning)

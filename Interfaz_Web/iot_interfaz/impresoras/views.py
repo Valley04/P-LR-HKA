@@ -1,3 +1,4 @@
+# views.py
 from django.contrib.auth.views import LoginView
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -224,15 +225,14 @@ def gestion_firmware_view(request, proyecto_id=None):
 @login_required
 def log_capture_view(request):
     query = request.GET.get('buscar')
+    
     logs_recientes = Prefetch('logs', queryset=LogDispositivo.objects.order_by('-fecha'))
     dispositivos = Dispositivo.objects.select_related('modelo', 'grupo').prefetch_related(logs_recientes).all()
     
     if query:
         dispositivos = dispositivos.filter(serial__icontains=query)
-
-    context = {'dispositivos': dispositivos}
-    
-    return render(request, 'log_capture.html', context)
+        
+    return render(request, 'log_capture.html', {'dispositivos': dispositivos})
 
 @login_required
 def descargar_logs_dispositivos(request, dispositivo_id):

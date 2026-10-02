@@ -1,0 +1,44 @@
+\babel@toc {spanish}{}\relax 
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {1.1}{\ignorespaces Diagrama de los tres niveles fundamentales en un sistema IIoT.}}{5}{}%
+\contentsline {figure}{\numberline {1.2}{\ignorespaces Estructura de la Impresora Fiscal.}}{6}{}%
+\contentsline {figure}{\numberline {1.3}{\ignorespaces Modelo MQTT de publicación y suscripción.}}{8}{}%
+\contentsline {figure}{\numberline {1.4}{\ignorespaces Vista realista del microcontrolador ESP32.}}{10}{}%
+\contentsline {figure}{\numberline {1.5}{\ignorespaces Diagrama de ejecución de tres tareas en distintos instantes de tiempo.}}{12}{}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Flujo metodológico general del trabajo de pasantía organizado en cuatro fases sucesivas.}}{19}{}%
+\contentsline {figure}{\numberline {2.2}{\ignorespaces Diagrama de la Arquitectura IIoT distribuida en tres niveles (Edge, Gateway y Cloud).}}{21}{}%
+\contentsline {figure}{\numberline {2.3}{\ignorespaces Diagrama propuesto para la arquitectura de comunicaciones MQTT.}}{21}{}%
+\contentsline {figure}{\numberline {2.4}{\ignorespaces Pinlayout de la tarjeta ESP32 DevKitC V4 y reasignación de pines seriales.}}{22}{}%
+\contentsline {figure}{\numberline {2.5}{\ignorespaces Configuración aplicada en menuconfig para optimización de IRAM.}}{23}{}%
+\contentsline {figure}{\numberline {2.6}{\ignorespaces Underclocking aplicado en menuconfig para optimización de consumo energético.}}{23}{}%
+\contentsline {figure}{\numberline {2.7}{\ignorespaces Impresora fiscal modelo HKA80 autorizada por la normativa vigente.}}{24}{}%
+\contentsline {figure}{\numberline {2.8}{\ignorespaces Inclusión estricta de dependencias en el archivo de construcción CMakeLists.txt.}}{26}{}%
+\contentsline {figure}{\numberline {2.9}{\ignorespaces Captura de inyección manual de tramas y comando ENQ mediante la terminal de datos RealTerm.}}{27}{}%
+\contentsline {figure}{\numberline {2.10}{\ignorespaces Máquina de estados del simulador fiscal en software.}}{28}{}%
+\contentsline {figure}{\numberline {2.11}{\ignorespaces Perfilado de memoria revelando un nivel crítico de ocupación de la IRAM (78.39\%).}}{30}{}%
+\contentsline {figure}{\numberline {2.12}{\ignorespaces Traza de depuración y registro de evento ante colisión por acceso concurrente al bus local (Choque de Trenes).}}{32}{}%
+\contentsline {figure}{\numberline {2.13}{\ignorespaces Interacción maestro-esclavo sobre el bus síncrono local, con señal de reloj dedicada a 100 kHz y vías independientes de transmisión y recepción.}}{33}{}%
+\contentsline {figure}{\numberline {2.14}{\ignorespaces Exclusión mutua en dos niveles para la protección de la memoria RAM y del bus físico.}}{35}{}%
+\contentsline {figure}{\numberline {2.15}{\ignorespaces Estructura de empaquetado de un fragmento de firmware hacia el periférico local.}}{42}{}%
+\contentsline {figure}{\numberline {2.16}{\ignorespaces Máquina de estados del bridge síncrono para reprogramación de periféricos locales.}}{42}{}%
+\contentsline {figure}{\numberline {2.17}{\ignorespaces Flujo de actualización reactiva del DOM mediante eventos MQTT y atributos HTMX.}}{45}{}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Prototipo funcional del MT-IoT integrado a la impresora fiscal en entorno de pruebas.}}{47}{}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Arquitectura IIoT definitiva del sistema, desplegada en borde y nube.}}{48}{}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Esquema definitivo de rutas y mensajería MQTT v5.0 del sistema.}}{49}{}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Traza de depuración en consola serial evidenciando el desempaquetado de la trama S1.}}{50}{}%
+\contentsline {figure}{\numberline {3.5}{\ignorespaces Registro en la vista \texttt {Log Capture} confirmando la intercepción de una desconexión LWT.}}{55}{}%
+\contentsline {figure}{\numberline {3.6}{\ignorespaces Diagrama de flujo de la resiliencia de red y del ciclo de detección, reconexión y restauración del túnel MQTT.}}{56}{}%
+\contentsline {figure}{\numberline {3.7}{\ignorespaces Panel de Control General (Dashboard) operando bajo arquitectura SPA reactiva.}}{60}{}%
+\contentsline {figure}{\numberline {3.8}{\ignorespaces Visualización en \texttt {Log Capture} de un cambio de estado de error mecánico (\texttt {0x48}).}}{61}{}%
+\contentsline {figure}{\numberline {3.9}{\ignorespaces Diagrama de flujo de la orquestación de la actualización remota (OTA) de doble objetivo.}}{62}{}%
+\contentsline {figure}{\numberline {3.10}{\ignorespaces Intermediación web desplegando una actualización de firmware crítica hacia el MT-IoT.}}{63}{}%
+\contentsline {figure}{\numberline {3.11}{\ignorespaces Confirmación asíncrona en la interfaz web de actualización exitosa en la impresora fiscal.}}{65}{}%
+\contentsline {figure}{\numberline {3.12}{\ignorespaces Perfilado de memoria inicial revelando ocupación crítica de IRAM ($78.39\%$).}}{66}{}%
+\contentsline {figure}{\numberline {3.13}{\ignorespaces Ocupación de IRAM optimizada al $52.26\%$ tras deshabilitar aceleración Wi-Fi.}}{67}{}%
+\babel@toc {spanish}{}\relax 
+\babel@toc {spanish}{}\relax 
+\babel@toc {spanish}{}\relax 
+\babel@toc {spanish}{}\relax 
+\addvspace {10\p@ }

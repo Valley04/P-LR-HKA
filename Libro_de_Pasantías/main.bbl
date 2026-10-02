@@ -1,0 +1,141 @@
+\begin{thebibliography}{10}
+  \providebibliographyfont{name}{}%
+  \providebibliographyfont{lastname}{}%
+  \providebibliographyfont{title}{\emph}%
+  \providebibliographyfont{jtitle}{\btxtitlefont}%
+  \providebibliographyfont{etal}{\emph}%
+  \providebibliographyfont{journal}{}%
+  \providebibliographyfont{volume}{}%
+  \providebibliographyfont{ISBN}{\MakeUppercase}%
+  \providebibliographyfont{ISSN}{\MakeUppercase}%
+  \providebibliographyfont{url}{\url}%
+  \providebibliographyfont{numeral}{}%
+  \expandafter\btxselectlanguage\expandafter {\btxfallbacklanguage}
+
+\expandafter\btxselectlanguage\expandafter {\btxfallbacklanguage}
+\bibitem {FreeRTOS_Kernel_Ref}
+\btxnamefont {\btxlastnamefont {{Amazon Web Services}}}\btxauthorcolon\
+  \btxtitlefont {\btxifchangecase {Freertos kernel reference manual}{FreeRTOS
+  Kernel Reference Manual}}.
+\newblock \btxtechreplong {}, Amazon Web Services, 2024.
+
+\bibitem {Connected_Everything_2016}
+\btxnamefont {\btxlastnamefont {{Connected Everything}}}\btxauthorcolon\
+  \btxtitlefont {\btxifchangecase {Industrial internet of things report:
+  Industrial systems in the digital age}{Industrial Internet of Things Report:
+  Industrial Systems in the Digital Age}}.
+\newblock \btxtechreplong {}, Digital Catapult / IoTUK, 2016.
+
+\bibitem {RFC5246_TLS12}
+\btxnamefont {\btxlastnamefont {Dierks}, Tim} \btxandlong {}\ \btxnamefont
+  {\btxlastnamefont {Rescorla}, Eric}\btxauthorcolon\ \btxtitlefont
+  {\btxifchangecase {The transport layer security (tls) protocol version
+  1.2}{The Transport Layer Security (TLS) Protocol Version 1.2}}.
+\newblock \btxifchangecase {Rfc}{RFC}\ 5246, Internet Engineering Task Force,
+  2008.
+
+\bibitem {Django_v5_Doc}
+\btxnamefont {\btxlastnamefont {{Django Software Foundation}}}\btxauthorcolon\
+  \btxtitlefont {Django Web Framework Documentation v5.0}, 2026.
+\newblock {\latintext \btxurlfont{https://docs.djangoproject.com/}}.
+
+\bibitem {Espressif_ESP_IDF_v552}
+\btxnamefont {\btxlastnamefont {{Espressif Systems}}}\btxauthorcolon\
+  \btxtitlefont {ESP-IDF Programming Guide v5.5.2}, 2025.
+\newblock {\latintext
+  \btxurlfont{https://docs.espressif.com/projects/esp-idf/en/v5.5.2/esp32/get-started/}}.
+
+\bibitem {Espressif_Menuconfig}
+\btxnamefont {\btxlastnamefont {{Espressif Systems}}}\btxauthorcolon\
+  \btxtitlefont {ESP-IDF Project Configuration Guide: SDK Configuration Tool
+  (menuconfig)}, 2025.
+\newblock {\latintext
+  \btxurlfont{https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/kconfig.html}}.
+
+\bibitem {Espressif_ESP32_Datasheet}
+\btxnamefont {\btxlastnamefont {{Espressif Systems}}}\btxauthorcolon\
+  \btxtitlefont {\btxifchangecase {Esp32 series datasheet}{ESP32 Series
+  Datasheet}}.
+\newblock \btxtechreplong {}, Espressif Systems, 2025.
+\newblock Versión 4.4.
+
+\bibitem {RFC6455_WebSockets}
+\btxnamefont {\btxlastnamefont {Fette}, Ian} \btxandlong {}\ \btxnamefont
+  {\btxlastnamefont {Melnikov}, Alexey}\btxauthorcolon\ \btxtitlefont
+  {\btxifchangecase {The websocket protocol}{The WebSocket Protocol}}.
+\newblock \btxifchangecase {Rfc}{RFC}\ 6455, Internet Engineering Task Force,
+  2011.
+
+\bibitem {HTMX_Doc}
+\btxnamefont {\btxlastnamefont {Gross}, Carson}\btxauthorcolon\ \btxtitlefont
+  {htmx: High-Power Tools for HTML}, 2024.
+\newblock {\latintext \btxurlfont{https://htmx.org/}}.
+
+\bibitem {Fierro_WebSockets_2017}
+\btxnamefont {\btxlastnamefont {Mendoza}, José\btxfnamespacelong
+  Guillermo\btxfnamespacelong Fierro}, \btxnamefont {\btxlastnamefont {Vera},
+  Francisco\btxfnamespacelong Gutiérrez}, \btxnamefont {\btxlastnamefont
+  {España}, Julio\btxfnamespacelong Armando\btxfnamespacelong Asato},
+  \btxnamefont {\btxlastnamefont {González}, Claudia\btxfnamespacelong
+  Cristina\btxfnamespacelong Ortega}\btxandcomma {} \btxandlong {}\
+  \btxnamefont {\btxlastnamefont {Juárez}, Eduardo\btxfnamespacelong
+  Alejandro\btxfnamespacelong Noria}\btxauthorcolon\ \btxjtitlefont
+  {\btxifchangecase {Análisis del uso de websockets para implementar
+  aplicaciones web en tiempo real}{Análisis del uso de WebSockets para
+  implementar aplicaciones web en tiempo real}}.
+\newblock \btxjournalfont {Pistas Educativas}, 39(127), 2017\ifbtxprintISSN {,
+  \mbox{\btxISSN~\btxISSNfont {2448-847X}}}.
+
+\bibitem {NIST_SP800_52}
+\btxnamefont {\btxlastnamefont {{National Institute of Standards and
+  Technology}}}\btxauthorcolon\ \btxtitlefont {\btxifchangecase {Guidelines for
+  the selection, configuration, and use of transport layer security (tls)
+  implementations}{Guidelines for the Selection, Configuration, and Use of
+  Transport Layer Security (TLS) Implementations}}.
+\newblock \Btxtechreplong {}\ SP 800-52 Rev. 2, U.S. Department of Commerce,
+  2019.
+
+\bibitem {OASIS_MQTT_v5}
+\btxnamefont {\btxlastnamefont {{OASIS Open}}}\btxauthorcolon\ \btxtitlefont
+  {MQTT Version 5.0. OASIS Standard}, 2019.
+\newblock {\latintext
+  \btxurlfont{https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html}}.
+
+\bibitem {Salazar_IoT_2014}
+\btxnamefont {\btxlastnamefont {Salazar}, Jordi} \btxandlong {}\ \btxnamefont
+  {\btxlastnamefont {Silvestre}, Santiago}\btxauthorcolon\ \btxtitlefont
+  {Internet de las Cosas}.
+\newblock \btxpublisherfont {České vysoké učení technické v Praze,
+  TechPedia}, 2014.
+
+\bibitem {TheFactoryHKA_Manual_Protocolos}
+\btxnamefont {\btxlastnamefont {{The Factory HKA, C.A.}}}\btxauthorcolon\
+  \btxtitlefont {Manual de Protocolos y Comandos Venezuela V0805R00-1}.
+\newblock Departamento de Soporte e Integración, 2022.
+\newblock Versión 8.5.0. Parámetros RS232 y estructuras S1/S2.
+
+\bibitem {TheFactoryHKA_iSmart_Manual}
+\btxnamefont {\btxlastnamefont {{The Factory HKA, C.A.}}}\btxauthorcolon\
+  \btxtitlefont {Módulo de Transmisión iSmart-W: Manual de Especificaciones},
+  2022.
+
+\bibitem {Garrido_Tesis_2025}
+\btxnamefont {\btxlastnamefont {Vega}, Pablo\btxfnamespacelong
+  Alejandro\btxfnamespacelong Garrido}\btxauthorcolon\ \btxtitlefont
+  {\btxifchangecase {Diseño e implementación de un sistema de monitoreo y
+  visualización de temperatura en tiempo real para procesos de
+  refrigeración}{Diseño e implementación de un sistema de monitoreo y
+  visualización de temperatura en tiempo real para procesos de
+  refrigeración}}.
+\newblock \btxifchangecase {Proyecto de grado}{Proyecto de Grado}, Universidad
+  Simón Bolívar, 2025.
+
+\bibitem {WEF_IIoT_2018}
+\btxnamefont {\btxlastnamefont {{World Economic Forum}}}\btxauthorcolon\
+  \btxtitlefont {\btxifchangecase {Industrial internet of things safety and
+  security protocol}{Industrial Internet of Things Safety and Security
+  Protocol}}.
+\newblock \Btxtechreplong {}\ REF 160418, Center for the Fourth Industrial
+  Revolution, 2018.
+
+\end{thebibliography}

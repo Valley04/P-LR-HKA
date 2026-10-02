@@ -1,0 +1,144 @@
+% Centro de Estadística y Matemática Aplicada
+% Universidad Simón Bolívar
+% Plantilla LaTeX para manuscritos (tesis y pasantías)
+% pregrado y postgrado
+%
+% Andrés M. Sajo-Castelli
+% Carlos Contreras
+%
+% 15 Abril 2015 -- primera versión pública
+% ...
+% 11 Mayo 2018 --- Se agrega bibliografía en castellano via babelbib
+%
+\documentclass[pregrado]{tesis-usb}
+
+% paquetes
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{verbatim}
+\usepackage{acronym}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{listings}
+\renewcommand{\lstlistingname}{Código}
+\renewcommand{\lstlistlistingname}{Índice de códigos}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning} % <-- ¡positioning es indispensable para 'right=of'!
+\usepackage{graphicx} % Necesario para \resizebox
+\usepackage{booktabs} % Líneas horizontales para tablas (Norma DEP 2.5)
+\usepackage{tabularx} % Tablas que abarcan todo el ancho de texto
+\renewcommand{\arraystretch}{1.5} % Separación vertical entre filas
+\setlength{\tabcolsep}{8pt} % Separación horizontal entre columnas
+\usepackage{algorithm} % Entorno de pseudocódigo analítico
+\usepackage{algpseudocode}
+\floatname{algorithm}{Algoritmo}
+\numberwithin{algorithm}{chapter} % Numeración por capítulo (coherente con figuras y tablas)
+
+% Configuración del título del listing (centrado y formato regular, sin negritas)
+\captionsetup[lstlisting]{
+    font=normal, 
+    justification=centering, 
+    labelsep=period
+}
+
+% Configuración del título del pseudocódigo (formato regular, sin negritas)
+\captionsetup[algorithm]{
+    font=normal,
+    justification=centering,
+    labelsep=period
+}
+
+\lstdefinelanguage{json}{
+  morestring=[b]",
+  morestring=[s]{'}{'},
+  morecomment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  morekeywords={true,false,null},
+  sensitive=false,
+  alsoletter={:},
+  moredelim=[l][\color{black}\ttfamily]{"},
+}
+\lstset{breaklines=true, basicstyle=\ttfamily}
+% \usepackage{hyperref}
+
+% estilo de las referencias
+\usepackage[fixlanguage]{babelbib-and}\selectbiblanguage{spanish}
+\usepackage[autostyle=false]{csquotes} % Comillas (Norma DEP 2.8)
+\setquotestyle{english} % Comillas tipográficas curvas: “texto”
+\newcommand{\say}[1]{\enquote{#1}} % Alias \say{} -> \enquote{} de csquotes
+\usepackage{url}
+\usepackage{float}
+\bibliographystyle{babplain-lf}
+
+\usepackage{titlesec}
+\titleformat{\chapter}[display]
+  {\normalfont\fontsize{14pt}{14pt}\bfseries\centering} % Formato de "CAPÍTULO X"
+  {\MakeUppercase{\chaptertitlename}\ \thechapter} % Etiqueta
+  {10pt} % Separación vertical
+  {\fontsize{12pt}{12pt}\bfseries\MakeUppercase} % Formato del título del desarrollo
+
+\usepackage{caption}
+% font=normal elimina las negritas, justification=centering centra el texto
+\captionsetup[figure]{font=normal, justification=centering, labelsep=period}
+\captionsetup[table]{font=normal, justification=centering, labelsep=period}
+
+\autor{Lorena Del Valle Rojas Chams El Dein}
+\autori{L. Rojas}
+\usbid{19-10469}
+\titulo{Diseño e implementación de un sistema IoT con Microcontroladores para el Monitoreo Remoto de Equipos Fiscales}
+\fecha{Septiembre~de~2026}
+\agno{2026}
+\fechadefensa{30~de~Septiembre~de~2026}
+\tutor{Tutor Académico: Prof. Miguel Díaz}
+\usarcotutor
+\cotutor{Tutor Industrial: Ing. Pablo Arguinzones y Ing. Luis Muñoz \mbox{(The Factory HKA)} } 
+\trabajo{Informe de Pasantía}
+\coord{Ingeniería Electrónica}
+\grado{Ingeniería Electrónica}
+\carrera{Ingeniería Electrónica}
+\programa{Nombre del Programa}
+\juradouno{Nombre y Apellido}
+\juradodos{Nombre y Apellido \mbox{(Afiliaci\'on)}}
+\juradotres{Nombre y Apellido}
+
+% Cambia comillas simple por comilla cerrada en ambiente verbatim 
+\makeatletter
+\let \@sverbatim \@verbatim
+\def \@verbatim {\@sverbatim \verbatimplus}
+{\catcode`'=13 \gdef \verbatimplus{\catcode`'=13 \chardef '=13 }} 
+\makeatother
+
+\begin{document}
+
+    \frontmatter
+    \maketitle
+    \input{dedicatoria}
+    \input{agradecimientos}
+    
+\begin{resumen}
+En este trabajo de pasantía se diseñó, implementó y validó un sistema de Internet Industrial de las Cosas (IIoT, por sus siglas en inglés, \textit{Industrial Internet of Things}) de tres niveles (\textit{Edge}, \textit{Gateway} y \textit{Cloud}) para la supervisión remota y diagnóstico determinista en tiempo real de impresoras fiscales en la empresa The Factory HKA. La arquitectura integra un nodo transmisor basado en el microcontrolador ESP32 ejecutado sobre el \textit{Espressif IoT Development Framework} (ESP-IDF) y el sistema operativo de tiempo real \textit{Free Real-Time Operating System} (FreeRTOS), junto a una plataforma web reactiva desarrollada en Django y \textit{HTML eXtensions} (HTMX). La captura local de registros de estado (\textit{Status S1}) se realiza mediante una interfaz síncrona en el borde, garantizando determinismo sin alterar la máquina de estados fiscal. La mensajería bidireccional utiliza el protocolo \textit{Message Queuing Telemetry Transport} (MQTT v5.0) sobre capas de seguridad \textit{Transport Layer Security} (TLS 1.2), reduciendo el consumo de ancho de banda en un $80.2\%$ frente a arquitecturas \textit{Hypertext Transfer Protocol} (HTTP) tradicionales. Asimismo, mediante optimizaciones de configuración en el microcontrolador, se redujo la ocupación de memoria RAM de instrucciones (IRAM) del $78.39\%$ al $52.26\%$. El sistema incorpora un mecanismo inalámbrico de actualización remota (\textit{Over-The-Air}, OTA) de doble objetivo, capaz de reescribir in situ tanto el firmware del \textit{gateway} como el del periférico fiscal cliente a través de un puente síncrono. Los resultados confirman un monitoreo de alta disponibilidad, resiliencia ante cortes de red y una drástica optimización del mantenimiento preventivo industrial.
+
+\vspace{0.5cm}
+\noindent \textbf{Palabras clave:} IIoT, ESP32, MQTT v5.0, HTMX, Equipos Fiscales, Firmware Embebido, OTA.
+\end{resumen}
+    \tableofcontents
+    \listoffigures
+    \listoftables
+    \useacronyms
+    \input{notacion}
+    
+    \mainmatter
+    \input{introduccion}
+    \input{usodelaclase}
+    \input{capitulo-4}
+    \input{capitulo-5}
+    \input{conclusiones}
+    \nocite{*}
+    \bibliography{referencias}
+    \appendix
+    \input{apendice-c.tex}
+
+\end{document}
