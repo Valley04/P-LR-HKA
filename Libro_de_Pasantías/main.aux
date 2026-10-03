@@ -294,95 +294,100 @@
 \newlabel{fig:arquitectura_final}{{3.2}{48}{Implementación del Prototipo Funcional de Borde}{figure.3.2}{}}
 \citation{TheFactoryHKA_Manual_Protocolos}
 \citation{FreeRTOS_Kernel_Ref}
-\citation{TheFactoryHKA_Manual_Protocolos}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.3}{\ignorespaces Montaje del banco de pruebas Hardware-in-the-Loop: el ESP32 maestro (MT-IoT) y el ESP32 esclavo que emula al periférico fiscal, interconectados sobre el bus síncrono local.}}{49}{}\protected@file@percent }
+\newlabel{fig:esp32_slave_master}{{3.3}{49}{Entorno de Pruebas Hardware-in-the-Loop (HIL)}{figure.3.3}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {3.2}Evaluación Cuantitativa de la Comunicación IoT y Telemetría}{49}{}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {3.3}{\ignorespaces Esquema definitivo de rutas y mensajería MQTT v5.0 del sistema.}}{49}{}\protected@file@percent }
-\newlabel{fig:arquitectura_mqtt_final}{{3.3}{49}{Evaluación Cuantitativa de la Comunicación IoT y Telemetría}{figure.3.3}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.2.1}Mecanismo de Extracción Transparente sin Interrupción del Ciclo Fiscal}{49}{}\protected@file@percent }
-\citation{FreeRTOS_Kernel_Ref}
-\@writefile{lof}{\contentsline {figure}{\numberline {3.4}{\ignorespaces Traza de depuración en consola serial evidenciando el desempaquetado de la trama S1.}}{50}{}\protected@file@percent }
-\newlabel{fig:log_terminal_s1}{{3.4}{50}{Mecanismo de Extracción Transparente sin Interrupción del Ciclo Fiscal}{figure.3.4}{}}
 \citation{TheFactoryHKA_Manual_Protocolos}
+\citation{FreeRTOS_Kernel_Ref}
+\citation{TheFactoryHKA_Manual_Protocolos}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.4}{\ignorespaces Esquema definitivo de rutas y mensajería MQTT v5.0 del sistema.}}{50}{}\protected@file@percent }
+\newlabel{fig:arquitectura_mqtt_final}{{3.4}{50}{Evaluación Cuantitativa de la Comunicación IoT y Telemetría}{figure.3.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.5}{\ignorespaces Traza de depuración en consola serial evidenciando el desempaquetado de la trama S1.}}{51}{}\protected@file@percent }
+\newlabel{fig:log_terminal_s1}{{3.5}{51}{Mecanismo de Extracción Transparente sin Interrupción del Ciclo Fiscal}{figure.3.5}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.2.2}Purga de Caracteres Invisibles y Sanitización del Payload}{51}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3.1}{\ignorespaces Efecto de la purga de caracteres invisibles sobre el campo de versión del periférico.}}{52}{}\protected@file@percent }
+\newlabel{tab:purga}{{3.1}{52}{Purga de Caracteres Invisibles y Sanitización del Payload}{table.3.1}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.2.3}Inmunidad Electromagnética y Robustez del Bus Local}{52}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3.2}{\ignorespaces Niveles de defensa implementados para la inmunidad electromagnética del bus local.}}{53}{}\protected@file@percent }
+\newlabel{tab:defensa_bus}{{3.2}{53}{Inmunidad Electromagnética y Robustez del Bus Local}{table.3.2}{}}
 \citation{OASIS_MQTT_v5}
-\@writefile{lot}{\contentsline {table}{\numberline {3.1}{\ignorespaces Niveles de defensa implementados para la inmunidad electromagnética del bus local.}}{53}{}\protected@file@percent }
-\newlabel{tab:defensa_bus}{{3.1}{53}{Inmunidad Electromagnética y Robustez del Bus Local}{table.3.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.4}Consumo de Ancho de Banda: HTTP vs. MQTT v5.0}{53}{}\protected@file@percent }
 \citation{OASIS_MQTT_v5}
 \citation{Espressif_ESP_IDF_v552}
 \citation{OASIS_MQTT_v5}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.4}Consumo de Ancho de Banda: HTTP vs. MQTT v5.0}{54}{}\protected@file@percent }
+\newlabel{eq:ahorro_banda}{{3.1}{54}{Consumo de Ancho de Banda: HTTP vs. MQTT v5.0}{equation.3.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3.3}{\ignorespaces Comparativa cuantitativa del consumo de ancho de banda por trama de telemetría fiscal.}}{54}{}\protected@file@percent }
+\newlabel{tab:ancho_banda}{{3.3}{54}{Consumo de Ancho de Banda: HTTP vs. MQTT v5.0}{table.3.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.5}Resiliencia de Red y Mecanismo Last Will and Testament (LWT)}{54}{}\protected@file@percent }
 \citation{Django_v5_Doc}
 \citation{OASIS_MQTT_v5}
-\newlabel{eq:ahorro_banda}{{3.1}{54}{Consumo de Ancho de Banda: HTTP vs. MQTT v5.0}{equation.3.1}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {3.2}{\ignorespaces Comparativa cuantitativa del consumo de ancho de banda por trama de telemetría fiscal.}}{54}{}\protected@file@percent }
-\newlabel{tab:ancho_banda}{{3.2}{54}{Consumo de Ancho de Banda: HTTP vs. MQTT v5.0}{table.3.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.5}Resiliencia de Red y Mecanismo Last Will and Testament (LWT)}{54}{}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {3.5}{\ignorespaces Registro en la vista \texttt  {Log Capture} confirmando la intercepción de una desconexión LWT.}}{55}{}\protected@file@percent }
-\newlabel{fig:prueba_lwt}{{3.5}{55}{Resiliencia de Red y Mecanismo Last Will and Testament (LWT)}{figure.3.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.6}{\ignorespaces Registro en la vista \texttt  {Log Capture} confirmando la intercepción de una desconexión LWT.}}{55}{}\protected@file@percent }
+\newlabel{fig:prueba_lwt}{{3.6}{55}{Resiliencia de Red y Mecanismo Last Will and Testament (LWT)}{figure.3.6}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.2.6}Validación de Casos Borde y Recuperación ante Micro-cortes}{55}{}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {3.6}{\ignorespaces Diagrama de flujo de la resiliencia de red y del ciclo de detección, reconexión y restauración del túnel MQTT.}}{56}{}\protected@file@percent }
-\newlabel{fig:flujo_resiliencia}{{3.6}{56}{Resiliencia de Red y Mecanismo Last Will and Testament (LWT)}{figure.3.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.7}{\ignorespaces Diagrama de flujo de la resiliencia de red y del ciclo de detección, reconexión y restauración del túnel MQTT.}}{56}{}\protected@file@percent }
+\newlabel{fig:flujo_resiliencia}{{3.7}{56}{Resiliencia de Red y Mecanismo Last Will and Testament (LWT)}{figure.3.7}{}}
 \citation{Django_v5_Doc}
 \citation{HTMX_Doc}
-\@writefile{lot}{\contentsline {table}{\numberline {3.3}{\ignorespaces Validación de casos borde y recuperación de estado ante fallas de energía y red.}}{57}{}\protected@file@percent }
-\newlabel{tab:casos_borde}{{3.3}{57}{Validación de Casos Borde y Recuperación ante Micro-cortes}{table.3.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3.4}{\ignorespaces Validación de casos borde y recuperación de estado ante fallas de energía y red.}}{57}{}\protected@file@percent }
+\newlabel{tab:casos_borde}{{3.4}{57}{Validación de Casos Borde y Recuperación ante Micro-cortes}{table.3.4}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {3.3}Desempeño del Ecosistema Web y Matriz de Latencias E2E}{57}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.1}Caracterización de la Latencia End-to-End ($T_{E2E}$)}{57}{}\protected@file@percent }
+\newlabel{eq:latencia_e2e}{{3.2}{58}{Caracterización de la Latencia End-to-End ($T_{E2E}$)}{equation.3.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3.5}{\ignorespaces Matriz de latencias, propagación de incertidumbre y tiempos de respuesta E2E del ciclo de telemetría.}}{58}{}\protected@file@percent }
+\newlabel{tab:latencias}{{3.5}{58}{Caracterización de la Latencia End-to-End ($T_{E2E}$)}{table.3.5}{}}
 \citation{FreeRTOS_Kernel_Ref}
 \citation{Garrido_Tesis_2025}
 \citation{RFC6455_WebSockets}
 \citation{HTMX_Doc}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3.1}Caracterización de la Latencia End-to-End ($T_{E2E}$)}{58}{}\protected@file@percent }
-\newlabel{eq:latencia_e2e}{{3.2}{58}{Caracterización de la Latencia End-to-End ($T_{E2E}$)}{equation.3.2}{}}
 \citation{Django_v5_Doc}
 \citation{TheFactoryHKA_Manual_Protocolos}
 \citation{Espressif_ESP_IDF_v552}
-\@writefile{lot}{\contentsline {table}{\numberline {3.4}{\ignorespaces Matriz de latencias, propagación de incertidumbre y tiempos de respuesta E2E del ciclo de telemetría.}}{59}{}\protected@file@percent }
-\newlabel{tab:latencias}{{3.4}{59}{Caracterización de la Latencia End-to-End ($T_{E2E}$)}{table.3.4}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.3.2}Monitor en Tiempo Real (Dashboard) y Log Capture}{59}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3.4}Pruebas del Sistema de Actualización Remota (OTA)}{59}{}\protected@file@percent }
+\newlabel{sec:ota_resultados}{{3.4}{59}{Pruebas del Sistema de Actualización Remota (OTA)}{section.3.4}{}}
 \citation{FreeRTOS_Kernel_Ref}
 \citation{Espressif_ESP_IDF_v552}
 \citation{Espressif_Menuconfig}
 \citation{TheFactoryHKA_Manual_Protocolos}
-\@writefile{lof}{\contentsline {figure}{\numberline {3.7}{\ignorespaces Panel de Control General (Dashboard) operando bajo arquitectura SPA reactiva.}}{60}{}\protected@file@percent }
-\newlabel{fig:dashboard_tiempo_real}{{3.7}{60}{Monitor en Tiempo Real (Dashboard) y Log Capture}{figure.3.7}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {3.4}Pruebas del Sistema de Actualización Remota (OTA)}{60}{}\protected@file@percent }
-\newlabel{sec:ota_resultados}{{3.4}{60}{Pruebas del Sistema de Actualización Remota (OTA)}{section.3.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.8}{\ignorespaces Panel de Control General (Dashboard) operando bajo arquitectura SPA reactiva.}}{60}{}\protected@file@percent }
+\newlabel{fig:dashboard_tiempo_real}{{3.8}{60}{Monitor en Tiempo Real (Dashboard) y Log Capture}{figure.3.8}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.4.1}Auto-actualización del Módulo Gateway (ESP32)}{60}{}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {3.8}{\ignorespaces Visualización en \texttt  {Log Capture} de un cambio de estado de error mecánico (\texttt  {0x48}).}}{61}{}\protected@file@percent }
-\newlabel{fig:log_capture_error}{{3.8}{61}{Monitor en Tiempo Real (Dashboard) y Log Capture}{figure.3.8}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3.9}{\ignorespaces Diagrama de flujo de la orquestación de la actualización remota (OTA) de doble objetivo.}}{62}{}\protected@file@percent }
-\newlabel{fig:flujo_ota}{{3.9}{62}{Pruebas del Sistema de Actualización Remota (OTA)}{figure.3.9}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.4.2}Puente Síncrono Heterogéneo de Reescritura de Firmware In Situ}{62}{}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {3.10}{\ignorespaces Intermediación web desplegando una actualización de firmware crítica hacia el MT-IoT.}}{63}{}\protected@file@percent }
-\newlabel{fig:ota_mt_iot}{{3.10}{63}{Auto-actualización del Módulo Gateway (ESP32)}{figure.3.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4.2}Puente Síncrono Heterogéneo de Reescritura de Firmware In Situ}{60}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3.9}{\ignorespaces Visualización en \texttt  {Log Capture} de un cambio de estado de error mecánico (\texttt  {0x48}).}}{61}{}\protected@file@percent }
+\newlabel{fig:log_capture_error}{{3.9}{61}{Monitor en Tiempo Real (Dashboard) y Log Capture}{figure.3.9}{}}
 \citation{FreeRTOS_Kernel_Ref}
 \citation{TheFactoryHKA_Manual_Protocolos}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.10}{\ignorespaces Diagrama de flujo de la orquestación de la actualización remota (OTA) de doble objetivo.}}{62}{}\protected@file@percent }
+\newlabel{fig:flujo_ota}{{3.10}{62}{Pruebas del Sistema de Actualización Remota (OTA)}{figure.3.10}{}}
 \citation{Espressif_Menuconfig}
 \citation{Espressif_ESP_IDF_v552}
-\@writefile{toc}{\contentsline {section}{\numberline {3.5}Análisis de Rendimiento y Estabilidad Global del Sistema}{64}{}\protected@file@percent }
 \citation{Espressif_Menuconfig}
-\@writefile{lof}{\contentsline {figure}{\numberline {3.11}{\ignorespaces Confirmación asíncrona en la interfaz web de actualización exitosa en la impresora fiscal.}}{65}{}\protected@file@percent }
-\newlabel{fig:ota_printer_exito}{{3.11}{65}{Puente Síncrono Heterogéneo de Reescritura de Firmware In Situ}{figure.3.11}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.5.1}Perfilado Formal de Memoria IRAM y DRAM}{65}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3.11}{\ignorespaces Intermediación web desplegando una actualización de firmware crítica hacia el MT-IoT.}}{63}{}\protected@file@percent }
+\newlabel{fig:ota_mt_iot}{{3.11}{63}{Auto-actualización del Módulo Gateway (ESP32)}{figure.3.11}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.5}Análisis de Rendimiento y Estabilidad Global del Sistema}{63}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5.1}Perfilado Formal de Memoria IRAM y DRAM}{63}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3.12}{\ignorespaces Confirmación asíncrona en la interfaz web de actualización exitosa en la impresora fiscal.}}{64}{}\protected@file@percent }
+\newlabel{fig:ota_printer_exito}{{3.12}{64}{Puente Síncrono Heterogéneo de Reescritura de Firmware In Situ}{figure.3.12}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3.6}{\ignorespaces Perfilado de recursos de memoria IRAM y DRAM en el SoC ESP32 ante optimizaciones de \texttt  {menuconfig}.}}{64}{}\protected@file@percent }
+\newlabel{tab:perfilado_iram}{{3.6}{64}{Perfilado Formal de Memoria IRAM y DRAM}{table.3.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.13}{\ignorespaces Perfilado de memoria inicial revelando ocupación crítica de IRAM ($78.39\%$).}}{65}{}\protected@file@percent }
+\newlabel{fig:iram_78}{{3.13}{65}{Perfilado Formal de Memoria IRAM y DRAM}{figure.3.13}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.14}{\ignorespaces Ocupación de IRAM optimizada al $52.26\%$ tras deshabilitar aceleración Wi-Fi.}}{65}{}\protected@file@percent }
+\newlabel{fig:iram_52}{{3.14}{65}{Perfilado Formal de Memoria IRAM y DRAM}{figure.3.14}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.5.2}Perfilado Térmico y Energético del Subclocking (80 MHz)}{65}{}\protected@file@percent }
-\newlabel{eq:potencia_dinamica}{{3.3}{65}{Perfilado Térmico y Energético del Subclocking (80 MHz)}{equation.3.3}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {3.5}{\ignorespaces Perfilado de recursos de memoria IRAM y DRAM en el SoC ESP32 ante optimizaciones de \texttt  {menuconfig}.}}{66}{}\protected@file@percent }
-\newlabel{tab:perfilado_iram}{{3.5}{66}{Perfilado Formal de Memoria IRAM y DRAM}{table.3.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3.12}{\ignorespaces Perfilado de memoria inicial revelando ocupación crítica de IRAM ($78.39\%$).}}{66}{}\protected@file@percent }
-\newlabel{fig:iram_78}{{3.12}{66}{Perfilado Formal de Memoria IRAM y DRAM}{figure.3.12}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3.13}{\ignorespaces Ocupación de IRAM optimizada al $52.26\%$ tras deshabilitar aceleración Wi-Fi.}}{67}{}\protected@file@percent }
-\newlabel{fig:iram_52}{{3.13}{67}{Perfilado Formal de Memoria IRAM y DRAM}{figure.3.13}{}}
-\newlabel{eq:salto_termico}{{3.4}{67}{Perfilado Térmico y Energético del Subclocking (80 MHz)}{equation.3.4}{}}
+\newlabel{eq:potencia_dinamica}{{3.3}{66}{Perfilado Térmico y Energético del Subclocking (80 MHz)}{equation.3.3}{}}
+\newlabel{eq:salto_termico}{{3.4}{66}{Perfilado Térmico y Energético del Subclocking (80 MHz)}{equation.3.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3.7}{\ignorespaces Compromiso térmico-energético del subclocking del SoC ESP32.}}{66}{}\protected@file@percent }
+\newlabel{tab:underclocking}{{3.7}{66}{Perfilado Térmico y Energético del Subclocking (80 MHz)}{table.3.7}{}}
 \citation{Django_v5_Doc}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5.3}Trazabilidad y Estabilidad de Almacenamiento en Servidor SQLite}{67}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3.8}{\ignorespaces Métricas de trazabilidad y desempeño del almacenamiento en SQLite.}}{67}{}\protected@file@percent }
+\newlabel{tab:sqlite}{{3.8}{67}{Trazabilidad y Estabilidad de Almacenamiento en Servidor SQLite}{table.3.8}{}}
 \citation{Django_v5_Doc}
-\@writefile{lot}{\contentsline {table}{\numberline {3.6}{\ignorespaces Compromiso térmico-energético del subclocking del SoC ESP32.}}{68}{}\protected@file@percent }
-\newlabel{tab:underclocking}{{3.6}{68}{Perfilado Térmico y Energético del Subclocking (80 MHz)}{table.3.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.5.3}Trazabilidad y Estabilidad de Almacenamiento en Servidor SQLite}{68}{}\protected@file@percent }
-\citation{Django_v5_Doc}
+\@writefile{toc}{\contentsline {chapter}{\MakeTextUppercase    []{CONCLUSIONES}}{69}{}\protected@file@percent }
 \citation{*}
 \bibdata{referencias}
-\@writefile{toc}{\contentsline {chapter}{\MakeTextUppercase    []{Conclusiones}}{70}{}\protected@file@percent }
 \bibcite{FreeRTOS_Kernel_Ref}{1}
 \bibcite{Connected_Everything_2016}{2}
 \bibcite{RFC5246_TLS12}{3}
@@ -422,9 +427,9 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {A.1.4}Exclusión Mutua de Memoria y Bus Físico}{75}{}\protected@file@percent }
 \newlabel{code:mutex_bus}{{A.4}{75}{Exclusión Mutua de Memoria y Bus Físico}{lstlisting.1.4}{}}
 \@writefile{lol}{\contentsline {lstlisting}{\numberline {A.4}{\ignorespaces Uso de doble exclusión mutua para proteger RAM y hardware físico.}}{75}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.1.5}Resiliencia y Reconexión MQTT}{75}{}\protected@file@percent }
-\newlabel{code:mqtt_reconnect}{{A.5}{75}{Resiliencia y Reconexión MQTT}{lstlisting.1.5}{}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {A.5}{\ignorespaces Lógica de resiliencia y reconexión en la tarea MQTT.}}{75}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1.5}Resiliencia y Reconexión MQTT}{76}{}\protected@file@percent }
+\newlabel{code:mqtt_reconnect}{{A.5}{76}{Resiliencia y Reconexión MQTT}{lstlisting.1.5}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {A.5}{\ignorespaces Lógica de resiliencia y reconexión en la tarea MQTT.}}{76}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {A.1.6}Configuración Segura del Cliente MQTT}{76}{}\protected@file@percent }
 \newlabel{code:mqtt_tls}{{A.6}{76}{Configuración Segura del Cliente MQTT}{lstlisting.1.6}{}}
 \@writefile{lol}{\contentsline {lstlisting}{\numberline {A.6}{\ignorespaces Configuración de inicialización del cliente MQTT con seguridad TLS estricta.}}{76}{}\protected@file@percent }
@@ -438,15 +443,15 @@
 \newlabel{code:http_range}{{A.9}{77}{Reanudación de Descargas mediante HTTP Range}{lstlisting.1.9}{}}
 \@writefile{lol}{\contentsline {lstlisting}{\numberline {A.9}{\ignorespaces Inyección de cabecera HTTP Range para reanudación de descargas interrumpidas.}}{77}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {A.1.10}Empaquetado de Firmware Segmentado hacia el Periférico}{77}{}\protected@file@percent }
-\newlabel{code:local_ota}{{A.10}{77}{Empaquetado de Firmware Segmentado hacia el Periférico}{lstlisting.1.10}{}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {A.10}{\ignorespaces Empaquetado y transmisión de firmware segmentado hacia el periférico local.}}{77}{}\protected@file@percent }
+\newlabel{code:local_ota}{{A.10}{78}{Empaquetado de Firmware Segmentado hacia el Periférico}{lstlisting.1.10}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {A.10}{\ignorespaces Empaquetado y transmisión de firmware segmentado hacia el periférico local.}}{78}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {A.2}Estructuras de Mensajería (JSON)}{78}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {A.2.1}Telemetría del Status S1}{78}{}\protected@file@percent }
 \newlabel{code:json_mqtt}{{A.11}{78}{Telemetría del Status S1}{lstlisting.1.11}{}}
 \@writefile{lol}{\contentsline {lstlisting}{\numberline {A.11}{\ignorespaces Estructura JSON del Status S1 publicado por el MT-IoT hacia el broker MQTT.}}{78}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.2}Comando de Actualización Remota}{78}{}\protected@file@percent }
-\newlabel{code:json_ota}{{A.12}{78}{Comando de Actualización Remota}{lstlisting.1.12}{}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {A.12}{\ignorespaces Estructura del payload MQTT para iniciar un proceso de actualización remota.}}{78}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.2}Comando de Actualización Remota}{79}{}\protected@file@percent }
+\newlabel{code:json_ota}{{A.12}{79}{Comando de Actualización Remota}{lstlisting.1.12}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {A.12}{\ignorespaces Estructura del payload MQTT para iniciar un proceso de actualización remota.}}{79}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {A.3}Herramientas de Simulación}{79}{}\protected@file@percent }
 \newlabel{code:simulador_python}{{A.13}{79}{Herramientas de Simulación}{lstlisting.1.13}{}}
 \@writefile{lol}{\contentsline {lstlisting}{\numberline {A.13}{\ignorespaces Simulador fiscal con cálculo de redundancia (LRC) y manejo de estados.}}{79}{}\protected@file@percent }

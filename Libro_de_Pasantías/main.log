@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12 Portable) (preloaded format=pdflatex 2026.10.2)  2 OCT 2026 16:56
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12 Portable) (preloaded format=pdflatex 2026.10.2)  2 OCT 2026 20:32
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -921,14 +921,14 @@ LaTeX Info: Redefining \. on input line 8.
 LaTeX Info: Redefining \% on input line 8.
 Package babel Info: 'spanish' activates 'spanish' shorthands.
 (babel)             Reported on input line 8.
-LaTeX Info: Redefining \. on input line 399.
-LaTeX Info: Redefining \% on input line 399.
-LaTeX Info: Redefining \. on input line 400.
-LaTeX Info: Redefining \% on input line 400.
-LaTeX Info: Redefining \. on input line 406.
-LaTeX Info: Redefining \% on input line 406.
-LaTeX Info: Redefining \. on input line 407.
-LaTeX Info: Redefining \% on input line 407.
+LaTeX Info: Redefining \. on input line 404.
+LaTeX Info: Redefining \% on input line 404.
+LaTeX Info: Redefining \. on input line 405.
+LaTeX Info: Redefining \% on input line 405.
+LaTeX Info: Redefining \. on input line 411.
+LaTeX Info: Redefining \% on input line 411.
+LaTeX Info: Redefining \. on input line 412.
+LaTeX Info: Redefining \% on input line 412.
 )
 \openout1 = `main.aux'.
 
@@ -1139,14 +1139,14 @@ LaTeX Info: Redefining \% on input line 1.
  [9
 
 ]
-LaTeX Info: Redefining \. on input line 40.
-LaTeX Info: Redefining \% on input line 40.
 LaTeX Info: Redefining \. on input line 41.
 LaTeX Info: Redefining \% on input line 41.
 LaTeX Info: Redefining \. on input line 42.
 LaTeX Info: Redefining \% on input line 42.
 LaTeX Info: Redefining \. on input line 43.
 LaTeX Info: Redefining \% on input line 43.
+LaTeX Info: Redefining \. on input line 44.
+LaTeX Info: Redefining \% on input line 44.
 )
 \tf@lof=\write5
 \openout5 = `main.lof'.
@@ -1154,14 +1154,14 @@ LaTeX Info: Redefining \% on input line 43.
  [10] (main.lot
 LaTeX Info: Redefining \. on input line 1.
 LaTeX Info: Redefining \% on input line 1.
-LaTeX Info: Redefining \. on input line 16.
-LaTeX Info: Redefining \% on input line 16.
-LaTeX Info: Redefining \. on input line 17.
-LaTeX Info: Redefining \% on input line 17.
 LaTeX Info: Redefining \. on input line 18.
 LaTeX Info: Redefining \% on input line 18.
 LaTeX Info: Redefining \. on input line 19.
 LaTeX Info: Redefining \% on input line 19.
+LaTeX Info: Redefining \. on input line 20.
+LaTeX Info: Redefining \% on input line 20.
+LaTeX Info: Redefining \. on input line 21.
+LaTeX Info: Redefining \% on input line 21.
 )
 \tf@lot=\write6
 \openout6 = `main.lot'.
@@ -1562,202 +1562,247 @@ Underfull \hbox (badness 10000) in paragraph at lines 43--44
 
  []
 
-[47 <./Img/prototipo_funcional.jpg>] [48]
-Underfull \hbox (badness 10000) in paragraph at lines 76--77
+[47 <./Img/prototipo_funcional.jpg>]
+<Img/esp32_slave_master.jpg, id=260, 1784.6675pt x 1880.02374pt>
+File: Img/esp32_slave_master.jpg Graphic file (type jpg)
+<use Img/esp32_slave_master.jpg>
+Package pdftex.def Info: Img/esp32_slave_master.jpg  used on input line 49.
+(pdftex.def)             Requested size: 228.90242pt x 241.11269pt.
+
+Underfull \hbox (badness 10000) in paragraph at lines 56--57
+
+ []
+
+[48]
+Underfull \hbox (badness 10000) in paragraph at lines 83--84
+
+ []
+
+[49 <./Img/esp32_slave_master.jpg>]
+Underfull \hbox (badness 10000) in paragraph at lines 85--86
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 78--79
-
- []
-
-[49]
-Underfull \hbox (badness 10000) in paragraph at lines 80--81
+Underfull \hbox (badness 10000) in paragraph at lines 87--88
 
  []
 
 <Img/log_terminal_s1.png, id=267, 550.30594pt x 292.84406pt>
 File: Img/log_terminal_s1.png Graphic file (type png)
 <use Img/log_terminal_s1.png>
-Package pdftex.def Info: Img/log_terminal_s1.png  used on input line 84.
+Package pdftex.def Info: Img/log_terminal_s1.png  used on input line 91.
 (pdftex.def)             Requested size: 389.13692pt x 207.08513pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 89--90
+Underfull \hbox (badness 10000) in paragraph at lines 96--97
 
  []
 
-[50 <./Img/log_terminal_s1.png>]
-Underfull \hbox (badness 10000) in paragraph at lines 99--100
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 101--102
-
- []
-
-[51]
-Underfull \hbox (badness 10000) in paragraph at lines 107--108
+[50]
+Underfull \hbox (badness 10000) in paragraph at lines 106--107
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 109--110
+Underfull \hbox (badness 10000) in paragraph at lines 108--109
+
+ []
+
+[51 <./Img/log_terminal_s1.png>]
+Underfull \hbox (badness 10000) in paragraph at lines 129--130
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 111--112
+Underfull \hbox (badness 10000) in paragraph at lines 131--132
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 113--114
+Underfull \hbox (badness 10000) in paragraph at lines 133--134
 
  []
 
-[52] [53]
-Overfull \hbox (2.22562pt too wide) in paragraph at lines 160--160
+[52]
+Underfull \hbox (badness 10000) in paragraph at lines 135--136
+
+ []
+
+[53]
+Overfull \hbox (2.22562pt too wide) in paragraph at lines 182--182
 []|\T1/cmr/bx/n/10.95 Mejoramiento 
  []
 
 
-Overfull \hbox (6.30795pt too wide) in paragraph at lines 160--160
+Overfull \hbox (6.30795pt too wide) in paragraph at lines 182--182
 []|$\OT1/cmr/m/n/10.95 328[]$|  
  []
 
 
-Overfull \hbox (2.68715pt too wide) in paragraph at lines 160--160
+Overfull \hbox (2.68715pt too wide) in paragraph at lines 182--182
 []|$\OT1/cmr/m/n/10.95 142[]$|  
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 165--166
+Underfull \hbox (badness 10000) in paragraph at lines 187--188
 
  []
 
-<Img/prueba_lwt.png, id=282, 613.54219pt x 473.51906pt>
+[54]
+<Img/prueba_lwt.png, id=286, 613.54219pt x 473.51906pt>
 File: Img/prueba_lwt.png Graphic file (type png)
 <use Img/prueba_lwt.png>
-Package pdftex.def Info: Img/prueba_lwt.png  used on input line 171.
+Package pdftex.def Info: Img/prueba_lwt.png  used on input line 193.
 (pdftex.def)             Requested size: 320.46199pt x 247.32956pt.
-[54]
-Underfull \hbox (badness 10000) in paragraph at lines 199--200
 
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 201--202
+Underfull \hbox (badness 10000) in paragraph at lines 221--222
 
  []
 
 [55 <./Img/prueba_lwt.png>]
-Underfull \hbox (badness 10000) in paragraph at lines 203--204
+Underfull \hbox (badness 10000) in paragraph at lines 223--224
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 205--206
+Underfull \hbox (badness 10000) in paragraph at lines 225--226
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 227--228
 
  []
 
 [56] [57]
-Overfull \hbox (3.67871pt too wide) in paragraph at lines 238--239
+Overfull \hbox (3.67871pt too wide) in paragraph at lines 260--261
 []\T1/cmr/m/n/12 Cada tér-mino re-pre-sen-ta una con-tri-bu-ción tem-po-ral me-
 di-ble e in-de-pen-dien-te: $\OML/cmm/m/it/12 T[]$
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 238--239
+Underfull \hbox (badness 10000) in paragraph at lines 260--261
 
  []
 
 
-Overfull \hbox (4.10638pt too wide) in paragraph at lines 258--258
+Underfull \hbox (badness 10000) in paragraph at lines 262--263
+
+ []
+
+
+Overfull \hbox (4.10638pt too wide) in paragraph at lines 280--280
 []|$\OML/cmm/m/it/12 T[]$|  
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 261--262
+Underfull \hbox (badness 10000) in paragraph at lines 283--284
 
  []
 
 [58]
-<Img/dashboard_tiempo_real.png, id=300, 1433.355pt x 682.80093pt>
+Underfull \hbox (badness 10000) in paragraph at lines 289--290
+
+ []
+
+<Img/dashboard_tiempo_real.png, id=301, 1433.355pt x 682.80093pt>
 File: Img/dashboard_tiempo_real.png Graphic file (type png)
 <use Img/dashboard_tiempo_real.png>
-Package pdftex.def Info: Img/dashboard_tiempo_real.png  used on input line 271.
+Package pdftex.def Info: Img/dashboard_tiempo_real.png  used on input line 293.
 
 (pdftex.def)             Requested size: 434.91321pt x 207.17564pt.
-<Img/log_capture_error.png, id=301, 612.78937pt x 654.94687pt>
+<Img/log_capture_error.png, id=302, 612.78937pt x 654.94687pt>
 File: Img/log_capture_error.png Graphic file (type png)
 <use Img/log_capture_error.png>
-Package pdftex.def Info: Img/log_capture_error.png  used on input line 280.
+Package pdftex.def Info: Img/log_capture_error.png  used on input line 302.
 (pdftex.def)             Requested size: 343.35364pt x 366.97762pt.
- [59]
-<Img/ota_mt_iot.png, id=305, 394.47375pt x 518.6878pt>
+
+Underfull \hbox (badness 10000) in paragraph at lines 310--311
+
+ []
+
+[59]
+<Img/ota_mt_iot.png, id=306, 394.47375pt x 518.6878pt>
 File: Img/ota_mt_iot.png Graphic file (type png)
 <use Img/ota_mt_iot.png>
-Package pdftex.def Info: Img/ota_mt_iot.png  used on input line 324.
+Package pdftex.def Info: Img/ota_mt_iot.png  used on input line 346.
 (pdftex.def)             Requested size: 251.79407pt x 331.08055pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 331--332
+Underfull \hbox (badness 10000) in paragraph at lines 353--354
 
  []
 
-[60 <./Img/dashboard_tiempo_real.png>] [61 <./Img/log_capture_error.png>]
-Underfull \hbox (badness 10000) in paragraph at lines 333--334
+[60 <./Img/dashboard_tiempo_real.png>]
+Underfull \hbox (badness 10000) in paragraph at lines 355--356
 
  []
 
-[62] [63 <./Img/ota_mt_iot.png>]
-Underfull \hbox (badness 10000) in paragraph at lines 335--336
+[61 <./Img/log_capture_error.png>]
+Underfull \hbox (badness 10000) in paragraph at lines 357--358
 
  []
 
-<Img/ota_printer_exito.png, id=322, 1135.24126pt x 679.03688pt>
+<Img/ota_printer_exito.png, id=315, 1135.24126pt x 679.03688pt>
 File: Img/ota_printer_exito.png Graphic file (type png)
 <use Img/ota_printer_exito.png>
-Package pdftex.def Info: Img/ota_printer_exito.png  used on input line 341.
+Package pdftex.def Info: Img/ota_printer_exito.png  used on input line 363.
 (pdftex.def)             Requested size: 389.13692pt x 232.75523pt.
-[64]
-<Img/iram_78.png, id=326, 520.94624pt x 291.0875pt>
+[62] [63 <./Img/ota_mt_iot.png>] [64 <./Img/ota_printer_exito.png>]
+<Img/iram_78.png, id=328, 520.94624pt x 291.0875pt>
 File: Img/iram_78.png Graphic file (type png)
 <use Img/iram_78.png>
-Package pdftex.def Info: Img/iram_78.png  used on input line 374.
+Package pdftex.def Info: Img/iram_78.png  used on input line 396.
 (pdftex.def)             Requested size: 343.35364pt x 191.85628pt.
-<Img/iram_52.png, id=327, 530.98375pt x 296.10625pt>
+<Img/iram_52.png, id=329, 530.98375pt x 296.10625pt>
 File: Img/iram_52.png Graphic file (type png)
 <use Img/iram_52.png>
-Package pdftex.def Info: Img/iram_52.png  used on input line 381.
+Package pdftex.def Info: Img/iram_52.png  used on input line 403.
 (pdftex.def)             Requested size: 343.35364pt x 191.47728pt.
- [65 <./Img/ota_printer_exito.png>] [66 <./Img/iram_78.png (PNG copy)>]
-Underfull \hbox (badness 10000) in paragraph at lines 402--403
+ [65 <./Img/iram_78.png (PNG copy)> <./Img/iram_52.png (PNG copy)>]
+Underfull \hbox (badness 10000) in paragraph at lines 424--425
 
  []
 
-[67 <./Img/iram_52.png (PNG copy)>]
-Underfull \hbox (badness 10000) in paragraph at lines 423--424
+[66]
+Underfull \hbox (badness 10000) in paragraph at lines 445--446
 
  []
 
 
-Overfull \hbox (30.57309pt too wide) in paragraph at lines 425--426
-\T1/cmr/m/n/12 iden-ti-fi-ca-do de for-ma uní-vo-ca por su nú-me-ro de se-rie, 
-y su bi-tá-co-ra de even-tos (\T1/cmtt/m/n/12 LogDispositivo\T1/cmr/m/n/12 ),
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 425--426
+Underfull \hbox (badness 10000) in paragraph at lines 464--465
 
  []
 
-[68]) (conclusiones.tex [69]
+[67]) (conclusiones.tex [68]
 TESIS-USB: resetting all acronyms
-) (main.bbl [70
+
+Underfull \hbox (badness 10000) in paragraph at lines 3--4
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5--6
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 7--8
+
+ []
+
+[69
 
 ]
+Underfull \hbox (badness 10000) in paragraph at lines 9--10
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 11--12
+
+ []
+
+) (main.bbl [70]
 TESIS-USB: resetting all acronyms
 babelbib: Using the BibTeX style's default font for `name'.
 babelbib: Using the BibTeX style's default font for `lastname'.
@@ -1842,14 +1887,14 @@ File: lstmisc.sty 2025/11/14 1.11b (Carsten Heinz)
 )) [80] (main.aux
 LaTeX Info: Redefining \. on input line 8.
 LaTeX Info: Redefining \% on input line 8.
-LaTeX Info: Redefining \. on input line 399.
-LaTeX Info: Redefining \% on input line 399.
-LaTeX Info: Redefining \. on input line 400.
-LaTeX Info: Redefining \% on input line 400.
-LaTeX Info: Redefining \. on input line 406.
-LaTeX Info: Redefining \% on input line 406.
-LaTeX Info: Redefining \. on input line 407.
-LaTeX Info: Redefining \% on input line 407.
+LaTeX Info: Redefining \. on input line 404.
+LaTeX Info: Redefining \% on input line 404.
+LaTeX Info: Redefining \. on input line 405.
+LaTeX Info: Redefining \% on input line 405.
+LaTeX Info: Redefining \. on input line 411.
+LaTeX Info: Redefining \% on input line 411.
+LaTeX Info: Redefining \. on input line 412.
+LaTeX Info: Redefining \% on input line 412.
 )
  ***********
 LaTeX2e <2025-11-01>
@@ -1857,10 +1902,10 @@ L3 programming layer <2025-12-24>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 25976 strings out of 467871
- 509571 string characters out of 5412550
- 1332721 words of memory out of 5000000
- 54377 multiletter control sequences out of 15000+600000
+ 25986 strings out of 467871
+ 509848 string characters out of 5412550
+ 1354577 words of memory out of 5000000
+ 54387 multiletter control sequences out of 15000+600000
  650398 words of font info for 98 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  99i,15n,118p,1837b,1917s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -1906,9 +1951,9 @@ ent/texmfs/install/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/lrojas/sco
 op/apps/miktex/current/texmfs/install/fonts/type1/public/amsfonts/cm/cmsy10.pfb
 ><C:/Users/lrojas/scoop/apps/miktex/current/texmfs/install/fonts/type1/public/a
 msfonts/cm/cmsy8.pfb>
-Output written on main.pdf (97 pages, 2345596 bytes).
+Output written on main.pdf (97 pages, 2700018 bytes).
 PDF statistics:
  1435 PDF objects out of 1440 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
- 128 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 133 words of extra memory for PDF output out of 10000 (max. 10000000)
 

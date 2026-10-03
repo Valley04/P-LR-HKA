@@ -42,11 +42,18 @@
 
 \par El primer nivel correspondió al emulador software \texttt{impresora.py}, desarrollado sobre la biblioteca \texttt{pyserial} con los mismos parámetros eléctricos del enlace fiscal ($9600$ baudios, $8$ bits de datos, paridad par y $1$ bit de parada). El \textit{script} implementa una máquina de estados de recepción (\texttt{ESPERANDO\_STX} y \texttt{RECIBIENDO\_DATOS}), calcula el código de redundancia LRC y responde a las encuestas con las tramas de estado y los reportes S1 y SV2, incluyendo la emisión de acuses de recibo \texttt{ACK} y \texttt{NAK} (véase el Código \ref{code:simulador_python}). Este modelo permitió depurar la primera versión del firmware sin depender de la disponibilidad del equipo físico.\\
 
-\par El segundo nivel elevó la fidelidad del banco de pruebas al dominio síncrono: se programó un ESP32 configurado como esclavo SPI (\texttt{blink\_example\_main.c}) que emula íntegramente al periférico fiscal sobre el mismo bus y con los mismos pines, replicando la trama de estado (\texttt{0x60}/\texttt{0x40}), los reportes S1 y SV2 y, de forma crítica, el protocolo completo de reescritura remota (apertura \texttt{0x07}, paquetes \texttt{0x08} y cierre \texttt{0x09}) con verificación de redundancia y de secuencia de paquetes. Contra este periférico simulado se validó de extremo a extremo el puente OTA descrito en la Sección \ref{sec:ota_resultados}, empleando un binario de prueba de $2500$ bytes generado por el \textit{script} \texttt{generar\_bin.py}. Este enfoque habilitó la inyección determinista de fallos (paquetes fuera de secuencia, \textit{checksums} alterados e interrupciones del enlace) y confirmó la capacidad de recuperación del firmware antes de comprometer la memoria de un equipo fiscal real.
+\par El segundo nivel elevó la fidelidad del banco de pruebas al dominio síncrono: se programó un ESP32 configurado como esclavo (\texttt{blink\_example\_main.c}) que emula íntegramente al periférico fiscal sobre el mismo bus y con los mismos pines, replicando la trama de estado (\texttt{0x60}/\texttt{0x40}), los reportes S1 y SV2 y, de forma crítica, el protocolo completo de reescritura remota (apertura \texttt{0x07}, paquetes \texttt{0x08} y cierre \texttt{0x09}) con verificación de redundancia y de secuencia de paquetes. Contra este periférico simulado se validó de extremo a extremo el puente OTA descrito en la Sección \ref{sec:ota_resultados}, empleando un binario de prueba de $2500$ bytes generado por el \textit{script} \texttt{generar\_bin.py}. Este enfoque habilitó la inyección determinista de fallos (paquetes fuera de secuencia, \textit{checksums} alterados e interrupciones del enlace) y confirmó la capacidad de recuperación del firmware antes de comprometer la memoria de un equipo fiscal real (véase la Figura \ref{fig:esp32_slave_master}).
+
+\begin{figure}[htb]
+    \centering
+    \includegraphics[width=0.5\textwidth]{Img/esp32_slave_master.jpg}
+    \caption{Montaje del banco de pruebas Hardware-in-the-Loop: el ESP32 maestro (MT-IoT) y el ESP32 esclavo que emula al periférico fiscal, interconectados sobre el bus síncrono local.}
+    \label{fig:esp32_slave_master}
+\end{figure}
 
 \section{Evaluación Cuantitativa de la Comunicación IoT y Telemetría}
 
-\par La validación de la capa lógica se centró en medir el tiempo de extracción de datos, la integridad matemática de las tramas tributarias y la reducción del ancho de banda consumido \cite{OASIS_MQTT_v5}.
+\par La validación de la capa lógica se centró en medir el tiempo de extracción de datos, la integridad matemática de las tramas tributarias y la reducción del ancho de banda consumido \cite{OASIS_MQTT_v5}.\\
 
 \par El esquema definitivo de rutas y mensajería MQTT v5.0, con los tópicos y cargas efectivamente desplegados en el sistema, se representa en la Figura \ref{fig:arquitectura_mqtt_final}.
 
@@ -73,11 +80,11 @@
 
 \subsection{Mecanismo de Extracción Transparente sin Interrupción del Ciclo Fiscal}
 
-\par La captura del registro \texttt{Status S1} se abordó como un mecanismo de extracción transparente, concebido para operar de forma no intrusiva sobre el ciclo de facturación del equipo fiscal y no como una simple lectura secuencial del canal serial. La interrogación se ejecutó desde una tarea dedicada de FreeRTOS (\texttt{printer\_task\_main}) desacoplada de la tarea de red (\texttt{mqtt\_task}), de modo que la fase de adquisición nunca compitió con la pila de comunicación inalámbrica por el mismo hilo de ejecución. Bajo esta separación de responsabilidades, el sondeo pudo sostenerse con un intervalo fijo de $5$ segundos durante jornadas continuas sin alterar la máquina de estados interna del periférico ni interrumpir las transacciones fiscales en curso \cite{TheFactoryHKA_Manual_Protocolos, FreeRTOS_Kernel_Ref}.\\
+\par La captura del registro \texttt{Status S1} se abordó como un mecanismo de extracción transparente, no como una lectura secuencial del canal serial. La interrogación se ejecutó desde una tarea dedicada de FreeRTOS (\texttt{printer\_task\_main}) desacoplada de la tarea de red (\texttt{mqtt\_task}), de modo que la adquisición nunca compitió con la pila inalámbrica por el mismo hilo; así, el sondeo se sostuvo cada $5$ segundos sin alterar la máquina de estados del periférico ni interrumpir las transacciones en curso \cite{TheFactoryHKA_Manual_Protocolos, FreeRTOS_Kernel_Ref}.\\
 
-\par El desempaquetado se resolvió íntegramente en SRAM sobre dos búferes estáticos de alineación forzada (\texttt{WORD\_ALIGNED\_ATTR}) de $1056$ bytes, \texttt{rx\_buffer} y \texttt{tx\_buffer}, dimensionados de forma que el controlador de DMA del SoC pueda transferir el bloque completo sin fragmentaciones ni copias intermedias. Al no reservarse memoria dinámica en la ruta crítica del ciclo fiscal, se eliminó la fragmentación del \textit{heap} y se obtuvo un perfil de memoria determinista y auditable. La localización de los delimitadores \texttt{STX (0x02)} y \texttt{ETX (0x03)} se ejecutó en un único barrido sobre el búfer, seguida de una tokenización en sitio mediante el carácter \texttt{0x0A} hacia un arreglo de punteros (\texttt{campos[20]}); dado que la longitud de la trama es fija e independiente de la carga transaccional del equipo, el costo del procesamiento se mantiene acotado en tiempo constante $O(1)$ respecto al número de operaciones fiscales registradas \cite{TheFactoryHKA_Manual_Protocolos}.\\
+\par El desempaquetado se resolvió íntegramente en SRAM sobre dos búferes estáticos alineados para DMA (\texttt{WORD\_ALIGNED\_ATTR}, $1056$ bytes), sin memoria dinámica en la ruta crítica, por lo que el perfil resultó determinista y libre de fragmentación del \textit{heap}. La localización de los delimitadores \texttt{STX (0x02)} y \texttt{ETX (0x03)} se ejecutó en un único barrido, seguida de una tokenización en sitio por el carácter \texttt{0x0A} hacia un arreglo de punteros (\texttt{campos[20]}); como la longitud de la trama es fija, el costo se mantiene acotado en tiempo constante $O(1)$ \cite{TheFactoryHKA_Manual_Protocolos}.\\
 
-\par La condición de borde que mayor atención exigió fue la contaminación del búfer por el terminador asíncrono (\texttt{\textbackslash n}) emitido por el equipo con anterioridad a la trama útil. Para neutralizarla, se diseñó una etapa de realineación que localiza el primer \texttt{STX} válido y desplaza la trama completa al inicio del búfer mediante una operación \texttt{memmove}, garantizando que el índice $0$ coincida siempre con el carácter de inicio y que los $116$ bytes útiles queden íntegros antes de la extracción. Este tratamiento se verificó experimentalmente sobre la consola serial de depuración (véase la Figura \ref{fig:log_terminal_s1}).\\
+\par La condición de borde más exigente fue la contaminación del búfer por el terminador asíncrono (\texttt{\textbackslash n}) previo a la trama útil. Se diseñó una etapa de realineación que localiza el primer \texttt{STX} y desplaza la trama al inicio del búfer con \texttt{memmove}, garantizando los $116$ bytes útiles desde el índice $0$; el tratamiento se verificó sobre la consola serial de depuración (véase la Figura \ref{fig:log_terminal_s1}).\\
 
 \begin{figure}[htbp]
     \centering
@@ -86,7 +93,7 @@
     \label{fig:log_terminal_s1}
 \end{figure}
 
-\par El acceso concurrente a la estructura de telemetría compartida se protegió mediante exclusión mutua. La actualización de los campos tributarios sobre la estructura empaquetada \texttt{mqtt\_data\_t} se realizó dentro de una sección crítica custodiada por el semáforo \texttt{mqtt\_data\_mutex}, mientras que el uso del bus físico se serializó con \texttt{spi\_bus\_mutex}; con ello se descartó cualquier condición de carrera entre la tarea fiscal, la tarea MQTT y la tarea de actualización remota, sin recurrir a esperas activas ni a bloqueos de la máquina de estados. La transferencia de control hacia la capa de red se materializó de forma dirigida mediante el indicador \texttt{needs\_sync} y la notificación \texttt{xTaskNotifyGive}, sustituyendo el sondeo periódico por un esquema de activación por evento que preserva la continuidad del ciclo fiscal \cite{FreeRTOS_Kernel_Ref}.\\
+\par El acceso concurrente a la estructura compartida se protegió con exclusión mutua: los campos tributarios de \texttt{mqtt\_data\_t} se actualizan en una sección crítica custodiada por \texttt{mqtt\_data\_mutex}, y el bus físico se serializa con \texttt{spi\_bus\_mutex}, descartando condiciones de carrera sin esperas activas. La entrega hacia la capa de red se realizó por evento, mediante \texttt{needs\_sync} y \texttt{xTaskNotifyGive}, en lugar del sondeo periódico \cite{FreeRTOS_Kernel_Ref}.\\
 
 \par El análisis de la salida en terminal confirma que el módulo logra aislar de manera transparente los registros almacenados en la Memoria de Trabajo del equipo fiscal \cite{TheFactoryHKA_Manual_Protocolos}:
 \begin{itemize}
@@ -96,11 +103,26 @@
 
 \subsection{Purga de Caracteres Invisibles y Sanitización del Payload}
 
-\par Uno de los defectos más sutiles detectados durante la validación del canal de telemetría fue la contaminación del \textit{payload} por caracteres de control invisibles. Las tramas de respuesta del periférico fiscal delimitan sus campos con el carácter de avance de línea (\texttt{0x0A}) y, adicionalmente, el equipo intercala un salto de línea (\texttt{\textbackslash n}) inmediatamente antes del carácter de fin de trama (\texttt{ETX}). Este carácter no es visible en una inspección textual, pero ocupa una posición física en el búfer y desplaza cualquier cálculo de longitud basado en posiciones fijas.\\
+\par Uno de los defectos más sutiles del canal de telemetría fue la contaminación del \textit{payload} por caracteres de control invisibles: las tramas delimitan sus campos con \texttt{0x0A} y el equipo intercala un salto de línea (\texttt{\textbackslash n}) justo antes del fin de trama (\texttt{ETX}). Ese carácter no se aprecia en una inspección textual, pero ocupa una posición física en el búfer y desplaza todo cálculo de longitud por posiciones fijas.\\
 
-\par La consecuencia se manifestó directamente sobre el JSON publicado por MQTT: la cadena de versión del periférico arribaba truncada y con residuos al final (por ejemplo, \texttt{20507GD00} en lugar de \texttt{020507GD00}), producto de un error de tipo \textit{Off-By-One} que consumía el salto de línea en lugar del último dígito útil. La solución adoptada no consistió en un ajuste cosmético, sino en una manipulación explícita de punteros sobre la memoria RAM. En la ruta de desempaquetado de la trama SV2, el \textit{firmware} recorre el \textit{payload} con la primitiva \texttt{strchr(ptr, '\textbackslash n')}, avanzando un puntero auxiliar (\texttt{ultima\_parte}) hasta situarlo justo después del último delimitador; de este modo, el campo de versión queda aislado con precisión y sin arrastrar el carácter de control. Complementariamente, la tokenización de la trama S1 sobrescribe en sitio cada \texttt{0x0A} con un terminador nulo (\texttt{\textbackslash 0}), y se inyecta manualmente un cierre nulo adicional al final del arreglo, garantizando que la rutina de serialización \texttt{snprintf} lea una cadena limpia y correctamente cerrada (véase el Código \ref{code:offbyone}).\\
+\par La consecuencia fue directa sobre el JSON publicado: la versión del periférico arribaba truncada y con residuos (\texttt{20507GD00} en lugar de \texttt{020507GD00}), por un error \textit{Off-By-One} que consumía el salto de línea en lugar del último dígito. La solución no fue cosmética, sino una manipulación explícita de punteros en RAM: el \textit{firmware} recorre el \textit{payload} con \texttt{strchr(ptr, '\textbackslash n')} y avanza un puntero auxiliar (\texttt{ultima\_parte}) hasta situarlo tras el último delimitador, aislando el campo de versión; además, la tokenización de la trama S1 sobrescribe cada \texttt{0x0A} con un terminador nulo y se inyecta un cierre nulo adicional, de modo que \texttt{snprintf} lee una cadena limpia y cerrada (véase el Código \ref{code:offbyone}). La Tabla \ref{tab:purga} resume el efecto medido.\\
 
-\par El resultado medible de esta purga fue la recuperación de la integridad del \textit{payload}: la estructura clave-valor transmitida dejó de presentar campos cortados o basura residual, la versión del periférico se reportó de forma exacta en la plataforma y el JSON resultó siempre deserializable por el \textit{Worker} del servidor (véase el Código \ref{code:json_mqtt}). Cabe destacar que esta misma disciplina de sanitización se replicó en el extremo receptor, donde el \textit{Worker} de Django elimina preventivamente los caracteres \texttt{\textbackslash n}, \texttt{\textbackslash r} y \texttt{\textbackslash t} del mensaje crudo antes de invocar el analizador JSON, estableciendo una doble barrera contra la corrupción del dato.
+\begin{table}[htbp]
+\centering
+\caption{Efecto de la purga de caracteres invisibles sobre el campo de versión del periférico.}
+\label{tab:purga}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{4.0cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X@{}}
+\toprule
+\textbf{Aspecto} & \textbf{Sin purga (defecto)} & \textbf{Con purga (corregido)} \\
+\midrule
+Campo de versión leído & \texttt{20507GD00} (truncado) & \texttt{020507GD00} (íntegro) \\
+Carácter de control & \texttt{\textbackslash n} arrastrado al \textit{payload} & \texttt{\textbackslash 0} inyectado manualmente \\
+JSON publicado por MQTT & Campo cortado / no deserializable & Estructura válida y deserializable \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\par El resultado fue la recuperación de la integridad del \textit{payload}: sin campos cortados ni basura residual y con JSON siempre deserializable (véase el Código \ref{code:json_mqtt}). La misma disciplina se replicó en el receptor, donde el \textit{Worker} de Django elimina \texttt{\textbackslash n}, \texttt{\textbackslash r} y \texttt{\textbackslash t} del mensaje crudo antes de invocar el analizador JSON.
 
 \subsection{Inmunidad Electromagnética y Robustez del Bus Local}
 
@@ -116,7 +138,7 @@
 \centering
 \caption{Niveles de defensa implementados para la inmunidad electromagnética del bus local.}
 \label{tab:defensa_bus}
-\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{2.4cm} >{\raggedright\arraybackslash}p{3.4cm} >{\raggedright\arraybackslash}p{3.2cm} >{\raggedright\arraybackslash}X@{}}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}p{3.4cm} >{\raggedright\arraybackslash}p{3.0cm} >{\raggedright\arraybackslash}X@{}}
 \toprule
 \textbf{Nivel de Defensa} & \textbf{Mecanismo} & \textbf{Parámetro} & \textbf{Acción de Recuperación} \\
 \midrule
@@ -196,13 +218,13 @@ Metadatos (RSSI / Versión FW) & Inyectados en \textit{Body} JSON & Extraídos e
 
 \subsection{Validación de Casos Borde y Recuperación ante Micro-cortes}
 
-\par La robustez del ciclo de telemetría se evaluó frente a dos familias de fallas que, en un despliegue real, ocurren con frecuencia: la desconexión abrupta de la alimentación y las fallas intermitentes de red durante el envío. El análisis se apoyó en una propiedad fundamental del diseño: el MT-IoT opera como un observador de estado sin memoria tributaria propia. Toda la información fiscal reside en la memoria de trabajo del periférico y se re-consulta íntegramente en cada sondeo, de modo que el \textit{gateway} no constituye una fuente de verdad que pueda corromperse, sino un reflejo periódico del estado del equipo.\\
+\par La robustez del ciclo de telemetría se evaluó frente a las dos fallas más frecuentes en un despliegue real: el corte abrupto de alimentación y las fallas intermitentes de red durante el envío. El análisis se apoya en una propiedad del diseño: el MT-IoT es un observador de estado sin memoria tributaria propia, pues toda la información fiscal reside en el periférico y se re-consulta en cada sondeo; el \textit{gateway} no es una fuente de verdad que pueda corromperse, sino un reflejo periódico del equipo.\\
 
-\par \textbf{Corte abrupto de energía:} al perderse la alimentación, la memoria volátil del microcontrolador se borra y el SoC reinicia su ciclo de arranque. Sin embargo, dado que el estado fiscal no reside en el \textit{gateway}, la recuperación no depende de persistir datos locales: tras el reinicio, los parámetros de red compilados en el firmware y los datos de calibración de radio conservados por la pila Wi-Fi en la memoria no volátil permiten restablecer el enlace de forma autónoma, y el primer sondeo posterior al arranque reconstruye la telemetría completa. La única consecuencia observable es un hueco de una sola ventana de sondeo ($5$ segundos), tras el cual el sistema vuelve a publicar el estado vigente.\\
+\par \textbf{Corte abrupto de energía:} al perderse la alimentación se borra la memoria volátil del SoC y este reinicia. Como el estado fiscal no reside en el \textit{gateway}, la recuperación no depende de persistir datos locales: los parámetros de red compilados y los datos de calibración de radio conservados en memoria no volátil permiten restablecer el enlace de forma autónoma, y el primer sondeo reconstruye la telemetría completa. El único efecto observable es un hueco de una ventana de sondeo ($5$ segundos).\\
 
-\par \textbf{Micro-cortes de red durante la telemetría:} cuando el enlace inalámbrico se interrumpe a mitad del ciclo, la lectura más reciente permanece retenida en la estructura compartida con el indicador de sincronización pendiente activo, y la tarea de red omite la publicación mientras la conexión no esté disponible, sin descartar el dato. Al restablecerse el contacto con el \textit{Broker}, la reconexión notifica a la tarea de publicación, que transmite de inmediato la lectura conservada; simultáneamente, el mecanismo \textit{Last Will and Testament} había marcado el equipo como desconectado y el \textit{Worker} del servidor registra la reconexión como un evento de trazabilidad. Debido a que el protocolo opera con un nivel de servicio de al menos una entrega (\texttt{QoS 1}) y a que la telemetría es un estado idempotente y no un comando, la eventual repetición de una publicación no genera efectos adversos.\\
+\par \textbf{Micro-cortes de red:} si el enlace se interrumpe a mitad del ciclo, la lectura más reciente queda retenida con el indicador de sincronización pendiente activo y la tarea de red omite la publicación sin descartar el dato; al reconectar, la tarea transmite de inmediato la lectura conservada, mientras el mecanismo \textit{Last Will and Testament} había marcado el equipo como desconectado y el \textit{Worker} registra la reconexión. Como el servicio es de al menos una entrega (\texttt{QoS 1}) y la telemetría es un estado idempotente, la repetición eventual no genera efectos adversos.\\
 
-\par \textbf{Coherencia temporal ante reinicios:} la marca de tiempo de cada mensaje combina un contador monotónico del RTOS con la fecha y hora leídas directamente del reloj interno del periférico fiscal, lo que evita depender de un servidor de tiempo externo y preserva la coherencia temporal incluso tras una pérdida de energía. La Tabla \ref{tab:casos_borde} sistematiza los escenarios evaluados, su mecanismo de detección y el resultado de la recuperación.\\
+\par \textbf{Coherencia temporal:} la marca de tiempo combina un contador monotónico del RTOS con la fecha y hora del reloj interno del periférico fiscal, lo que evita depender de un servidor de tiempo externo y preserva la coherencia tras una pérdida de energía. La Tabla \ref{tab:casos_borde} sistematiza los escenarios evaluados.\\
 
 \begin{table}[htbp]
 \centering
@@ -220,7 +242,7 @@ Desconexión del periférico fiscal & \textit{Timeout} del bus y contador de err
 \end{tabularx}
 \end{table}
 
-\par La conclusión de esta validación es que ninguna de las fallas evaluadas compromete la integridad de la información fiscal: el sistema tolera micro-cortes sin pérdida de muestras gracias a la retención del estado pendiente, y se recupera de cortes de energía en un lapso acotado a un único intervalo de sondeo, en virtud de su naturaleza de observador sin estado tributario propio.
+\par Ninguna de las fallas evaluadas compromete la integridad de la información fiscal: el sistema tolera micro-cortes sin pérdida de muestras y se recupera de cortes de energía en un único intervalo de sondeo, por su naturaleza de observador sin estado tributario propio.
 
 \section{Desempeño del Ecosistema Web y Matriz de Latencias E2E}
 
@@ -237,7 +259,7 @@ T_{E2E} = T_{UART\_poll} + T_{JSON\_pack} + T_{TLS\_handshake} + T_{MQTT\_pub} +
 
 \par Cada término representa una contribución temporal medible e independiente: $T_{UART\_poll}$ es el tiempo de sondeo del registro \texttt{Status S1} sobre el bus local, incluyendo el ciclo de encuesta y el desempaquetado de la trama; $T_{JSON\_pack}$ corresponde a la serialización del \textit{payload} y a la entrega de la sección crítica hacia la tarea de red; $T_{TLS\_handshake}$ mide la fase de cifrado y establecimiento seguro del canal; $T_{MQTT\_pub}$ comprende la publicación y el tránsito del mensaje por el \textit{Broker} HiveMQ Cloud; y $T_{WS\_render}$ cuantifica el renderizado reactivo del DOM mediante WebSockets Seguros y HTMX.\\
 
-\par Mediante un perfilado de tiempos realizado sobre $500$ iteraciones continuas de envío de telemetría, se determinaron las latencias promedio y las desviaciones estándar de cada etapa, reportadas en la Tabla \ref{tab:latencias}.
+\par Mediante un perfilado de tiempos realizado sobre $500$ iteraciones continuas de envío de telemetría, se determinaron las latencias promedio y las desviaciones estándar de cada etapa, reportadas en la Tabla \ref{tab:latencias}.\\
 
 \begin{table}[htbp]
 \centering
@@ -264,7 +286,7 @@ T_{E2E} = T_{UART\_poll} + T_{JSON\_pack} + T_{TLS\_handshake} + T_{MQTT\_pub} +
 
 \subsection{Monitor en Tiempo Real (Dashboard) y Log Capture}
 
-\par La integración de la biblioteca MQTT.js directamente en el cliente web permitió establecer canales de WebSockets Seguros (WSS) sobre el puerto 8884 hacia la nube \cite{RFC6455_WebSockets}. La Figura \ref{fig:dashboard_tiempo_real} evidencia el funcionamiento del panel de control general, validando el renderizado reactivo de indicadores clave (dispositivos en línea, distribución de modelos y gráficos de crecimiento) sin necesidad de recargar la página completa \cite{HTMX_Doc}.
+\par La integración de la biblioteca MQTT.js directamente en el cliente web permitió establecer canales de WebSockets Seguros (WSS) sobre el puerto 8884 hacia la nube \cite{RFC6455_WebSockets}. La Figura \ref{fig:dashboard_tiempo_real} evidencia el funcionamiento del panel de control general, validando el renderizado reactivo de indicadores clave (dispositivos en línea, distribución de modelos y gráficos de crecimiento) sin necesidad de recargar la página completa \cite{HTMX_Doc}.\\
 
 \begin{figure}[htbp]
     \centering
@@ -275,7 +297,7 @@ T_{E2E} = T_{UART\_poll} + T_{JSON\_pack} + T_{TLS\_handshake} + T_{MQTT\_pub} +
 
 \par Por su parte, la evaluación del módulo de auditoría de errores (véase la Figura \ref{fig:log_capture_error}) confirmó que el \textit{Worker} en Django intercepta y registra de forma independiente las variaciones lógicas del hardware \cite{Django_v5_Doc}. La captura documenta la transición exacta desde un estado normal (\texttt{0x60}) hacia un código de en medio de una transacción fiscal (\texttt{0x61}), correspondiente a la operación de imprimir una factura en la impresora fiscal \cite{TheFactoryHKA_Manual_Protocolos}.
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
     \centering
     \includegraphics[width=0.75\textwidth]{Img/log_capture_error.png}
     \caption{Visualización en \texttt{Log Capture} de un cambio de estado de error mecánico (\texttt{0x48}).}
@@ -285,7 +307,7 @@ T_{E2E} = T_{UART\_poll} + T_{JSON\_pack} + T_{TLS\_handshake} + T_{MQTT\_pub} +
 \section{Pruebas del Sistema de Actualización Remota (OTA)}
 \label{sec:ota_resultados}
 
-\par La validación de la actualización remota de firmware se dividió según el destino lógico del binario compilado: la autoactualización del gateway ESP32 o la reescritura del periférico fiscal \cite{Espressif_ESP_IDF_v552}.
+\par La validación de la actualización remota de firmware se dividió según el destino lógico del binario compilado: la autoactualización del gateway ESP32 o la reescritura del periférico fiscal \cite{Espressif_ESP_IDF_v552}.\\
 
 \par El flujo completo de orquestación de la actualización remota de doble objetivo, desde la interfaz web hasta el reporte final, se sintetiza en la Figura \ref{fig:flujo_ota}.
 
@@ -319,7 +341,7 @@ T_{E2E} = T_{UART\_poll} + T_{JSON\_pack} + T_{TLS\_handshake} + T_{MQTT\_pub} +
 
 \par Al seleccionar el objetivo \say{\texttt{ismart}} desde la plataforma web (véase la Figura \ref{fig:ota_mt_iot}), el MT-IoT recibió la orden por MQTT y activó la bandera de suspensión (\texttt{ota\_en\_progreso = true}) \cite{FreeRTOS_Kernel_Ref}. Las pruebas de descarga HTTPS verificaron la escritura en la partición OTA inactiva dentro del mapa de memoria de 4 MB \cite{Espressif_ESP_IDF_v552}. Se constató que la reducción de la frecuencia de la CPU a 80 MHz mediante \texttt{menuconfig} \cite{Espressif_Menuconfig} estabilizó la corriente consumida durante la descodificación criptográfica.
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
     \centering
     \includegraphics[width=0.55\textwidth]{Img/ota_mt_iot.png}
     \caption{Intermediación web desplegando una actualización de firmware crítica hacia el MT-IoT.}
@@ -328,13 +350,13 @@ T_{E2E} = T_{UART\_poll} + T_{JSON\_pack} + T_{TLS\_handshake} + T_{MQTT\_pub} +
 
 \subsection{Puente Síncrono Heterogéneo de Reescritura de Firmware In Situ}
 
-\par La operación de mayor complejidad no consistió en la carga de un archivo mediante HTTP, sino en la reescritura \textit{in situ} de la memoria del periférico fiscal a través de un puente síncrono heterogéneo que tradujo el flujo de un canal IP asíncrono al dominio determinista del bus local \cite{TheFactoryHKA_Manual_Protocolos}. El binario se transfirió por fragmentos de $1024$ bytes, cada uno de los cuales fue empaquetado con una cabecera de control de $4$ bytes (identificador de paquete, índice secuencial y longitud en $16$ bits) y un código de redundancia XOR calculado sobre los datos, conformando una trama robusta reenviable hasta un máximo de $3$ intentos con confirmación explícita (\texttt{ACK}) por parte del periférico. La ventana de trabajo se gestionó sobre un búfer circular de $1$~KB reutilizado cíclicamente en cada fragmento, de manera que la huella de memoria del proceso permaneció constante e independiente del tamaño del firmware, que ronda los $900$~KB.\\
+\par La operación de mayor complejidad no fue la carga de un archivo por HTTP, sino la reescritura \textit{in situ} de la memoria del periférico fiscal mediante un puente síncrono heterogéneo que tradujo el flujo de un canal IP asíncrono al dominio determinista del bus local \cite{TheFactoryHKA_Manual_Protocolos}. El binario se transfirió en fragmentos de $1024$ bytes, cada uno empaquetado con una cabecera de $4$ bytes (identificador, índice secuencial y longitud en $16$ bits) y un código de redundancia XOR, conformando una trama reenviable hasta $3$ veces con confirmación \texttt{ACK}. La ventana de trabajo fue un búfer circular de $1$~KB reutilizado en cada fragmento, de modo que la huella de memoria permaneció constante e independiente del firmware (cercano a $900$~KB).\\
 
-\par La robustez frente a contingencias de red se evaluó desconectando arbitrariamente la interfaz Wi-Fi durante la transferencia. Ante la pérdida del canal, el firmware no reinicia la descarga desde el byte cero: reabre la conexión HTTP adjuntando la cabecera de rango \texttt{Range: bytes=<desplazamiento>-}, de forma que el servidor reanuda el envío exactamente en el fragmento donde se interrumpió. Esta estrategia de transferencia reanudable por fragmentos (\textit{HTTP Range Requests}) se sostuvo sobre un lazo de persistencia de hasta $5$ reintentos consecutivos, cuyo contador se reinicia cada vez que se confirma progreso real, garantizando que la operación sobreviva a cortes intermitentes de Wi-Fi o a reinicios transitorios del enlace. Adicionalmente, el sistema activa el lazo de reconexión inalámbrica (\texttt{WIFI\_EVENT\_STA\_DISCONNECTED}) y, al restablecerse el contacto con el \textit{Broker} MQTT, el dispositivo retorna a su estado operativo habitual sin bloqueos del microcontrolador.\\
+\par La robustez frente a contingencias de red se evaluó desconectando la interfaz Wi-Fi durante la transferencia. Ante la pérdida del canal, el firmware no reinicia desde el byte cero: reabre la conexión con la cabecera \texttt{Range: bytes=<desplazamiento>-} para que el servidor reanude en el fragmento interrumpido. Esta transferencia reanudable (\textit{HTTP Range Requests}) se sostuvo en un lazo de hasta $5$ reintentos, reiniciado con cada progreso real, y el dispositivo retorna a su estado operativo habitual tras reconectar sin bloquear el microcontrolador.\\
 
-\par La integridad del binario se garantizó por construcción: la secuencia de control se compone de una apertura de sesión (\texttt{0x07}), la ráfaga de paquetes de datos (\texttt{0x08}) y un cierre explícito (\texttt{0x09}) que el puente solo emite cuando el contador de bytes confirmados iguala la longitud total declarada por el servidor. En consecuencia, una transferencia parcial nunca llega a comprometerse en la memoria del periférico, y ante una nueva orden de actualización emitida desde la plataforma el proceso se reinicia desde el $0\%$ para preservar la coherencia absoluta del firmware. Con el propósito de no interferir con la máquina de estados fiscal, la reescritura se arbitró mediante la bandera de suspensión (\texttt{ota\_en\_progreso}) y el semáforo del bus (\texttt{spi\_bus\_mutex}), que ponen la rutina de sondeo en reposo mientras el puente ocupa el canal físico \cite{FreeRTOS_Kernel_Ref}.\\
+\par La integridad se garantizó por construcción: la secuencia de control (apertura \texttt{0x07}, paquetes \texttt{0x08} y cierre \texttt{0x09}) solo emite el cierre cuando los bytes confirmados igualan la longitud declarada por el servidor; por ello, una transferencia parcial nunca se compromete en la memoria del periférico y una nueva orden reinicia el proceso desde el $0\%$. Para no interferir con la máquina de estados fiscal, la reescritura se arbitró con la bandera \texttt{ota\_en\_progreso} y el semáforo \texttt{spi\_bus\_mutex}, que ponen el sondeo en reposo mientras el puente ocupa el canal físico \cite{FreeRTOS_Kernel_Ref}.\\
 
-\par Una vez confirmada la recepción de la totalidad de los bloques con verificación de redundancia local (LRC/Checksum), el periférico fiscal ejecuta un reinicio por hardware y consolida el nuevo firmware \cite{TheFactoryHKA_Manual_Protocolos}. Como se evidencia en la notificación flotante de la Figura \ref{fig:ota_printer_exito}, la interfaz web confirma el éxito de la operación mediante el mensaje: \say{Actualización Completada: El equipo Z7C9999999 actualizó printer con éxito}.
+\par Confirmada la recepción total con verificación de redundancia (LRC/Checksum), el periférico reinicia por hardware y consolida el nuevo firmware \cite{TheFactoryHKA_Manual_Protocolos}; la interfaz web confirma el éxito con el mensaje \say{Actualización Completada: El equipo Z7C9999999 actualizó printer con éxito} (Figura \ref{fig:ota_printer_exito}).
 
 \begin{figure}[htbp]
     \centering
@@ -420,8 +442,25 @@ $80$~MHz (adoptado) & $0.33$ & $0.33$ & Sí (handshake TLS: $45$~ms $< 100$~ms) 
 
 \subsection{Trazabilidad y Estabilidad de Almacenamiento en Servidor SQLite}
 
-\par En el nivel de gestión en la nube, se midió el crecimiento de la base de datos relacional SQLite (\texttt{db.sqlite3}) sometida a ráfagas de telemetría continua \cite{Django_v5_Doc}. La implementación de la rutina de depuración automática ($\texttt{fecha\_limite} = \texttt{timezone.now()} - \texttt{timedelta(days=90)}$) dentro del \textit{Worker} demostró ser efectiva. Las pruebas de estrés con un histórico simulado de $10,000$ registros confirmaron que la depuración asíncrona purga los registros obsoletos sin bloquear las consultas de la interfaz web, manteniendo la tasa de respuesta en búsquedas indexadas por serial por debajo de los $12 \text{ ms}$ \cite{Django_v5_Doc}.\\
+\par En el nivel de nube se midió el crecimiento de la base de datos relacional SQLite (\texttt{db.sqlite3}) bajo ráfagas de telemetría continua \cite{Django_v5_Doc}. La rutina de depuración automática del \textit{Worker} ($\texttt{fecha\_limite} = \texttt{timezone.now()} - \texttt{timedelta(days=90)}$) resultó efectiva: con un histórico simulado de $10,000$ registros, purga los obsoletos sin bloquear las consultas de la interfaz y mantiene la búsqueda indexada por serial por debajo de los $12$~ms. La Tabla \ref{tab:sqlite} resume las métricas obtenidas.\\
 
-\par La trazabilidad se materializó sobre dos entidades relacionales: el dispositivo fiscal, identificado de forma unívoca por su número de serie, y su bitácora de eventos (\texttt{LogDispositivo}), vinculada mediante clave foránea y ordenada cronológicamente de forma descendente. El \textit{Worker} asíncrono \texttt{listen\_mqtt.py} se suscribe a los tópicos de telemetría y de alertas de conexión, y por cada trama recibida no almacena un único registro, sino que compara el estado entrante contra el último estado persistido y descompone la diferencia en eventos atómicos e independientes: cambios de estado lógico (\texttt{STS1}), transiciones de error mecánico (\texttt{STS2}), cortes de reporte Z, emisión de facturas, reconexiones y actualizaciones de firmware (véase el Código \ref{code:listen_mqtt}). Esta descomposición por evento, evaluada ante ráfagas de telemetría, demostró preservar la granularidad de la auditoría sin degradar el desempeño de escritura.\\
+\begin{table}[htbp]
+\centering
+\caption{Métricas de trazabilidad y desempeño del almacenamiento en SQLite.}
+\label{tab:sqlite}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{5.5cm}@{}}
+\toprule
+\textbf{Métrica} & \textbf{Valor medido} \\
+\midrule
+Registros históricos de prueba & $10,000$ \\
+Latencia de búsqueda indexada por serial & $< 12$~ms \\
+Ventana de retención automática & $90$ días \\
+Estrategia de carga de relaciones & \texttt{select\_related} + \texttt{prefetch\_related} \\
+Eventos registrados por trama & Uno o más, de forma atómica e independiente \\
+\bottomrule
+\end{tabularx}
+\end{table}
 
-\par La eficiencia de las consultas se sostuvo sobre dos decisiones de diseño verificadas empíricamente. En primer lugar, el acceso a la vista de auditoría emplea la carga diferida de relaciones mediante \texttt{select\_related} y \texttt{prefetch\_related} sobre el conjunto ordenado de registros, reduciendo el problema de consultas N+1 a un número constante de accesos a la base de datos. En segundo lugar, la búsqueda por serial utiliza coincidencia indexada (\texttt{serial\_\_icontains}) que, combinada con el ordenamiento por fecha, mantiene la latencia de recuperación por debajo de los $12$~ms incluso con el histórico completo cargado. La rutina de retención de $90$ días, además, acota el volumen histórico de forma continua, de modo que la profundidad de la bitácora permanece estable en el tiempo y las consultas conservan su tasa de respuesta ante ráfagas sostenidas de eventos \cite{Django_v5_Doc}.
+\par La trazabilidad se apoya en dos entidades: el dispositivo fiscal (identificado por su serial) y su bitácora (\texttt{LogDispositivo}), vinculada por clave foránea y ordenada cronológicamente. El \textit{Worker} \texttt{listen\_mqtt.py} compara cada trama con el último estado persistido y descompone la diferencia en eventos atómicos: cambios de \texttt{STS1}, transiciones de \texttt{STS2}, cortes de reporte Z, emisión de facturas, reconexiones y actualizaciones de firmware (véase el Código \ref{code:listen_mqtt}), preservando la granularidad de la auditoría sin degradar la escritura.\\
+
+\par La eficiencia se sostuvo en dos decisiones verificadas: la vista de auditoría emplea \texttt{select\_related} y \texttt{prefetch\_related}, reduciendo las consultas N+1 a un número constante de accesos; y la búsqueda por serial usa coincidencia indexada (\texttt{serial\_\_icontains}) con ordenamiento por fecha, manteniendo la latencia por debajo de los $12$~ms incluso con el histórico completo. La retención de $90$ días acota el volumen de forma continua, de modo que la profundidad de la bitácora permanece estable \cite{Django_v5_Doc}.

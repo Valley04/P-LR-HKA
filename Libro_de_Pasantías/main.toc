@@ -71,20 +71,20 @@
 \contentsline {subsection}{\numberline {3.2.1}Mecanismo de Extracción Transparente sin Interrupción del Ciclo Fiscal}{49}{}%
 \contentsline {subsection}{\numberline {3.2.2}Purga de Caracteres Invisibles y Sanitización del Payload}{51}{}%
 \contentsline {subsection}{\numberline {3.2.3}Inmunidad Electromagnética y Robustez del Bus Local}{52}{}%
-\contentsline {subsection}{\numberline {3.2.4}Consumo de Ancho de Banda: HTTP vs. MQTT v5.0}{53}{}%
+\contentsline {subsection}{\numberline {3.2.4}Consumo de Ancho de Banda: HTTP vs. MQTT v5.0}{54}{}%
 \contentsline {subsection}{\numberline {3.2.5}Resiliencia de Red y Mecanismo Last Will and Testament (LWT)}{54}{}%
 \contentsline {subsection}{\numberline {3.2.6}Validación de Casos Borde y Recuperación ante Micro-cortes}{55}{}%
 \contentsline {section}{\numberline {3.3}Desempeño del Ecosistema Web y Matriz de Latencias E2E}{57}{}%
-\contentsline {subsection}{\numberline {3.3.1}Caracterización de la Latencia End-to-End ($T_{E2E}$)}{58}{}%
+\contentsline {subsection}{\numberline {3.3.1}Caracterización de la Latencia End-to-End ($T_{E2E}$)}{57}{}%
 \contentsline {subsection}{\numberline {3.3.2}Monitor en Tiempo Real (Dashboard) y Log Capture}{59}{}%
-\contentsline {section}{\numberline {3.4}Pruebas del Sistema de Actualización Remota (OTA)}{60}{}%
+\contentsline {section}{\numberline {3.4}Pruebas del Sistema de Actualización Remota (OTA)}{59}{}%
 \contentsline {subsection}{\numberline {3.4.1}Auto-actualización del Módulo Gateway (ESP32)}{60}{}%
-\contentsline {subsection}{\numberline {3.4.2}Puente Síncrono Heterogéneo de Reescritura de Firmware In Situ}{62}{}%
-\contentsline {section}{\numberline {3.5}Análisis de Rendimiento y Estabilidad Global del Sistema}{64}{}%
-\contentsline {subsection}{\numberline {3.5.1}Perfilado Formal de Memoria IRAM y DRAM}{65}{}%
+\contentsline {subsection}{\numberline {3.4.2}Puente Síncrono Heterogéneo de Reescritura de Firmware In Situ}{60}{}%
+\contentsline {section}{\numberline {3.5}Análisis de Rendimiento y Estabilidad Global del Sistema}{63}{}%
+\contentsline {subsection}{\numberline {3.5.1}Perfilado Formal de Memoria IRAM y DRAM}{63}{}%
 \contentsline {subsection}{\numberline {3.5.2}Perfilado Térmico y Energético del Subclocking (80 MHz)}{65}{}%
-\contentsline {subsection}{\numberline {3.5.3}Trazabilidad y Estabilidad de Almacenamiento en Servidor SQLite}{68}{}%
-\contentsline {chapter}{\MakeTextUppercase []{Conclusiones}}{70}{}%
+\contentsline {subsection}{\numberline {3.5.3}Trazabilidad y Estabilidad de Almacenamiento en Servidor SQLite}{67}{}%
+\contentsline {chapter}{\MakeTextUppercase []{CONCLUSIONES}}{69}{}%
 \contentsline {chapter}{\MakeTextUppercase []{Referencias}}{71}{}%
 \babel@toc {spanish}{}\relax 
 \babel@toc {spanish}{}\relax 
@@ -96,7 +96,7 @@
 \contentsline {subsection}{\numberline {A.1.2}Interrogación Serial No Bloqueante}{74}{}%
 \contentsline {subsection}{\numberline {A.1.3}Validación de Integridad de Trama}{74}{}%
 \contentsline {subsection}{\numberline {A.1.4}Exclusión Mutua de Memoria y Bus Físico}{75}{}%
-\contentsline {subsection}{\numberline {A.1.5}Resiliencia y Reconexión MQTT}{75}{}%
+\contentsline {subsection}{\numberline {A.1.5}Resiliencia y Reconexión MQTT}{76}{}%
 \contentsline {subsection}{\numberline {A.1.6}Configuración Segura del Cliente MQTT}{76}{}%
 \contentsline {subsection}{\numberline {A.1.7}Inyección de Metadatos mediante User Properties}{76}{}%
 \contentsline {subsection}{\numberline {A.1.8}Testamento (Last Will and Testament)}{77}{}%
@@ -104,7 +104,7 @@
 \contentsline {subsection}{\numberline {A.1.10}Empaquetado de Firmware Segmentado hacia el Periférico}{77}{}%
 \contentsline {section}{\numberline {A.2}Estructuras de Mensajería (JSON)}{78}{}%
 \contentsline {subsection}{\numberline {A.2.1}Telemetría del Status S1}{78}{}%
-\contentsline {subsection}{\numberline {A.2.2}Comando de Actualización Remota}{78}{}%
+\contentsline {subsection}{\numberline {A.2.2}Comando de Actualización Remota}{79}{}%
 \contentsline {section}{\numberline {A.3}Herramientas de Simulación}{79}{}%
 \contentsline {section}{\numberline {A.4}Worker de Telemetría en el Servidor}{79}{}%
 \contentsline {section}{\numberline {A.5}Interfaz Reactiva Web}{80}{}%

@@ -7,12 +7,14 @@
 \contentsline {table}{\numberline {2.4}{\ignorespaces Propiedades de usuario (\textit {User Properties}) inyectadas en cada publicación MQTT v5.0.}}{38}{}%
 \contentsline {table}{\numberline {2.5}{\ignorespaces Estructura del mensaje JSON de comando para iniciar una actualización remota.}}{39}{}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {3.1}{\ignorespaces Niveles de defensa implementados para la inmunidad electromagnética del bus local.}}{53}{}%
-\contentsline {table}{\numberline {3.2}{\ignorespaces Comparativa cuantitativa del consumo de ancho de banda por trama de telemetría fiscal.}}{54}{}%
-\contentsline {table}{\numberline {3.3}{\ignorespaces Validación de casos borde y recuperación de estado ante fallas de energía y red.}}{57}{}%
-\contentsline {table}{\numberline {3.4}{\ignorespaces Matriz de latencias, propagación de incertidumbre y tiempos de respuesta E2E del ciclo de telemetría.}}{59}{}%
-\contentsline {table}{\numberline {3.5}{\ignorespaces Perfilado de recursos de memoria IRAM y DRAM en el SoC ESP32 ante optimizaciones de \texttt {menuconfig}.}}{66}{}%
-\contentsline {table}{\numberline {3.6}{\ignorespaces Compromiso térmico-energético del subclocking del SoC ESP32.}}{68}{}%
+\contentsline {table}{\numberline {3.1}{\ignorespaces Efecto de la purga de caracteres invisibles sobre el campo de versión del periférico.}}{52}{}%
+\contentsline {table}{\numberline {3.2}{\ignorespaces Niveles de defensa implementados para la inmunidad electromagnética del bus local.}}{53}{}%
+\contentsline {table}{\numberline {3.3}{\ignorespaces Comparativa cuantitativa del consumo de ancho de banda por trama de telemetría fiscal.}}{54}{}%
+\contentsline {table}{\numberline {3.4}{\ignorespaces Validación de casos borde y recuperación de estado ante fallas de energía y red.}}{57}{}%
+\contentsline {table}{\numberline {3.5}{\ignorespaces Matriz de latencias, propagación de incertidumbre y tiempos de respuesta E2E del ciclo de telemetría.}}{58}{}%
+\contentsline {table}{\numberline {3.6}{\ignorespaces Perfilado de recursos de memoria IRAM y DRAM en el SoC ESP32 ante optimizaciones de \texttt {menuconfig}.}}{64}{}%
+\contentsline {table}{\numberline {3.7}{\ignorespaces Compromiso térmico-energético del subclocking del SoC ESP32.}}{66}{}%
+\contentsline {table}{\numberline {3.8}{\ignorespaces Métricas de trazabilidad y desempeño del almacenamiento en SQLite.}}{67}{}%
 \babel@toc {spanish}{}\relax 
 \babel@toc {spanish}{}\relax 
 \babel@toc {spanish}{}\relax 
