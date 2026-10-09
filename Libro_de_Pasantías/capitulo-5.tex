@@ -286,7 +286,7 @@ T_{E2E} = T_{UART\_poll} + T_{JSON\_pack} + T_{TLS\_handshake} + T_{MQTT\_pub} +
 
 \subsection{Monitor en Tiempo Real (Dashboard) y Log Capture}
 
-\par La integración de la biblioteca MQTT.js directamente en el cliente web permitió establecer canales de WebSockets Seguros (WSS) sobre el puerto 8884 hacia la nube \cite{RFC6455_WebSockets}. La Figura \ref{fig:dashboard_tiempo_real} evidencia el funcionamiento del panel de control general, validando el renderizado reactivo de indicadores clave (dispositivos en línea, distribución de modelos y gráficos de crecimiento) sin necesidad de recargar la página completa \cite{HTMX_Doc}.\\
+\par La integración de la biblioteca MQTT.js directamente en el cliente web permitió establecer canales de WebSockets Seguros (WSS) sobre el puerto 8884 hacia la nube. Este puerto corresponde al canal de WebSocket Seguro (WSS) que HiveMQ Cloud expone por defecto, y es independiente del puerto 8883 empleado por el nodo de borde (MT-IoT) y el \textit{worker} del servidor para MQTT sobre TLS. La Figura \ref{fig:dashboard_tiempo_real} evidencia el funcionamiento del panel de control general, validando el renderizado reactivo de indicadores clave (dispositivos en línea, distribución de modelos y gráficos de crecimiento) sin necesidad de recargar la página completa \cite{HTMX_Doc}.\\
 
 \begin{figure}[htbp]
     \centering
@@ -464,3 +464,30 @@ Eventos registrados por trama & Uno o más, de forma atómica e independiente \\
 \par La trazabilidad se apoya en dos entidades: el dispositivo fiscal (identificado por su serial) y su bitácora (\texttt{LogDispositivo}), vinculada por clave foránea y ordenada cronológicamente. El \textit{Worker} \texttt{listen\_mqtt.py} compara cada trama con el último estado persistido y descompone la diferencia en eventos atómicos: cambios de \texttt{STS1}, transiciones de \texttt{STS2}, cortes de reporte Z, emisión de facturas, reconexiones y actualizaciones de firmware (véase el Código \ref{code:listen_mqtt}), preservando la granularidad de la auditoría sin degradar la escritura.\\
 
 \par La eficiencia se sostuvo en dos decisiones verificadas: la vista de auditoría emplea \texttt{select\_related} y \texttt{prefetch\_related}, reduciendo las consultas N+1 a un número constante de accesos; y la búsqueda por serial usa coincidencia indexada (\texttt{serial\_\_icontains}) con ordenamiento por fecha, manteniendo la latencia por debajo de los $12$~ms incluso con el histórico completo. La retención de $90$ días acota el volumen de forma continua, de modo que la profundidad de la bitácora permanece estable \cite{Django_v5_Doc}.
+
+\section{Cumplimiento de los Objetivos Específicos}
+
+\par Como cierre del capítulo y síntesis final del alcance del proyecto, la Tabla \ref{tab:matriz_objetivos} contrasta los objetivos específicos planteados en la introducción con su grado de ejecución y el entregable técnico asociado. La matriz permite verificar la cobertura del objetivo general y deja constancia explícita de los desafíos superados, las optimizaciones aplicadas y los ajustes de alcance asumidos durante el desarrollo.
+
+\begin{table}[htbp]
+\centering
+\caption{Matriz de cumplimiento de objetivos específicos y alcance técnico.}
+\label{tab:matriz_objetivos}
+\footnotesize
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{4.0cm} >{\raggedright\arraybackslash}p{2cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X@{}}
+\toprule
+\textbf{Objetivo Específico} & \textbf{Estado} & \textbf{Entregable / Resultado} & \textbf{Observaciones} \\
+\midrule
+Diseñar la arquitectura IIoT que integre microcontroladores, protocolos y plataforma de monitoreo. & Logrado & Arquitectura de tres niveles (\textit{Edge}, \textit{Gateway} y \textit{Cloud}) con diagramas de flujo y de comunicaciones. & Definición del árbol de tópicos y del modelo de seguridad (TLS y \textit{User Properties}). \\
+Desarrollar el firmware embebido para el microcontrolador ESP32. & Logrado & Firmware en C sobre ESP-IDF y FreeRTOS. & Reingeniería de la memoria IRAM (78.39\% $\to$ 52.26\%) y \textit{subclocking} a $80$~MHz. \\
+Integrar el sistema con las interfaces del equipo fiscal para la captura de datos. & Logrado & Enlace síncrono SPI a $100$~kHz y analizador de tramas \textit{Status} S1/SV2. & Migración de UART a SPI por inmunidad electromagnética y corrección del error \textit{Off-By-One}. \\
+Implementar la comunicación mediante MQTT con un servidor externo. & Logrado & Cliente MQTT v5.0 sobre TLS 1.2 (puerto 8883). & Validación por \textit{bundle} de certificados, \textit{Last Will and Testament} y \textit{User Properties}. \\
+Implementar un servidor MQTT para recibir, almacenar y distribuir los datos. & Parcialmente Logrado & \textit{Worker} MQTT en Django (Paho) con persistencia en SQLite. & El \textit{broker} se delegó al servicio gestionado HiveMQ Cloud; se implementó la capa de recepción, almacenamiento y distribución. \\
+Desarrollar una interfaz web que visualice en tiempo real el estado de los equipos. & Logrado & \textit{Dashboard} Django/HTMX con cliente MQTT.js sobre WSS (puerto 8884). & Se descartó Django Channels para evitar un intermediario; integración directa navegador--\textit{broker}. \\
+Validar el sistema evaluando confiabilidad, latencia, frecuencia y robustez ante fallos. & Logrado & Banco de pruebas \textit{Hardware-in-the-Loop} y métricas de latencia \textit{end-to-end}. & Latencia media $T_{E2E} = 268$~ms y recuperación ante micro-cortes y alertas LWT. \\
+Diseñar e implementar un módulo de actualización remota (OTA) de doble objetivo. & Logrado & Módulo OTA para el \textit{gateway} (ESP32) y puente síncrono para el periférico fiscal. & Alcance ampliado respecto al plan original; reanudación de descargas por HTTP \textit{Range} y máquina de estados finita. \\
+Documentar el proceso de desarrollo y los resultados de validación. & Logrado & Diagramas, \textit{scripts} de prueba y resultados de validación. & Código fuente y estructuras de mensajería conservados en el Apéndice \ref{apx:codigo}. \\
+\bottomrule
+\end{tabularx}
+\end{table}

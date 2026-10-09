@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12 Portable) (preloaded format=pdflatex 2026.10.2)  2 OCT 2026 20:32
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12 Portable) (preloaded format=pdflatex 2026.10.2)  9 OCT 2026 12:23
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -921,14 +921,14 @@ LaTeX Info: Redefining \. on input line 8.
 LaTeX Info: Redefining \% on input line 8.
 Package babel Info: 'spanish' activates 'spanish' shorthands.
 (babel)             Reported on input line 8.
-LaTeX Info: Redefining \. on input line 404.
-LaTeX Info: Redefining \% on input line 404.
-LaTeX Info: Redefining \. on input line 405.
-LaTeX Info: Redefining \% on input line 405.
-LaTeX Info: Redefining \. on input line 411.
-LaTeX Info: Redefining \% on input line 411.
-LaTeX Info: Redefining \. on input line 412.
-LaTeX Info: Redefining \% on input line 412.
+LaTeX Info: Redefining \. on input line 406.
+LaTeX Info: Redefining \% on input line 406.
+LaTeX Info: Redefining \. on input line 407.
+LaTeX Info: Redefining \% on input line 407.
+LaTeX Info: Redefining \. on input line 413.
+LaTeX Info: Redefining \% on input line 413.
+LaTeX Info: Redefining \. on input line 414.
+LaTeX Info: Redefining \% on input line 414.
 )
 \openout1 = `main.aux'.
 
@@ -1121,14 +1121,14 @@ Overfull \hbox (6.3323pt too wide) in paragraph at lines 44--44
  []
 
 [7]
-LaTeX Info: Redefining \. on input line 89.
-LaTeX Info: Redefining \% on input line 89.
 LaTeX Info: Redefining \. on input line 90.
 LaTeX Info: Redefining \% on input line 90.
 LaTeX Info: Redefining \. on input line 91.
 LaTeX Info: Redefining \% on input line 91.
 LaTeX Info: Redefining \. on input line 92.
 LaTeX Info: Redefining \% on input line 92.
+LaTeX Info: Redefining \. on input line 93.
+LaTeX Info: Redefining \% on input line 93.
 )
 \tf@toc=\write4
 \openout4 = `main.toc'.
@@ -1154,14 +1154,14 @@ LaTeX Info: Redefining \% on input line 44.
  [10] (main.lot
 LaTeX Info: Redefining \. on input line 1.
 LaTeX Info: Redefining \% on input line 1.
-LaTeX Info: Redefining \. on input line 18.
-LaTeX Info: Redefining \% on input line 18.
 LaTeX Info: Redefining \. on input line 19.
 LaTeX Info: Redefining \% on input line 19.
 LaTeX Info: Redefining \. on input line 20.
 LaTeX Info: Redefining \% on input line 20.
 LaTeX Info: Redefining \. on input line 21.
 LaTeX Info: Redefining \% on input line 21.
+LaTeX Info: Redefining \. on input line 22.
+LaTeX Info: Redefining \% on input line 22.
 )
 \tf@lot=\write6
 \openout6 = `main.lot'.
@@ -1255,66 +1255,66 @@ File: Img/esp32_physic.png Graphic file (type png)
 Package pdftex.def Info: Img/esp32_physic.png  used on input line 98.
 (pdftex.def)             Requested size: 228.90242pt x 228.89781pt.
  [10 <./Img/esp32_physic.png (PNG copy)>]
-Underfull \hbox (badness 10000) in paragraph at lines 118--119
+Underfull \hbox (badness 10000) in paragraph at lines 119--120
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 129--130
+Underfull \hbox (badness 10000) in paragraph at lines 130--132
 
  []
 
 [11]
-Underfull \hbox (badness 10000) in paragraph at lines 139--140
+Underfull \hbox (badness 10000) in paragraph at lines 141--142
 
  []
 
-<Img/scheuler_diagram.png, id=116, 768.62157pt x 261.97874pt>
+<Img/scheuler_diagram.png, id=117, 768.62157pt x 261.97874pt>
 File: Img/scheuler_diagram.png Graphic file (type png)
 <use Img/scheuler_diagram.png>
-Package pdftex.def Info: Img/scheuler_diagram.png  used on input line 145.
+Package pdftex.def Info: Img/scheuler_diagram.png  used on input line 147.
 (pdftex.def)             Requested size: 412.02156pt x 140.43906pt.
-[12 <./Img/scheuler_diagram.png>]
-Underfull \hbox (badness 10000) in paragraph at lines 162--163
+[12]
+Underfull \hbox (badness 10000) in paragraph at lines 164--165
 
  []
 
-[13]
-Underfull \hbox (badness 10000) in paragraph at lines 168--169
+[13 <./Img/scheuler_diagram.png>]
+Underfull \hbox (badness 10000) in paragraph at lines 170--171
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 174--175
+Underfull \hbox (badness 10000) in paragraph at lines 176--177
 
  []
 
 [14]
-Underfull \hbox (badness 10000) in paragraph at lines 180--181
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 190--191
+Underfull \hbox (badness 10000) in paragraph at lines 182--183
 
  []
 
 [15]
-Underfull \hbox (badness 10000) in paragraph at lines 196--197
+Underfull \hbox (badness 10000) in paragraph at lines 192--193
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 198--199
 
  []
 
 [16]
-Underfull \hbox (badness 10000) in paragraph at lines 216--217
+Underfull \hbox (badness 10000) in paragraph at lines 218--219
 
  []
 
-
-Underfull \hbox (badness 10000) in paragraph at lines 227--228
+[17]
+Underfull \hbox (badness 10000) in paragraph at lines 229--230
 
  []
 
-[17]) (capitulo-4.tex [18]
+) (capitulo-4.tex [18]
 TESIS-USB: resetting all acronyms
 Cap\'{\i }tulo 2.
 
@@ -1325,219 +1325,220 @@ Underfull \hbox (badness 10000) in paragraph at lines 6--7
 [19
 
 ]
-<Img/arquitectura_iiot.png, id=145, 643.6547pt x 367.3725pt>
+<Img/arquitectura_iiot.png, id=146, 643.6547pt x 367.3725pt>
 File: Img/arquitectura_iiot.png Graphic file (type png)
 <use Img/arquitectura_iiot.png>
-Package pdftex.def Info: Img/arquitectura_iiot.png  used on input line 39.
+Package pdftex.def Info: Img/arquitectura_iiot.png  used on input line 41.
 (pdftex.def)             Requested size: 434.91321pt x 248.2404pt.
-<Img/arquitectura_mqtt.png, id=146, 962.84718pt x 620.3175pt>
+<Img/arquitectura_mqtt.png, id=147, 962.84718pt x 620.3175pt>
 File: Img/arquitectura_mqtt.png Graphic file (type png)
 <use Img/arquitectura_mqtt.png>
-Package pdftex.def Info: Img/arquitectura_mqtt.png  used on input line 48.
+Package pdftex.def Info: Img/arquitectura_mqtt.png  used on input line 50.
 (pdftex.def)             Requested size: 434.91321pt x 280.19095pt.
  [20]
-Underfull \hbox (badness 10000) in paragraph at lines 57--58
-
- []
-
-[21 <./Img/arquitectura_iiot.png> <./Img/arquitectura_mqtt.png>]
 Underfull \hbox (badness 10000) in paragraph at lines 59--60
 
  []
 
-<Img/esp32_pinlayout.png, id=156, 3303.77142pt x 1358.676pt>
+[21 <./Img/arquitectura_iiot.png> <./Img/arquitectura_mqtt.png>]
+Underfull \hbox (badness 10000) in paragraph at lines 61--62
+
+ []
+
+<Img/esp32_pinlayout.png, id=158, 3303.77142pt x 1358.676pt>
 File: Img/esp32_pinlayout.png Graphic file (type png)
 <use Img/esp32_pinlayout.png>
-Package pdftex.def Info: Img/esp32_pinlayout.png  used on input line 63.
+Package pdftex.def Info: Img/esp32_pinlayout.png  used on input line 65.
 (pdftex.def)             Requested size: 366.24527pt x 150.6158pt.
 [22 <./Img/esp32_pinlayout.png>]
-<Img/menuconfig_optimizacion_wifi.png, id=161, 311.1625pt x 52.195pt>
+<Img/menuconfig_optimizacion_wifi.png, id=163, 311.1625pt x 52.195pt>
 File: Img/menuconfig_optimizacion_wifi.png Graphic file (type png)
 <use Img/menuconfig_optimizacion_wifi.png>
 Package pdftex.def Info: Img/menuconfig_optimizacion_wifi.png  used on input li
-ne 72.
+ne 74.
 (pdftex.def)             Requested size: 228.90242pt x 38.3967pt.
-<Img/menuconfig_optimizacion_under.png, id=162, 508.90125pt x 91.34125pt>
+<Img/menuconfig_optimizacion_under.png, id=164, 508.90125pt x 91.34125pt>
 File: Img/menuconfig_optimizacion_under.png Graphic file (type png)
 <use Img/menuconfig_optimizacion_under.png>
 Package pdftex.def Info: Img/menuconfig_optimizacion_under.png  used on input l
-ine 81.
+ine 83.
 (pdftex.def)             Requested size: 320.46199pt x 57.52159pt.
-<Img/hka80.png, id=163, 358.33875pt x 324.46219pt>
+<Img/hka80.png, id=165, 358.33875pt x 324.46219pt>
 File: Img/hka80.png Graphic file (type png)
 <use Img/hka80.png>
-Package pdftex.def Info: Img/hka80.png  used on input line 92.
+Package pdftex.def Info: Img/hka80.png  used on input line 94.
 (pdftex.def)             Requested size: 274.6857pt x 248.73259pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 97--98
+Underfull \hbox (badness 10000) in paragraph at lines 99--100
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 101--102
 
  []
 
 [23 <./Img/menuconfig_optimizacion_wifi.png (PNG copy)> <./Img/menuconfig_optim
 izacion_under.png (PNG copy)>]
-Underfull \hbox (badness 10000) in paragraph at lines 123--124
+Underfull \hbox (badness 10000) in paragraph at lines 125--126
 
  []
 
 [24 <./Img/hka80.png>]
-Underfull \hbox (badness 10000) in paragraph at lines 141--142
-
- []
-
-
 Underfull \hbox (badness 10000) in paragraph at lines 143--144
 
  []
 
-[25]
-<Img/cmakelist_dirs.png, id=175, 500.62032pt x 45.16875pt>
-File: Img/cmakelist_dirs.png Graphic file (type png)
-<use Img/cmakelist_dirs.png>
-Package pdftex.def Info: Img/cmakelist_dirs.png  used on input line 149.
-(pdftex.def)             Requested size: 412.02156pt x 37.17644pt.
- [26 <./Img/cmakelist_dirs.png>]
-<Img/enq_realterm.png, id=181, 1487.5575pt x 446.66875pt>
-File: Img/enq_realterm.png Graphic file (type png)
-<use Img/enq_realterm.png>
-Package pdftex.def Info: Img/enq_realterm.png  used on input line 171.
-(pdftex.def)             Requested size: 434.91321pt x 130.58704pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 216--217
+Underfull \hbox (badness 10000) in paragraph at lines 145--146
 
  []
 
-[27 <./Img/enq_realterm.png (PNG copy)>]
+[25]
+<Img/cmakelist_dirs.png, id=177, 500.62032pt x 45.16875pt>
+File: Img/cmakelist_dirs.png Graphic file (type png)
+<use Img/cmakelist_dirs.png>
+Package pdftex.def Info: Img/cmakelist_dirs.png  used on input line 151.
+(pdftex.def)             Requested size: 412.02156pt x 37.17644pt.
+ [26 <./Img/cmakelist_dirs.png>]
+<Img/enq_realterm.png, id=183, 1487.5575pt x 446.66875pt>
+File: Img/enq_realterm.png Graphic file (type png)
+<use Img/enq_realterm.png>
+Package pdftex.def Info: Img/enq_realterm.png  used on input line 173.
+(pdftex.def)             Requested size: 434.91321pt x 130.58704pt.
+
 Underfull \hbox (badness 10000) in paragraph at lines 218--219
 
  []
 
-
+[27 <./Img/enq_realterm.png (PNG copy)>]
 Underfull \hbox (badness 10000) in paragraph at lines 220--221
 
  []
 
 [28]
-Underfull \hbox (badness 10000) in paragraph at lines 252--253
+Underfull \hbox (badness 10000) in paragraph at lines 222--223
 
  []
 
 [29]
-<Img/iram_crisis.png, id=191, 520.94624pt x 291.0875pt>
-File: Img/iram_crisis.png Graphic file (type png)
-<use Img/iram_crisis.png>
-Package pdftex.def Info: Img/iram_crisis.png  used on input line 258.
-(pdftex.def)             Requested size: 343.35364pt x 191.85628pt.
- [30 <./Img/iram_crisis.png (PNG copy)>]
-Underfull \hbox (badness 10000) in paragraph at lines 273--274
+Underfull \hbox (badness 10000) in paragraph at lines 254--255
 
  []
 
+<Img/iram_crisis.png, id=193, 520.94624pt x 291.0875pt>
+File: Img/iram_crisis.png Graphic file (type png)
+<use Img/iram_crisis.png>
+Package pdftex.def Info: Img/iram_crisis.png  used on input line 260.
+(pdftex.def)             Requested size: 343.35364pt x 191.85628pt.
 
 Underfull \hbox (badness 10000) in paragraph at lines 275--276
 
  []
 
-[31] [32]
-Underfull \hbox (badness 10000) in paragraph at lines 334--335
+[30]
+Underfull \hbox (badness 10000) in paragraph at lines 277--283
+
+ []
+
+[31 <./Img/iram_crisis.png (PNG copy)>] [32]
+Underfull \hbox (badness 10000) in paragraph at lines 344--345
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 352--353
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 354--355
+Underfull \hbox (badness 10000) in paragraph at lines 362--363
 
  []
 
 [33]
-LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <12> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 363.
-
-Underfull \hbox (badness 10000) in paragraph at lines 394--395
+Underfull \hbox (badness 10000) in paragraph at lines 364--366
 
  []
 
+LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <12> not available
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 374.
 [34]
-Underfull \hbox (badness 10000) in paragraph at lines 396--397
+Underfull \hbox (badness 10000) in paragraph at lines 405--406
 
  []
 
 [35]
-Underfull \hbox (badness 10000) in paragraph at lines 421--422
+Underfull \hbox (badness 10000) in paragraph at lines 407--408
 
  []
 
 [36]
-Overfull \hbox (52.17606pt too wide) in paragraph at lines 426--427
-\T1/cmr/m/n/12 to es-tán-dar 8883 (\T1/cmtt/m/n/12 secure-mqtt\T1/cmr/m/n/12 ),
- es-ta-ble-cien-do el trans-por-te co-mo \T1/cmtt/m/n/12 MQTT_TRANSPORT_OVER_SS
-L\T1/cmr/m/n/12 .
+Underfull \hbox (badness 10000) in paragraph at lines 432--433
+
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 452--453
+Underfull \hbox (badness 10000) in paragraph at lines 463--464
 
  []
 
 [37]
-Underfull \hbox (badness 10000) in paragraph at lines 473--474
+Underfull \hbox (badness 10000) in paragraph at lines 465--466
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 484--485
 
  []
 
 [38]
-Underfull \hbox (badness 10000) in paragraph at lines 479--480
+Underfull \hbox (badness 10000) in paragraph at lines 490--491
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 501--502
+Underfull \hbox (badness 10000) in paragraph at lines 512--513
 
  []
 
 [39]
-Underfull \hbox (badness 10000) in paragraph at lines 515--516
+Underfull \hbox (badness 10000) in paragraph at lines 526--527
+
+ []
+
+[40]
+Underfull \hbox (badness 10000) in paragraph at lines 528--529
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 517--518
+Underfull \hbox (badness 10000) in paragraph at lines 530--531
 
  []
 
-
-Underfull \hbox (badness 10000) in paragraph at lines 519--520
-
- []
-
-[40] [41] [42]
-Underfull \hbox (badness 10000) in paragraph at lines 607--608
+[41] [42]
+Underfull \hbox (badness 10000) in paragraph at lines 618--619
 
  []
 
 [43]
-Underfull \hbox (badness 10000) in paragraph at lines 639--640
+Underfull \hbox (badness 10000) in paragraph at lines 650--651
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 645--646
+Underfull \hbox (badness 10000) in paragraph at lines 656--657
 
  []
 
 [44]
-Underfull \hbox (badness 10000) in paragraph at lines 647--648
+Underfull \hbox (badness 10000) in paragraph at lines 658--659
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 649--650
+Underfull \hbox (badness 10000) in paragraph at lines 660--661
 
  []
 
-) (capitulo-5.tex [45]
+) (capitulo-5.tex [45] [46]
 TESIS-USB: resetting all acronyms
 Cap\'{\i }tulo 3.
 
@@ -1545,12 +1546,12 @@ Underfull \hbox (badness 10000) in paragraph at lines 7--8
 
  []
 
-<Img/prototipo_funcional.jpg, id=253, 1446.40375pt x 1510.64375pt>
+<Img/prototipo_funcional.jpg, id=257, 1446.40375pt x 1510.64375pt>
 File: Img/prototipo_funcional.jpg Graphic file (type jpg)
 <use Img/prototipo_funcional.jpg>
 Package pdftex.def Info: Img/prototipo_funcional.jpg  used on input line 13.
 (pdftex.def)             Requested size: 297.57036pt x 310.7904pt.
-[46
+[47
 
 ]
 Underfull \hbox (badness 10000) in paragraph at lines 41--42
@@ -1562,8 +1563,8 @@ Underfull \hbox (badness 10000) in paragraph at lines 43--44
 
  []
 
-[47 <./Img/prototipo_funcional.jpg>]
-<Img/esp32_slave_master.jpg, id=260, 1784.6675pt x 1880.02374pt>
+[48 <./Img/prototipo_funcional.jpg>]
+<Img/esp32_slave_master.jpg, id=264, 1784.6675pt x 1880.02374pt>
 File: Img/esp32_slave_master.jpg Graphic file (type jpg)
 <use Img/esp32_slave_master.jpg>
 Package pdftex.def Info: Img/esp32_slave_master.jpg  used on input line 49.
@@ -1573,12 +1574,12 @@ Underfull \hbox (badness 10000) in paragraph at lines 56--57
 
  []
 
-[48]
+[49]
 Underfull \hbox (badness 10000) in paragraph at lines 83--84
 
  []
 
-[49 <./Img/esp32_slave_master.jpg>]
+[50 <./Img/esp32_slave_master.jpg>]
 Underfull \hbox (badness 10000) in paragraph at lines 85--86
 
  []
@@ -1588,7 +1589,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 87--88
 
  []
 
-<Img/log_terminal_s1.png, id=267, 550.30594pt x 292.84406pt>
+<Img/log_terminal_s1.png, id=272, 550.30594pt x 292.84406pt>
 File: Img/log_terminal_s1.png Graphic file (type png)
 <use Img/log_terminal_s1.png>
 Package pdftex.def Info: Img/log_terminal_s1.png  used on input line 91.
@@ -1598,7 +1599,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 96--97
 
  []
 
-[50]
+[51]
 Underfull \hbox (badness 10000) in paragraph at lines 106--107
 
  []
@@ -1608,7 +1609,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 108--109
 
  []
 
-[51 <./Img/log_terminal_s1.png>]
+[52 <./Img/log_terminal_s1.png>]
 Underfull \hbox (badness 10000) in paragraph at lines 129--130
 
  []
@@ -1623,12 +1624,12 @@ Underfull \hbox (badness 10000) in paragraph at lines 133--134
 
  []
 
-[52]
+[53]
 Underfull \hbox (badness 10000) in paragraph at lines 135--136
 
  []
 
-[53]
+[54]
 Overfull \hbox (2.22562pt too wide) in paragraph at lines 182--182
 []|\T1/cmr/bx/n/10.95 Mejoramiento 
  []
@@ -1648,8 +1649,8 @@ Underfull \hbox (badness 10000) in paragraph at lines 187--188
 
  []
 
-[54]
-<Img/prueba_lwt.png, id=286, 613.54219pt x 473.51906pt>
+[55]
+<Img/prueba_lwt.png, id=290, 613.54219pt x 473.51906pt>
 File: Img/prueba_lwt.png Graphic file (type png)
 <use Img/prueba_lwt.png>
 Package pdftex.def Info: Img/prueba_lwt.png  used on input line 193.
@@ -1659,7 +1660,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 221--222
 
  []
 
-[55 <./Img/prueba_lwt.png>]
+[56 <./Img/prueba_lwt.png>]
 Underfull \hbox (badness 10000) in paragraph at lines 223--224
 
  []
@@ -1674,7 +1675,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 227--228
 
  []
 
-[56] [57]
+[57] [58]
 Overfull \hbox (3.67871pt too wide) in paragraph at lines 260--261
 []\T1/cmr/m/n/12 Cada tér-mino re-pre-sen-ta una con-tri-bu-ción tem-po-ral me-
 di-ble e in-de-pen-dien-te: $\OML/cmm/m/it/12 T[]$
@@ -1700,18 +1701,18 @@ Underfull \hbox (badness 10000) in paragraph at lines 283--284
 
  []
 
-[58]
+[59]
 Underfull \hbox (badness 10000) in paragraph at lines 289--290
 
  []
 
-<Img/dashboard_tiempo_real.png, id=301, 1433.355pt x 682.80093pt>
+<Img/dashboard_tiempo_real.png, id=305, 1433.355pt x 682.80093pt>
 File: Img/dashboard_tiempo_real.png Graphic file (type png)
 <use Img/dashboard_tiempo_real.png>
 Package pdftex.def Info: Img/dashboard_tiempo_real.png  used on input line 293.
 
 (pdftex.def)             Requested size: 434.91321pt x 207.17564pt.
-<Img/log_capture_error.png, id=302, 612.78937pt x 654.94687pt>
+<Img/log_capture_error.png, id=306, 612.78937pt x 654.94687pt>
 File: Img/log_capture_error.png Graphic file (type png)
 <use Img/log_capture_error.png>
 Package pdftex.def Info: Img/log_capture_error.png  used on input line 302.
@@ -1721,8 +1722,8 @@ Underfull \hbox (badness 10000) in paragraph at lines 310--311
 
  []
 
-[59]
-<Img/ota_mt_iot.png, id=306, 394.47375pt x 518.6878pt>
+[60]
+<Img/ota_mt_iot.png, id=310, 394.47375pt x 518.6878pt>
 File: Img/ota_mt_iot.png Graphic file (type png)
 <use Img/ota_mt_iot.png>
 Package pdftex.def Info: Img/ota_mt_iot.png  used on input line 346.
@@ -1732,22 +1733,23 @@ Underfull \hbox (badness 10000) in paragraph at lines 353--354
 
  []
 
-[60 <./Img/dashboard_tiempo_real.png>]
+[61 <./Img/dashboard_tiempo_real.png>] [62 <./Img/log_capture_error.png>]
 Underfull \hbox (badness 10000) in paragraph at lines 355--356
 
  []
 
-[61 <./Img/log_capture_error.png>]
+
 Underfull \hbox (badness 10000) in paragraph at lines 357--358
 
  []
 
-<Img/ota_printer_exito.png, id=315, 1135.24126pt x 679.03688pt>
+[63]
+<Img/ota_printer_exito.png, id=323, 1135.24126pt x 679.03688pt>
 File: Img/ota_printer_exito.png Graphic file (type png)
 <use Img/ota_printer_exito.png>
 Package pdftex.def Info: Img/ota_printer_exito.png  used on input line 363.
 (pdftex.def)             Requested size: 389.13692pt x 232.75523pt.
-[62] [63 <./Img/ota_mt_iot.png>] [64 <./Img/ota_printer_exito.png>]
+ [64 <./Img/ota_mt_iot.png>]
 <Img/iram_78.png, id=328, 520.94624pt x 291.0875pt>
 File: Img/iram_78.png Graphic file (type png)
 <use Img/iram_78.png>
@@ -1758,12 +1760,12 @@ File: Img/iram_52.png Graphic file (type png)
 <use Img/iram_52.png>
 Package pdftex.def Info: Img/iram_52.png  used on input line 403.
 (pdftex.def)             Requested size: 343.35364pt x 191.47728pt.
- [65 <./Img/iram_78.png (PNG copy)> <./Img/iram_52.png (PNG copy)>]
+ [65 <./Img/ota_printer_exito.png>] [66 <./Img/iram_78.png (PNG copy)>]
 Underfull \hbox (badness 10000) in paragraph at lines 424--425
 
  []
 
-[66]
+[67 <./Img/iram_52.png (PNG copy)>]
 Underfull \hbox (badness 10000) in paragraph at lines 445--446
 
  []
@@ -1773,7 +1775,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 464--465
 
  []
 
-[67]) (conclusiones.tex [68]
+[68]) (conclusiones.tex [69] [70]
 TESIS-USB: resetting all acronyms
 
 Underfull \hbox (badness 10000) in paragraph at lines 3--4
@@ -1790,7 +1792,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 7--8
 
  []
 
-[69
+[71
 
 ]
 Underfull \hbox (badness 10000) in paragraph at lines 9--10
@@ -1802,7 +1804,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 11--12
 
  []
 
-) (main.bbl [70]
+) (main.bbl [72]
 TESIS-USB: resetting all acronyms
 babelbib: Using the BibTeX style's default font for `name'.
 babelbib: Using the BibTeX style's default font for `lastname'.
@@ -1845,7 +1847,7 @@ Underfull \hbox (badness 1675) in paragraph at lines 99--103
 d\T1/cmr/m/n/12 , 2019.  $\T1/cmtt/m/n/12 https : / / docs .
  []
 
-[71
+[73
 
 ]
 LaTeX Info: Redefining \. on input line 105.
@@ -1856,7 +1858,7 @@ LaTeX Info: Redefining \. on input line 141.
 LaTeX Info: Redefining \% on input line 141.
 LaTeX Info: Redefining \. on input line 141.
 LaTeX Info: Redefining \% on input line 141.
-) (apendice-c.tex [72]
+) (apendice-c.tex [74]
 TESIS-USB: resetting all acronyms
 Ap\'{e}ndice A.
 
@@ -1870,13 +1872,13 @@ File: lstmisc.sty 2025/11/14 1.11b (Carsten Heinz)
 )
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10> not available
 (Font)              Font shape `T1/cmtt/m/n' tried instead on input line 11.
- [73
+ [75
 
-] [74] [75] [76] [77] [78]
+] [76] [77] [78] [79] [80]
 (C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/listings\ls
 tlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
-) [79]
+) [81]
 (C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/listings\ls
 tlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
@@ -1884,17 +1886,17 @@ File: lstlang1.sty 2025/11/14 1.11b listings language file
 (C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/listings\ls
 tmisc.sty
 File: lstmisc.sty 2025/11/14 1.11b (Carsten Heinz)
-)) [80] (main.aux
+)) [82] (main.aux
 LaTeX Info: Redefining \. on input line 8.
 LaTeX Info: Redefining \% on input line 8.
-LaTeX Info: Redefining \. on input line 404.
-LaTeX Info: Redefining \% on input line 404.
-LaTeX Info: Redefining \. on input line 405.
-LaTeX Info: Redefining \% on input line 405.
-LaTeX Info: Redefining \. on input line 411.
-LaTeX Info: Redefining \% on input line 411.
-LaTeX Info: Redefining \. on input line 412.
-LaTeX Info: Redefining \% on input line 412.
+LaTeX Info: Redefining \. on input line 406.
+LaTeX Info: Redefining \% on input line 406.
+LaTeX Info: Redefining \. on input line 407.
+LaTeX Info: Redefining \% on input line 407.
+LaTeX Info: Redefining \. on input line 413.
+LaTeX Info: Redefining \% on input line 413.
+LaTeX Info: Redefining \. on input line 414.
+LaTeX Info: Redefining \% on input line 414.
 )
  ***********
 LaTeX2e <2025-11-01>
@@ -1902,11 +1904,11 @@ L3 programming layer <2025-12-24>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 25986 strings out of 467871
- 509848 string characters out of 5412550
- 1354577 words of memory out of 5000000
- 54387 multiletter control sequences out of 15000+600000
- 650398 words of font info for 98 fonts, out of 8000000 for 9000
+ 25998 strings out of 467871
+ 510016 string characters out of 5412550
+ 1354709 words of memory out of 5000000
+ 54396 multiletter control sequences out of 15000+600000
+ 652201 words of font info for 101 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  99i,15n,118p,1837b,1917s stack positions out of 10000i,1000n,20000p,200000b,200000s
  <C:\Users\lrojas\scoop\apps\miktex\current\texmfs/data\fonts/pk/ljfour/jknap
@@ -1914,46 +1916,52 @@ pen/ec/dpi600\ecit1200.pk> <C:\Users\lrojas\scoop\apps\miktex\current\texmfs/da
 ta\fonts/pk/ljfour/jknappen/ec/dpi600\ecit1000.pk> <C:\Users\lrojas\scoop\apps\
 miktex\current\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1000.pk> <C:\
 Users\lrojas\scoop\apps\miktex\current\texmfs/data\fonts/pk/ljfour/jknappen/ec/
-dpi600\ecti0800.pk> <C:\Users\lrojas\scoop\apps\miktex\current\texmfs/data\font
-s/pk/ljfour/jknappen/ec/dpi600\ecbx0800.pk> <C:\Users\lrojas\scoop\apps\miktex\
-current\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1095.pk> <C:\Users\l
+dpi600\ecti1000.pk> <C:\Users\lrojas\scoop\apps\miktex\current\texmfs/data\font
+s/pk/ljfour/jknappen/ec/dpi600\ecbx1000.pk> <C:\Users\lrojas\scoop\apps\miktex\
+current\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\ecti0800.pk> <C:\Users\l
 rojas\scoop\apps\miktex\current\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\
-ecti1095.pk> <C:\Users\lrojas\scoop\apps\miktex\current\texmfs/data\fonts/pk/lj
-four/jknappen/ec/dpi600\ectt0800.pk> <C:\Users\lrojas\scoop\apps\miktex\current
-\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1095.pk> <C:\Users\lrojas\s
-coop\apps\miktex\current\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\ecbi120
+ecbx0800.pk> <C:\Users\lrojas\scoop\apps\miktex\current\texmfs/data\fonts/pk/lj
+four/jknappen/ec/dpi600\tcrm1095.pk> <C:\Users\lrojas\scoop\apps\miktex\current
+\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1095.pk> <C:\Users\lrojas\s
+coop\apps\miktex\current\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\ectt080
 0.pk> <C:\Users\lrojas\scoop\apps\miktex\current\texmfs/data\fonts/pk/ljfour/jk
-nappen/ec/dpi600\ecrm1000.pk> <C:\Users\lrojas\scoop\apps\miktex\current\texmfs
-/data\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1095.pk> <C:\Users\lrojas\scoop\ap
-ps\miktex\current\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1095.pk> <
+nappen/ec/dpi600\ectt1095.pk> <C:\Users\lrojas\scoop\apps\miktex\current\texmfs
+/data\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1000.pk> <C:\Users\lrojas\scoop\ap
+ps\miktex\current\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\ecbi1200.pk> <
 C:\Users\lrojas\scoop\apps\miktex\current\texmfs/data\fonts/pk/ljfour/jknappen/
-ec/dpi600\ecbx1440.pk> <C:\Users\lrojas\scoop\apps\miktex\current\texmfs/data\f
-onts/pk/ljfour/jknappen/ec/dpi600\ecrm0800.pk> <C:\Users\lrojas\scoop\apps\mikt
-ex\current\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1200.pk> <C:\User
+ec/dpi600\ecrm1095.pk> <C:\Users\lrojas\scoop\apps\miktex\current\texmfs/data\f
+onts/pk/ljfour/jknappen/ec/dpi600\ecbx1095.pk> <C:\Users\lrojas\scoop\apps\mikt
+ex\current\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\tcbx1200.pk> <C:\User
 s\lrojas\scoop\apps\miktex\current\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi6
-00\ectt1200.pk> <C:\Users\lrojas\scoop\apps\miktex\current\texmfs/data\fonts/pk
-/ljfour/jknappen/ec/dpi600\ecti1200.pk> <C:\Users\lrojas\scoop\apps\miktex\curr
-ent\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm2488.pk> <C:\Users\lroja
-s\scoop\apps\miktex\current\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm
+00\ecbx1440.pk> <C:\Users\lrojas\scoop\apps\miktex\current\texmfs/data\fonts/pk
+/ljfour/jknappen/ec/dpi600\ecrm0800.pk> <C:\Users\lrojas\scoop\apps\miktex\curr
+ent\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1200.pk> <C:\Users\lroja
+s\scoop\apps\miktex\current\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\ectt
 1200.pk> <C:\Users\lrojas\scoop\apps\miktex\current\texmfs/data\fonts/pk/ljfour
-/jknappen/ec/dpi600\ecbx1200.pk> <C:\Users\lrojas\scoop\apps\miktex\current\tex
-mfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1440.pk><C:/Users/lrojas/scoop/
-apps/miktex/current/texmfs/install/fonts/type1/public/amsfonts/cm/cmex10.pfb><C
-:/Users/lrojas/scoop/apps/miktex/current/texmfs/install/fonts/type1/public/amsf
-onts/cm/cmmi10.pfb><C:/Users/lrojas/scoop/apps/miktex/current/texmfs/install/fo
-nts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Users/lrojas/scoop/apps/miktex/curr
-ent/texmfs/install/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/lrojas/sc
-oop/apps/miktex/current/texmfs/install/fonts/type1/public/amsfonts/cm/cmr10.pfb
-><C:/Users/lrojas/scoop/apps/miktex/current/texmfs/install/fonts/type1/public/a
-msfonts/cm/cmr12.pfb><C:/Users/lrojas/scoop/apps/miktex/current/texmfs/install/
-fonts/type1/public/amsfonts/cm/cmr6.pfb><C:/Users/lrojas/scoop/apps/miktex/curr
-ent/texmfs/install/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/lrojas/sco
-op/apps/miktex/current/texmfs/install/fonts/type1/public/amsfonts/cm/cmsy10.pfb
-><C:/Users/lrojas/scoop/apps/miktex/current/texmfs/install/fonts/type1/public/a
-msfonts/cm/cmsy8.pfb>
-Output written on main.pdf (97 pages, 2700018 bytes).
+/jknappen/ec/dpi600\ecti1200.pk> <C:\Users\lrojas\scoop\apps\miktex\current\tex
+mfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm2488.pk> <C:\Users\lrojas\scoop
+\apps\miktex\current\texmfs/data\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1200.pk
+> <C:\Users\lrojas\scoop\apps\miktex\current\texmfs/data\fonts/pk/ljfour/jknapp
+en/ec/dpi600\ecbx1200.pk> <C:\Users\lrojas\scoop\apps\miktex\current\texmfs/dat
+a\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1440.pk><C:/Users/lrojas/scoop/apps/mi
+ktex/current/texmfs/install/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users
+/lrojas/scoop/apps/miktex/current/texmfs/install/fonts/type1/public/amsfonts/cm
+/cmmi10.pfb><C:/Users/lrojas/scoop/apps/miktex/current/texmfs/install/fonts/typ
+e1/public/amsfonts/cm/cmmi12.pfb><C:/Users/lrojas/scoop/apps/miktex/current/tex
+mfs/install/fonts/type1/public/amsfonts/cm/cmmi7.pfb><C:/Users/lrojas/scoop/app
+s/miktex/current/texmfs/install/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Us
+ers/lrojas/scoop/apps/miktex/current/texmfs/install/fonts/type1/public/amsfonts
+/cm/cmr10.pfb><C:/Users/lrojas/scoop/apps/miktex/current/texmfs/install/fonts/t
+ype1/public/amsfonts/cm/cmr12.pfb><C:/Users/lrojas/scoop/apps/miktex/current/te
+xmfs/install/fonts/type1/public/amsfonts/cm/cmr6.pfb><C:/Users/lrojas/scoop/app
+s/miktex/current/texmfs/install/fonts/type1/public/amsfonts/cm/cmr7.pfb><C:/Use
+rs/lrojas/scoop/apps/miktex/current/texmfs/install/fonts/type1/public/amsfonts/
+cm/cmr8.pfb><C:/Users/lrojas/scoop/apps/miktex/current/texmfs/install/fonts/typ
+e1/public/amsfonts/cm/cmsy10.pfb><C:/Users/lrojas/scoop/apps/miktex/current/tex
+mfs/install/fonts/type1/public/amsfonts/cm/cmsy8.pfb>
+Output written on main.pdf (99 pages, 2768713 bytes).
 PDF statistics:
- 1435 PDF objects out of 1440 (max. 8388607)
+ 1584 PDF objects out of 1728 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  133 words of extra memory for PDF output out of 10000 (max. 10000000)
 

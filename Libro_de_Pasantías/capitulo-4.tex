@@ -26,12 +26,14 @@
 
     Para garantizar la escalabilidad y robustez del sistema (véase la Figura \ref{fig:arquitectura_iiot}), se optó por una arquitectura distribuida de tres niveles, alineada con los estándares industriales del Internet de las Cosas (IIoT) \cite{WEF_IIoT_2018, Connected_Everything_2016}:
     
-    \begin{itemize}
-        \item \textbf{Nivel de Borde (Edge):} Representado por la impresora fiscal HKA80. En esta capa se origina la información crítica mediante registros de estado (\texttt{Status S1}) y diagnóstico (\texttt{SV2}) \cite{TheFactoryHKA_Manual_Protocolos}. La captura de estos datos se realiza a través de una interfaz de comunicación síncrona de alto rendimiento, diseñada para operar de forma transparente. Esta transparencia se logra manteniendo un intervalo de sondeo (\textit{polling}) estrictamente acotado, asegurando que los tiempos de respuesta de la transacción no excedan los umbrales de latencia tolerados por el \textit{firmware} legal del equipo; premisa que será demostrada posteriormente mediante un perfilado de tiempos en el bus de datos.
+    \begin{itemize}        
+        \item \textbf{Nivel de Borde (\textit{Edge}):} Representado por la impresora fiscal HKA80. En esta capa se origina la información crítica mediante registros de estado (\textbf{Status S1}) y diagnóstico (\textbf{SV2}) \cite{TheFactoryHKA_Manual_Protocolos}. La captura de estos datos se realiza a través de una interfaz de comunicación síncrona dedicada (operando a una frecuencia de reloj de $100$~kHz), diseñada para funcionar de forma transparente sin interferir con las operaciones de impresión. Esta transparencia se logra manteniendo un intervalo de sondeo (\textit{polling}) estrictamente acotado, asegurando que los tiempos de respuesta de cada transacción no excedan los umbrales temporales tolerados por el firmware fiscal homologado del equipo; premisa que será demostrada posteriormente mediante un perfilado de tiempos en el bus de datos.
 
         \item \textbf{Nivel de Pasarela (Gateway):} Ejecutado por el Módulo de Transmisión IoT (basado en el SoC ESP32). Su función es doble: actúa como maestro en la interfaz local con el periférico y como cliente seguro (\textit{Publisher}) hacia la red Wi-Fi \cite{Espressif_ESP32_Datasheet}. En este nivel se implementa la lógica de empaquetado de datos en formato JSON y la gestión de seguridad mediante TLS/SSL, permitiendo el acceso a registros críticos almacenados en la Memoria de Trabajo y Memoria de Auditoría sin interferir con el cabezal de impresión.
 
-        \item \textbf{Nivel de Gestión y Visualización (Cloud):} Compuesto por el \textit{Broker} HiveMQ y el servidor de aplicaciones desarrollado en Django \cite{Django_v5_Doc}. Este nivel orquesta la recepción asíncrona de telemetría y su visualización en tiempo real en el Dashboard mediante un túnel de \textit{MQTT sobre WebSockets} \cite{OASIS_MQTT_v5, RFC6455_WebSockets}.
+        \item \textbf{Nivel de Gestión y Visualización (Cloud):} Compuesto por el \textit{Broker} HiveMQ y el servidor de aplicaciones desarrollado en Django \cite{Django_v5_Doc}. Este nivel orquesta 
+        la recepción asíncrona de telemetría y su visualización en tiempo real en el Dashboard mediante 
+        el transporte de tramas \textit{MQTT} sobre un túnel \textit{WebSocket} (WSS) \cite{OASIS_MQTT_v5, RFC6455_WebSockets}.
     \end{itemize}
 
     \begin{figure}[htbp]
@@ -40,8 +42,8 @@
         \caption{Diagrama de la Arquitectura IIoT distribuida en tres niveles (Edge, Gateway y Cloud).}
         \label{fig:arquitectura_iiot}
     \end{figure}
-
-    \par La elaboración de los diagramas técnicos (Figura \ref{fig:arquitectura_iiot} y Figura \ref{fig:arquitectura_mqtt}) respondió a la necesidad de visualizar el flujo de datos desde el comando inicial \texttt{0x05h} (ENQ) enviado por el MT-IoT hasta el desempaquetado (\textit{Unpack Data}) en la plataforma web \cite{Connected_Everything_2016}. El diseño de la arquitectura de comunicaciones fue especialmente crítico para definir el \textit{Topic Tree} (jerarquía de tópicos) y el uso de \textit{User Properties} de MQTT v5.0 \cite{OASIS_MQTT_v5}. La inyección de metadatos (como la versión del firmware y la intensidad de señal Wi-Fi) directamente en las \textit{User Properties} de la cabecera del protocolo evita sobrecargar el cuerpo del mensaje JSON, lo cual reduce significativamente el consumo de ancho de banda y elimina la necesidad de \textit{parsing} adicional en el servidor \cite{OASIS_MQTT_v5}.
+    
+    \par La elaboración de los diagramas técnicos (Figura \ref{fig:arquitectura_iiot} y Figura \ref{fig:arquitectura_mqtt}) respondió a la necesidad de visualizar el flujo de datos desde el comando inicial \texttt{0x05h} (\texttt{ENQ}) enviado por el MT-IoT a través de la interfaz serie asíncrona RS-232, hasta el desempaquetado (\textit{Data Unpackaging}) en la plataforma web para una fase inicial y conceptual del proyecto \cite{Connected_Everything_2016}. El diseño de la arquitectura de comunicaciones fue especialmente crítico para definir el \textit{Topic Tree} (jerarquía de tópicos), el uso de \textit{User Properties} de MQTT v5.0, y el modelo de seguridad mediante el encapsulamiento sobre TLS/SSL \cite{OASIS_MQTT_v5}. La inyección de metadatos (como la versión del firmware y la intensidad de señal Wi-Fi) directamente en las \textit{User Properties} de la cabecera del protocolo evita sobrecargar el cuerpo del mensaje JSON, lo cual reduce el consumo de ancho de banda y elimina la necesidad de procesamiento o \textit{parsing} adicional en el cliente web suscriptor \cite{OASIS_MQTT_v5}.
 
     \begin{figure}[H]
         \centering
@@ -74,12 +76,12 @@
     \label{fig:menuconfig_wifi}
 \end{figure}
 
-\par Finalmente, para optimizar el consumo energético y la disipación térmica en operación continua, se aplicó una técnica de \textit{underclocking}, ajustando la frecuencia del CPU a 80 MHz (vease Figura \ref{fig:menuconfig_under}) \cite{Espressif_Menuconfig}. Esta frecuencia demostró ser estadísticamente suficiente para sostener la aceleración criptográfica de AES por hardware requerida por la conexión segura hacia HiveMQ.
+\par Finalmente, para optimizar el comportamiento térmico y garantizar la estabilidad del hardware en operación continua 24/7 dentro de un gabinete comercial, se ajustó la frecuencia del CPU a 80~MHz mediante la herramienta \texttt{menuconfig} (vease Figura \ref{fig:menuconfig_under}) \cite{Espressif_Menuconfig}.Esta frecuencia de reloj mínima operativa demostró ser suficiente para sostener de forma determinista el procesamiento del sistema y la aceleración criptográfica de AES por hardware requerida por la conexión segura hacia HiveMQ, evitando la disipación de calor innecesaria asociada a frecuencias superiores (160/240~MHz).
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.7\linewidth]{Img/menuconfig_optimizacion_under.png}
-    \caption{Underclocking aplicado en menuconfig para optimización de consumo energético.}
+    \caption{Ajuste de frecuencia de reloj del CPU a 80~MHz en \texttt{menuconfig} para estabilidad térmica en operación continua.}
     \label{fig:menuconfig_under}
 \end{figure}
 
@@ -96,24 +98,24 @@
 
 \par Para la integración con el MT-IoT, se definieron los parámetros obligatorios del protocolo: tasa de transferencia de 9600 bps, longitud de 8 bits, paridad par y 1 bit de parada \cite{TheFactoryHKA_Manual_Protocolos}. La fase inicial de la telemetría priorizó el registro \texttt{Status S1} (identidad del equipo y acumuladores) y el comando \texttt{SV2} (versión de \textit{firmware} del periférico).\\
 
-\par Un hallazgo crítico durante el desarrollo del \textit{parser} fue la identificación de un carácter invisible de salto de línea (\texttt{\textbackslash n}) inmediatamente antes del fin de trama (ETX) emitido por la impresora. Este factor desplazaba los punteros de memoria provocando errores de tipo \textit{Off-By-One}, los cuales corrompían el \textit{payload} MQTT. La anomalía fue resuelta introduciendo un ajuste dinámico que inyecta un terminador nulo en la memoria RAM para purgar la trama. La secuencia analítica de esta corrección se describe en el Algoritmo \ref{alg:offbyone}, mientras que su implementación en lenguaje C se conserva en el Apéndice \ref{apx:codigo}.
+\par Un hallazgo crítico durante el desarrollo del \textbf{analizador sintáctico (\textit{parser})} fue la identificación de un carácter invisible de salto de línea (\texttt{\textbackslash n}) inmediatamente antes del fin de trama (ETX) emitido por la impresora. Este factor desplazaba los punteros de memoria provocando errores de tipo \textit{Off-By-One}, los cuales corrompían la carga útil (\textit{payload}) MQTT. La anomalía fue resuelta introduciendo un ajuste dinámico que delimita el término de la cadena mediante la inyección explícita del carácter nulo (\texttt{\textbackslash 0}) en el \textit{buffer} de salida, asegurando la integridad de los datos extraídos. La secuencia analítica de esta corrección se describe en el Algoritmo \ref{alg:offbyone}, mientras que su implementación en lenguaje C se conserva en el Apéndice \ref{apx:codigo}.\\
 
 \begin{algorithm}[htbp]
-\caption{Mitigación analítica del error Off-By-One en el parseo de la trama SV2.}
-\label{alg:offbyone}
-\begin{algorithmic}[1]
-\State Recibir el bloque de respuesta y validar su redundancia (LRC).
-\State Calcular la posición del terminador: $p_{ETX} \leftarrow n - 2$.
-\State Estimar el índice inicial del campo de versión: $i_0 \leftarrow p_{ETX} - L_{fw} - 1$.
-\If{$i_0 \geq 1$}
-    \State Reservar la sección crítica de memoria.
-    \State Copiar $L_{fw}$ caracteres desde $i_0$ hacia el campo de versión.
-    \State Inyectar el terminador nulo manual en la posición $L_{fw}$.
-    \State Liberar la sección crítica.
-    \State \Return verdadero
-\EndIf
-\State \Return falso
-\end{algorithmic}
+	\caption{Mitigación analítica del error \textit{Off-By-One} en el procesamiento de la trama SV2.}
+	\label{alg:offbyone}
+	\begin{algorithmic}[1]
+		\State Recibir el bloque de respuesta y validar su redundancia (LRC).
+		\State Calcular la posición del terminador: $p_{ETX} \leftarrow n - 2$.
+		\State Estimar el índice inicial del campo de versión: $i_0 \leftarrow p_{ETX} - L_{fw} - 1$.
+		\If{$i_0 \ge 1$}
+		\State Reservar/bloquear la sección crítica de memoria.
+		\State Copiar $L_{fw}$ caracteres desde $i_0$ hacia el \textit{buffer} del campo de versión.
+		\State Asignar el carácter terminador nulo (\say{\texttt{\textbackslash 0}}) en la posición $L_{fw}$ del \textit{buffer} de destino.
+		\State Liberar la sección crítica.
+		\State \Return verdadero
+	\EndIf
+	\State \Return falso
+	\end{algorithmic}
 \end{algorithm}
 
 \par Esta sanitización de datos asegura un determinismo absoluto en la captura de registros cada 5 segundos, permitiendo que el MT-IoT actúe como un \textit{Gateway} transparente que no añade latencia a la red transaccional del contribuyente.
@@ -138,7 +140,7 @@
     \end{tabularx}
 \end{table}
 
-\par La elección del framework de desarrollo representó un compromiso (\textit{trade-off}) crítico entre velocidad de prototipado y determinismo temporal. Aunque el ecosistema Arduino permitía un despliegue ágil, su modelo de ejecución mono-hilo imponía latencias inaccesibles. En un entorno transaccional fiscal, un retardo provocado por un \texttt{delay()} bloqueante en el stack Wi-Fi arriesgaba sobrepasar la ventana temporal de lectura del firmware fiscal legal. Por ello, se justificó el uso nativo de \textbf{ESP-IDF}, permitiendo gestión explícita de memoria en C y la asignación determinista de tareas mediante FreeRTOS.\\
+\par La elección del framework de desarrollo representó un compromiso (\textit{trade-off}) crítico entre velocidad de prototipado y determinismo temporal. Aunque el ecosistema Arduino permitía un despliegue ágil, su modelo de ejecución mono-hilo imponía latencias inaccesibles. En un entorno transaccional fiscal, un retardo provocado por un \texttt{delay()} bloqueante en el stack Wi-Fi arriesgaba sobrepasar la ventana temporal de lectura del firmware fiscal homologado. Por ello, se justificó el uso nativo de \textbf{ESP-IDF}, permitiendo gestión explícita de memoria en C y la asignación determinista de tareas mediante FreeRTOS.\\
 
 \par Si bien Arduino ofrece una curva de aprendizaje reducida, su modelo de ejecución secuencial representa un cuello de botella sistémico. Al optar por ESP-IDF \cite{Espressif_ESP_IDF_v552}, la migración del punto de entrada del programa hacia \texttt{app\_main} permitió el despliegue de la API de FreeRTOS. A través de la función \texttt{xTaskCreatePinnedToCore} \cite{FreeRTOS_Kernel_Ref}, se logró orquestar tareas independientes fijadas a núcleos específicos, garantizando que el \textit{stack} de red no interrumpiera la captura local por UART.\\
 
@@ -211,13 +213,13 @@
 \end{algorithmic}
 \end{algorithm}
 
-\subsection{Integración de Mensajería Ligera (MQTT sobre TCP)}
+\subsection{Integración de Mensajería Ligera (MQTT sobre TCP)}\label{sec:mqtt_tcp}
 
 \par Una vez consolidada la captura de datos locales, el desarrollo se orientó a la capa de transporte. Previo a la implementación final, se realizó una validación enviando tramas crudas mediante peticiones \texttt{HTTP GET} hacia la nube, lo que confirmó el correcto dimensionamiento del \textit{heap} para el \textit{stack} de red Wi-Fi de ESP-IDF \cite{Espressif_ESP_IDF_v552}.\\
 
 \par Sin embargo, para cumplir con los requerimientos industriales de mínima sobrecarga (\textit{overhead}) de cabecera y envío asíncrono, se migró hacia el estándar MQTT v5.0 sobre conexiones TCP/IP \cite{OASIS_MQTT_v5}. El prototipado inicial utilizó el \textit{broker} de código abierto \textit{Eclipse Mosquitto} en el entorno local (puerto estándar 1883 no cifrado) \cite{OASIS_MQTT_v5}.\\
 
-\par El \textit{firmware} orquestó la conexión mediante el bucle de eventos \texttt{mqtt\_event\_handler}. Al recibir la confirmación de conexión (\texttt{MQTT\_EVENT\_CONNECTED}), el sistema disparaba la tarea de publicación a través del nivel de calidad de servicio \texttt{QoS 1} (entrega garantizada al menos una vez). Las pruebas operativas se realizaron empaquetando el \texttt{Status S1} simulado en cadenas JSON planas hacia una jerarquía preliminar de tópicos, sentando las bases para el modelado asíncrono y los mecanismos de persistencia del servidor web final \cite{Django_v5_Doc}.\\
+\par El \textit{firmware} gestionó la conexión mediante el bucle de eventos \texttt{mqtt\_event\_handler}. Al recibir la confirmación de conexión (\texttt{MQTT\_EVENT\_CONNECTED}), el sistema disparaba la tarea de publicación a través del nivel de calidad de servicio QoS~1 (entrega garantizada al menos una vez). Las pruebas operativas se realizaron empaquetando el \textbf{Status S1} simulado en cadenas JSON planas hacia una jerarquía preliminar de tópicos, sentando las bases para el procesamiento asíncrono de eventos y los mecanismos de persistencia del servidor web final \cite{Django_v5_Doc}.\\
 
 \par La efectividad de este canal de transporte se validó mediante la intercepción del \textit{payload} en el \textit{Broker} HiveMQ. Tal como se documenta en la Tabla \ref{tab:json_s1}, el microcontrolador logró empaquetar exitosamente los registros crudos de la impresora en una estructura clave-valor legible, confirmando la correcta extracción del RIF, los acumuladores de ventas y los estados operativos. El listado textual del mensaje se conserva en el Apéndice \ref{apx:codigo}.
 
@@ -234,7 +236,7 @@
 \texttt{sts2} & Cadena & Estado del mecanismo de impresión (p. ej., \texttt{0x40}) \\
 \texttt{estado} & Cadena & Descripción textual del estado lógico \\
 \texttt{error} & Cadena & Descripción textual del error mecánico \\
-\texttt{cajero} & Cadena & Identificador del cajero (ATM) \\
+\texttt{cajero} & Cadena & Código o identificador del operador de caja \\
 \texttt{ventas} & Cadena & Acumulador de ventas diarias \\
 \texttt{fact\_emitidas} & Cadena & Contador de facturas emitidas \\
 \texttt{rif} & Cadena & Registro de Información Fiscal del contribuyente \\
@@ -272,7 +274,12 @@
 
 \par En la etapa de prototipado inicial, la captura local de datos fiscales se realizaba utilizando el transceptor asíncrono UART \cite{TheFactoryHKA_Manual_Protocolos}. Al implementar el flujo bidireccional estricto gobernado por caracteres de control físicos (\texttt{ACK 0x06h} y \texttt{NAK 0x15h}), se evidenció que este estándar presentaba vulnerabilidades inaceptables para la robustez industrial.\\
 
-\par Debido a la ausencia de blindaje electromagnético en el cable de interconexión local y la naturaleza asíncrona del bus, las líneas físicas actuaban como antenas ante el ruido y la interferencia electromagnética (EMI) del entorno. Esta inyección de ruido deformaba los bits de datos en tránsito, insertando "basura" en el controlador de hardware del microcontrolador.\\
+\par Debido a la ausencia de blindaje en el cable de interconexión local y la naturaleza 
+asíncrona del bus RS-232, la línea de transmisión presentó vulnerabilidad a perturbaciones 
+en la señal. Esta condición generaba corrupción de tramas a nivel del controlador UART 
+del microcontrolador, evidenciándose mediante la recepción de bytes anómalos (\textit{garbage data}) 
+y errores de enmarcado (\textit{Framing Errors}). Dichas anomalías desincronizaban los punteros 
+de lectura del \textit{buffer}, inyectando caracteres no imprimibles en el flujo de entrada previo a su procesamiento.\\
 
 \par Al alterarse las tramas físicas (especialmente los 129 bytes del comando \texttt{Status S1}), el \textit{firmware} fallaba en la comprobación matemática de redundancia longitudinal (LRC) \cite{TheFactoryHKA_Manual_Protocolos}. Para mitigar temporalmente este fenómeno antes de la migración definitiva a la interfaz síncrona, se implementó una estricta validación por \textit{software} que descartaba las tramas corruptas y liberaba el bus, tal como se documenta en el Algoritmo \ref{alg:lrc}.
 
@@ -295,12 +302,12 @@
 
 \subsection{Problemas de Concurrencia (Race Conditions)}
 
-\par La orquestación multitarea de FreeRTOS permite ejecutar procesos de forma paralela en los dos núcleos del ESP32 \cite{FreeRTOS_Kernel_Ref}. Sin embargo, la coexistencia de la tarea de adquisición fiscal continua y la recepción de comandos inalámbricos introdujo condiciones de carrera (\textit{Race Conditions}) severas:
+\par La administración multitarea de FreeRTOS permite ejecutar procesos de forma paralela en los dos núcleos del ESP32 \cite{FreeRTOS_Kernel_Ref}. Sin embargo, la coexistencia de la tarea de adquisición fiscal continua y la recepción de comandos inalámbricos introdujo condiciones de carrera (\textit{Race Conditions}) severas:
 
 \begin{enumerate}
-    \item \textbf{Colisiones Eléctricas (\say{Choque de Trenes}):} Durante las pruebas iniciales de actualización, si el microcontrolador recibía un comando de descarga OTA por MQTT exactamente en el mismo milisegundo en que la tarea fiscal iniciaba su ciclo de sondeo, ambas rutinas intentaban polarizar las líneas físicas locales simultáneamente. Al carecer de exclusión mutua coordinada a nivel de \textit{hardware}, el controlador entraba en pánico (lanzando una excepción \texttt{assert failed}) y forzaba el reinicio de la placa (véase la Figura \ref{fig:choque_trenes}).
+    \item \textbf{Colisiones en Periféricos Compartidos (\textit{Hardware Lock}):} Durante las pruebas iniciales de actualización, si el microcontrolador recibía un comando de descarga OTA por MQTT exactamente en el mismo instante en que la tarea fiscal iniciaba su ciclo de sondeo, ambas rutinas intentaban acceder simultáneamente al controlador del bus de comunicación. Al carecer de exclusión mutua coordinada mediante un semáforo o \textit{mutex} de FreeRTOS, el sistema generaba un fallo de aserción (\texttt{assert failed}) forzando el reinicio del SoC (véase la Figura \ref{fig:choque_trenes}).
     
-    \item \textbf{Lecturas Cruzadas (\textit{Corrupción de RAM}):} A nivel lógico, la tarea de monitoreo sobrescribía continuamente los acumuladores de ventas en los búferes de la memoria RAM. Si la tarea MQTT despertaba de manera asíncrona para empaquetar el \textit{payload} JSON en ese preciso lapso, leía una mezcla de datos viejos y nuevos, transmitiendo telemetría fiscal híbrida y corrupta hacia el servidor.
+    \item \textbf{Inconsistencia de Datos por Concurrencia (\textit{Race Condition}):} A nivel lógico, la falta de control de acceso síncrono permitía que la tarea de monitoreo actualizara los búferes de ventas mientras la tarea MQTT leía de forma asíncrona dichos campos para empaquetar el \textit{payload} JSON. Esto ocasionaba la lectura de tramas híbridas o incompletas en la memoria intermedia, comprometiendo la integridad de la telemetría transmitida.
 \end{enumerate}
 
 \begin{figure}[htbp]
@@ -312,7 +319,7 @@
     ar/.style={thick,->,>=stealth}]
     \node [task] (poll) at (0,2.2) {Tarea \texttt{Polling}\\ (sondeo fiscal $S1$)};
     \node [task] (ota) at (0,-0.2) {Tarea \texttt{OTA}\\ (reescritura de firmware)};
-    \node [bus] (bus) at (6.2,1.0) {Bus SPI local\\(pines compartidos)};
+    \node [bus] (bus) at (6.2,1.0) {Bus UART / RS232 local\\(pines compartidos)};
     \node [ev] (crash) at (6.2,-1.9) {\texttt{assert failed}\\reinicio del SoC};
     \draw [ar, red] (poll.east) -- node[above, font=\scriptsize, text=red]{$t_0$} (bus.west);
     \draw [ar, red] (ota.east) -- node[below, font=\scriptsize, text=red]{$t_0$} (bus.west);
@@ -323,7 +330,10 @@
 \label{fig:choque_trenes}
 \end{figure}
 
-\par Estas limitaciones demostraron empíricamente que, para un entorno de control tributario, no basta con lograr comunicación bidireccional; es mandatorio implementar mecanismos de exclusión mutua por \textit{hardware} (como \textit{Mutexes}) y optimizaciones granulares de la memoria \cite{Espressif_ESP32_Datasheet}.
+\par Estas limitaciones demostraron empíricamente que, para un entorno de control tributario, 
+no basta con lograr comunicación bidireccional; es mandatorio implementar mecanismos de 
+exclusión mutua gestionados por el RTOS (tales como \textit{Mutexes}) para arbitrar el acceso 
+concurrente a los recursos de \textit{hardware} compartidos y garantizar optimizaciones granulares de la memoria \cite{Espressif_ESP32_Datasheet}.
 
 \section{Diseño de un Kernel Concurrente e Invariante de Red a Prueba de Condiciones de Carrera}
 
@@ -351,7 +361,8 @@
 
 \par Para blindar la integridad lógica de las tramas tributarias en esta nueva capa física, se implementó una rutina matemática de validación de redundancia longitudinal (LRC). Tras recibir cada bloque de datos, el \textit{firmware} ejecuta un lazo cerrado que realiza operaciones lógicas \texttt{XOR} acumulativas sobre los bytes recibidos, contrastando el resultado con el \textit{checksum} enviado por el periférico fiscal \cite{TheFactoryHKA_Manual_Protocolos}.\\
 
-\par Si la trama es declarada válida, el MT-IoT responde con un carácter \texttt{ACK (0x06h)}; de lo contrario, envía un \texttt{NAK (0x15h)} y procede de inmediato a reiniciar lógicamente los registros del hardware del bus local, impidiendo la propagación de datos corruptos en la memoria del sistema.\\
+\par Si la trama es declarada válida, el MT-IoT responde con un carácter \texttt{ACK} (\texttt{0x06h}); de lo contrario, envía un \texttt{NAK} (\texttt{0x15h}) y procede de inmediato a vaciar (\textit{flush}) el \textit{buffer} de recepción de entrada y reiniciar sus punteros de lectura, descartando la secuencia 
+anómala e impidiendo la propagación de datos corruptos hacia la memoria del sistema.\\
 
 \par Adicionalmente, para evitar bloqueos del procesador si el periférico es apagado físicamente, se establecieron temporizadores (\textit{timeouts}) estrictos. Si se supera el límite de fallos continuos, el \textit{firmware} transiciona al estado de pánico y activa una máquina de reconexión, sin bloquear las tareas de red \cite{FreeRTOS_Kernel_Ref}.
 
@@ -391,7 +402,7 @@
 
 \subsection{Estrategias de Resiliencia de Red y DNS Injection}
 
-\par Para cumplir con los requerimientos de robustez industrial, el \textit{firmware} se dotó de mecanismos de autodefensa. Ante cortes del proveedor de internet (ISP), la capa de red del microcontrolador gatilla asíncronamente el evento \texttt{WIFI\_EVENT\_STA\_DISCONNECTED}, iniciando un lazo de reconexión infinito que intenta reanudar el enlace sin reiniciar la lógica de control interna \cite{Espressif_ESP_IDF_v552}.\\
+\par Para cumplir con los requerimientos de robustez industrial, el \textit{firmware} se dotó de mecanismos de autodefensa jerárquicos. A nivel de enlace, ante la pérdida de la conexión con el punto de acceso (AP), la capa de red del microcontrolador gatilla asíncronamente el evento \texttt{WIFI\_EVENT\_STA\_DISCONNECTED}, cuyo campo \texttt{reason} codifica el motivo de la desconexión. El manejador responde con \texttt{esp\_wifi\_connect()}, iniciando un lazo de reconexión infinito que reanuda el enlace sin reiniciar la lógica de control interna \cite{Espressif_ESP_IDF_v552}. La caída del servicio de internet (WAN), en cambio, se detecta en la capa de aplicación mediante los fallos de socket y los reintentos automáticos del cliente MQTT.\\
 
 \par Uno de los aportes más significativos fue la mitigación de fallos de resolución de nombres (\textit{DNS}) del contribuyente. Al capturar una dirección IP local a través del evento \texttt{IP\_EVENT\_STA\_GOT\_IP}, la pasarela intercepta dinámicamente la configuración de la interfaz de red (\textit{netif}) e inyecta forzosamente los servidores principales de Google (8.8.8.8) \cite{Espressif_ESP_IDF_v552}. Esta técnica asegura que el cliente TLS siempre resuelva la ruta hacia HiveMQ.\\
 
@@ -412,18 +423,18 @@
 \end{algorithmic}
 \end{algorithm}
 
-\section{Protocolo de Comunicación Segura y Mensajería MQTT v5.0}
+\section{Seguridad y Trazabilidad del Canal de Telemetría MQTT v5.0}
 
-\par Una vez consolidada la estabilidad del \textit{firmware} en su capa de adquisición local y resueltos los conflictos de concurrencia multitarea, el desarrollo se enfocó en el establecimiento de un canal de telemetría de grado industrial hacia la nube \cite{Connected_Everything_2016}. La implementación de la pila de red se diseñó bajo el estándar MQTT v5.0, operando sobre conexiones TCP/IP persistentes hacia la infraestructura de HiveMQ Cloud \cite{OASIS_MQTT_v5}. Este diseño satisface tanto los requerimientos de mínima sobrecarga de red (\textit{overhead}) como la exigencia innegociable de garantizar la confidencialidad de la información fiscal en tránsito.
+\par Sobre el canal de telemetría MQTT establecido en la Sección~\ref{sec:mqtt_tcp}, esta sección aborda su endurecimiento para operación en producción: la protección criptográfica del transporte y la explotación de las capacidades avanzadas del estándar MQTT~v5.0 para la trazabilidad y la detección de caídas abruptas de enlace.
 
-\subsection{Seguridad en la Capa de Transporte (TLS/SSL)}
+\subsection{Configuración Segura del Cliente MQTT (TLS 1.2)}
 
 \par El transporte de información tributaria sensible a través de internet requiere esquemas de cifrado robustos que impidan ataques de interceptación pasiva (\textit{eavesdropping}) o inyección de contenido. Para cumplir con esta directiva, el cliente MQTT embebido en el ESP32 se configuró para establecer \textit{sockets} seguros utilizando el protocolo TLS v1.2, apoyado en la biblioteca Mbed TLS nativa de ESP-IDF \cite{Espressif_ESP_IDF_v552}.\\
 
-\par La orquestación de la seguridad se estructuró dentro de la estructura de configuración del cliente (\texttt{esp\_mqtt\_client\_config\_t}), aplicando dos decisiones de diseño fundamentales que se evidencian en la Tabla \ref{tab:tls_config}:
+\par La implementación de los parámetros de seguridad se definió dentro de la estructura de configuración del cliente (\texttt{esp\_mqtt\_client\_config\_t}), aplicando dos decisiones de diseño fundamentales que se evidencian en la Tabla \ref{tab:tls_config}:
 
 \begin{enumerate}
-    \item \textbf{Puerto Seguro y Cifrado por Hardware:} Se forzó el enrutamiento hacia el puerto estándar 8883 (\texttt{secure-mqtt}), estableciendo el transporte como \texttt{MQTT\_TRANSPORT\_OVER\_SSL}. Esto obliga al microcontrolador a realizar un \textit{Handshake} criptográfico, negociando algoritmos de cifrado simétrico mediante la aceleración por \textit{hardware} integrada en el silicio del SoC \cite{Espressif_ESP32_Datasheet}.
+    \item \textbf{Puerto Seguro y Cifrado por Hardware:} Se forzó el enrutamiento hacia el puerto estándar 8883 (\texttt{secure-mqtt}), estableciendo el transporte como \texttt{MQTT\_\allowbreak TRANSPORT\_\allowbreak OVER\_\allowbreak SSL}. Esto obliga al microcontrolador a realizar un \textit{Handshake} criptográfico, negociando algoritmos de cifrado simétrico mediante la aceleración por \textit{hardware} integrada en el silicio del SoC \cite{Espressif_ESP32_Datasheet}.
     
     \item \textbf{Autenticación mediante \textit{Bundle} de Certificados:} Para mitigar ataques de intermediario (\textit{Man-in-the-Middle}), el MT-IoT verifica la cadena de confianza de HiveMQ Cloud. En lugar de quemar estáticamente extensos archivos PEM en la Flash (lo que degradaría la memoria), se habilitó el parámetro \texttt{crt\_bundle\_attach}. Esta técnica enlaza un catálogo optimizado de Autoridades de Certificación (CAs) confiables provisto por Espressif, logrando una validación robusta con un consumo residual de almacenamiento \cite{Espressif_ESP_IDF_v552}.
 \end{enumerate}
@@ -451,7 +462,7 @@
 
 \par La adopción del estándar MQTT v5.0 permitió incorporar capacidades avanzadas de diagnóstico que no eran viables en versiones anteriores (v3.1.1) \cite{OASIS_MQTT_v5}. El \textit{firmware} explota estas características para optimizar la trazabilidad y la resiliencia del monitoreo en tiempo real.\\
 
-\par En primer lugar, se implementó el uso de \textit{User Properties} en cada paquete de publicación (\texttt{PUBLISH}). Estas propiedades actúan como metadatos en formato clave-valor (UTF-8) anidados en la cabecera del protocolo de red, permitiendo su lectura por el servidor web sin necesidad de ejecutar rutinas costosas de deserialización sobre el \textit{payload} JSON principal \cite{OASIS_MQTT_v5}. Tal como se documenta en la Tabla \ref{tab:user_props}, el \textit{firmware} inyecta dinámicamente propiedades críticas como el RSSI (intensidad de señal Wi-Fi) y el número de serie.
+\par En primer lugar, se implementó el uso de \textit{User Properties} en cada paquete de publicación (\texttt{PUBLISH}). Estas propiedades actúan como metadatos en formato clave-valor (UTF-8) anidados en la cabecera del protocolo de red, permitiendo su lectura por el servidor web sin necesidad de ejecutar rutinas costosas de deserialización sobre el \textit{payload} JSON principal \cite{OASIS_MQTT_v5}. Tal como se documenta en la Tabla \ref{tab:user_props}, el \textit{firmware} inyecta dinámicamente propiedades críticas como el RSSI (intensidad de señal Wi-Fi) y el número de serie.\\
 
 \begin{table}[htbp]
 \centering
@@ -476,7 +487,7 @@
 
 \section{Arquitectura de Puente Síncrono de Reescritura Remota para Periféricos In Situ (OTA Doble Objetivo)}
 
-\par Uno de los requerimientos no funcionales más exigentes es la capacidad de mantener el ciclo de vida del \textit{hardware} en campo sin requerir la intervención física de soporte técnico \cite{WEF_IIoT_2018}. Para superar este desafío operativo, se diseñó un protocolo de Actualización Inalámbrica (OTA, \textit{Over-The-Air}) de doble objetivo. Este sistema inédito en la arquitectura de la empresa permite canalizar, a través del túnel seguro MQTT, comandos de bajo nivel para reescribir tanto el \textit{firmware} del MT-IoT como el código interno del periférico fiscal.\\
+\par Uno de los requerimientos no funcionales más exigentes es la capacidad de mantener el ciclo de vida del \textit{software} en campo sin requerir la intervención física de soporte técnico \cite{WEF_IIoT_2018}. Para superar este desafío operativo, se diseñó un protocolo de Actualización Inalámbrica (OTA, \textit{Over-The-Air}) de doble objetivo. Este sistema inédito en la arquitectura de la empresa permite canalizar, a través del túnel seguro MQTT, comandos de bajo nivel para reescribir tanto el \textit{firmware} del MT-IoT como el código interno del periférico fiscal.\\
 
 \par El flujo inicia en la interfaz de gestión web, donde el administrador selecciona el archivo binario compilado (\texttt{.bin}). El servidor publica un \textit{payload} JSON estructurado en el tópico de comandos de actualización del dispositivo \cite{OASIS_MQTT_v5}. Tal como se aprecia en la Tabla \ref{tab:json_ota}, este paquete define la instrucción, el \textit{hardware} de destino (MT-IoT o Impresora), la versión esperada y una ruta segura de descarga de un solo uso. El listado textual del mensaje se conserva en el Apéndice \ref{apx:codigo}.
 
@@ -646,7 +657,7 @@
 
 \par Para proveer a la plataforma con la fluidez de una \textit{Single Page Application} (SPA) reduciendo el consumo de memoria en el cliente, se integró el \textit{framework} asíncrono ligero HTMX \cite{HTMX_Doc}. HTMX permite realizar peticiones AJAX silenciosas, intercambiando dinámicamente (\textit{swapping}) solo fragmentos del DOM sin recargar la página.\\
 
-\par La innovación arquitectónica reside en la \textbf{Integración de Eventos Personalizados (JS-HTMX)}. Cuando el monitor MQTT.js detecta un cambio crítico (ej., avance de la OTA o alerta LWT), despacha un evento DOM hacia el navegador (\texttt{mqttNuevoLog}). La vista HTMX, cuyo flujo se representa en la Figura \ref{fig:flujo_htmx}, intercepta este evento desde el cuerpo del documento y gatilla un ciclo de refresco HTTP parcial, renderizando las nuevas filas de auditoría instantáneamente.\\
+\par La actualización en tiempo real se gestionó mediante la \textbf{Integración de Eventos Personalizados (JS-HTMX)}. Cuando el monitor MQTT.js detecta un cambio crítico (ej., avance de la OTA o alerta LWT), despacha un evento DOM hacia el navegador (\texttt{mqttNuevoLog}). La vista HTMX, cuyo flujo se representa en la Figura \ref{fig:flujo_htmx}, intercepta este evento desde el cuerpo del documento y gatilla un ciclo de refresco HTTP parcial, renderizando las nuevas filas de auditoría instantáneamente.\\
 
 \begin{figure}[H]
 \centering

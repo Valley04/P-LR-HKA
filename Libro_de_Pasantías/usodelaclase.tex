@@ -50,7 +50,7 @@
 
 \subsection{Interconexión de Datos: El Rol del Status S1 y SV2}
 
-\par El monitoreo remoto planteado en este trabajo requiere una interconexión física de alto rendimiento para captura de datos en tiempo real. Si bien los sistemas administrativos tradicionales utilizan el estándar serial RS232 para la gestión local \cite{TheFactoryHKA_Manual_Protocolos}, para la integración directa entre el microcontrolador ESP32 y el hardware de la impresora se implementó una \textbf{interfaz de comunicación síncrona}.\\
+\par El monitoreo remoto planteado en este trabajo requiere una interconexión física de alto rendimiento para captura de datos en tiempo real. Si bien los sistemas administrativos tradicionales utilizan el estándar serial RS232 para la gestión local \cite{TheFactoryHKA_Manual_Protocolos}, para la integración directa entre el microcontrolador ESP32 y el hardware de la impresora se implementó una \textbf{interfaz de comunicación síncrona} del tipo SPI.\\
 
 \par Esta arquitectura de comunicación permite al ESP32 actuar como el controlador principal de la línea, gestionando el flujo de datos mediante señales de sincronismo y control dedicadas. A través de este bus, el firmware realiza el \textit{polling} de información fiscal solicitando tramas específicas como el \textbf{Status S1} (Serial del equipo, RIF y contadores) y \textbf{SV2} (versión de firmware de la impresora) \cite{TheFactoryHKA_Manual_Protocolos, TheFactoryHKA_iSmart_Manual}. La migración no solo garantiza una comunicación de baja latencia y alta confiabilidad, sino que asegura la escalabilidad del sistema ante futuras actualizaciones de hardware, manteniendo la compatibilidad con el dispositivo de transmisión actual de la empresa.
 
@@ -81,17 +81,17 @@
 
 \par Para el monitoreo en tiempo real, se implementó el protocolo \textbf{WebSockets}, el cual establece un canal de comunicación persistente y bidireccional sobre una única conexión TCP \cite{RFC6455_WebSockets, Fierro_WebSockets_2017}. A diferencia de HTTP, que requiere una nueva cabecera por cada solicitud, WebSockets reduce drásticamente la latencia mediante un proceso de \textit{handshake} que eleva la conexión de HTTP a un flujo de datos binarios continuo.\\
 
-\par En la arquitectura final de este proyecto, se utiliza \textbf{MQTT sobre WebSockets} \cite{OASIS_MQTT_v5, Fierro_WebSockets_2017}. Esta técnica permite que el Dashboard web encapsule paquetes MQTT dentro de tramas de WebSocket, permitiendo que el navegador \say{hable} directamente con el broker. Esto elimina la necesidad de intermediarios pesados (como Django Channels), simplificando la infraestructura y garantizando que los estados de la impresora se reflejen en pantalla de forma instantanea.
+\par En la arquitectura final de este proyecto se implementa la técnica de túnel o encapsulamiento de \textbf{MQTT sobre WebSockets} \cite{OASIS_MQTT_v5, Fierro_WebSockets_2017}. Esta integración es fundamental debido a que los navegadores web no permiten la apertura de conexiones TCP crudas (raw sockets), las cuales son requeridas por el protocolo MQTT nativo \cite{RFC6455_WebSockets}. Al encapsular los paquetes MQTT dentro de tramas de WebSocket, el Dashboard web puede suscribirse e interactuar directamente con el broker (HiveMQ Cloud) de forma bidireccional y cifrada (WSS) \cite{OASIS_MQTT_v5}. Esto elimina la necesidad de implementar servidores intermediarios complejos (como Django Channels), simplificando la infraestructura backend y garantizando la recepción en tiempo real de los estados y alertas del parque de impresoras.
 
 \subsection{Modelo Maestro-Esclavo en Buses Seriales}
 
 \par En el nivel del borde (\textit{Edge}), la interacción entre el microcontrolador y la impresora fiscal se rige por el modelo \textbf{Maestro-Esclavo} \cite{TheFactoryHKA_Manual_Protocolos}. En esta jerarquía, el ESP32 asume el rol de maestro, teniendo el control total sobre el bus de comunicación y decidiendo cuando iniciar la transferencia de datos.\\
 
-\par Para la integración con la impresora HKA80, este modelo se manifiesta a través de un \textbf{bus de comunicación serie síncrono}. El controlador principal genera la \textbf{señal de temporización} y gestiona la \textbf{habilitación del dispositivo periférico} para realizar un  un sondeo \textit{polling} constante de los registros fiscales. Si bien este modelo presenta una alta dependencia del maestro, garantiza un determinismo absoluto en la captura de datos críticos, evitando colisiones en el bus y asegurando que cada trama de \textbf{Status S1} sea recibida y validada antes de proceder con la lógica de red.
+\par Para la integración con la impresora HKA80, este modelo se manifiesta a través de un \textbf{bus de comunicación serie síncrono} (operando bajo una arquitectura Maestro-Esclavo a 100kHz). El controlador principal (ESP32) genera la señal de temporización (\textit{Clock}) y gestiona la habilitación del dispositivo periférico para realizar un sondeo (\textit{polling}) constante de los registros fiscales. Si bien este modelo presenta una alta dependencia del maestro, garantiza un determinismo absoluto en la captura de datos críticos al eliminar las desviaciones por deriva de reloj (\textit{baud-rate drift}) y la inyección de bytes corruptos por ruido electromagnético que afectaban a la interfaz asíncrona tradicional. Esto asegura que cada trama de \textbf{Status S1} sea recibida y validada mediante comprobación de redundancia (LRC) antes de proceder con la lógica de red.
 
 \section{Hardware de Alto Rendimiento: ESP32}
 
-\par El núcleo del sistema de transmisión se fundamenta en el ESP32, un sistema en chip (SoC) de bajo consumo diseñado por Espressif Systems que integra conectividad Wi-Fi y Bluetooth de modo dual \cite{Espressif_ESP32_Datasheet}. A diferencia de los microcontroladores convencionales, este dispositivo está diseñado para aplicaciones industriales de IoT, ofreciendo una robustez y versatilidad que permiten manejar simultáneamente tareas de comunicación segura y control de periféricos de alta velocidad (véase la Figura \ref{fig:esp32_physic}).
+\par El núcleo del sistema de transmisión se fundamenta en la tarjeta de desarrollo \textbf{ESP32 DevKitC V4} (basada en el módulo \textbf{ESP32-WROOM-32}) \cite{Espressif_ESP32_Datasheet}. Este dispositivo integra un sistema en chip (SoC) de bajo consumo diseñado por Espressif Systems que incorpora conectividad Wi-Fi e interfaz Bluetooth de modo dual. A diferencia de los microcontroladores convencionales, este componente está concebido para aplicaciones industriales de IoT, ofreciendo una robustez y versatilidad que permiten manejar simultáneamente tareas de comunicación segura y el control de periféricos de alta velocidad (véase la Figura \ref{fig:esp32_physic}).
 
 \begin{figure} [H]
     \centering
@@ -100,9 +100,10 @@
     \label{fig:esp32_physic}
 \end{figure}
 
-\subsection{Arquitectura de Procesamiento y Multitarea (FreeRTOS)} 
+\subsection{Arquitectura de Procesamiento y Multitarea (FreeRTOS)}
 
-\par El dispositivo integra un microprocesador Xtensa Dual-Core LX6 de 32 bits, capaz de alcanzar un rendimiento de hasta 600 MIPS \cite{Espressif_ESP32_Datasheet}. Esta arquitectura de doble núcleo es un pilar en el proyecto, ya que permite la implementación de un sistema operativo de tiempo real (FreeRTOS) \cite{FreeRTOS_Kernel_Ref}. Mediante la gestión de tareas independientes, el firmware separa la lógica de captura de datos fiscales (tarea de prioridad 5) del stack de comunicación de red, garantizando que el polling de la impresora no se vea interrumpido por las latencias inherentes a la comunicación en la nube.
+\par En la variante específica utilizada para este desarrollo, el dispositivo integra un microprocesador de arquitectura \textbf{Xtensa® Dual-Core LX6 de 32 bits}, capaz de alcanzar una frecuencia de reloj 
+de hasta 240~MHz y un rendimiento de 600~MIPS \cite{Espressif_ESP32_Datasheet}. Si bien las variantes más recientes de la familia ESP32 (como las series basadas en arquitectura RISC-V) operan bajo un solo núcleo, la arquitectura de doble núcleo Xtensa LX6 del modelo seleccionado es un pilar crítico en este diseño. Esta arquitectura permite aprovechar las capacidades SMP (Symmetric Multiprocessing) de FreeRTOS para aislar físicamente los procesos de captura de datos locales en un núcleo dedicado, evitando que retardos por procesamiento del stack de red afecte el tiempo real del sistema.
 
 \subsection{Jerarquía de Memoria y Optimización Crítica} 
 
@@ -126,9 +127,10 @@
 
 \subsection{Interfaces de Comunicación y Capacidad Sensorial} 
 
-\par El sistema de transmisión aprovecha la matriz de periféricos avanzados del chip para la integración con el ecosistema fiscal \cite{Espressif_ESP32_Datasheet}. Se utiliza una interfaz de comunicación física operando a una frecuencia optimizada, lo que asegura un intercanbio de datos constante y de baja latencia con hardware de impresión. Esta interfaz permite al ESP32 actuar como el maestro de la comunicación, gestionando líneas dedicadas para la captura inmediata de registros de estado.\\
+\par El sistema de transmisión aprovecha la matriz de periféricos avanzados del chip para la integración con el ecosistema fiscal \cite{Espressif_ESP32_Datasheet}. Se utiliza una interfaz 
+de comunicación física serie síncrona operando a una \textbf{frecuencia de reloj de $100$~kHz}, lo que asegura un intercanbio de datos constante y de baja latencia con hardware de impresión. Esta interfaz permite al ESP32 actuar como el maestro de la comunicación, gestionando líneas dedicadas para la captura inmediata de registros de estado.\\
 
-\par Asimismo, la radio integrada de 2.4 GHz permite la interconexión bajo los estándares 802.11 b/g/n, posicionando al dispositivo como un Gateway industrial que cumple con las capas de detección e intercambio de datos descritas en la arquitectura IoT industrial \cite{Espressif_ESP32_Datasheet}.
+\par Asimismo, la unidad de radio integrada de 2.4 GHz permite la interconexión bajo los estándares 802.11 b/g/n, posicionando al dispositivo como un node Gateway embebido que cumple con las capas de detección e intercambio de datos descritas en la arquitectura IoT \cite{Espressif_ESP32_Datasheet}.
 
 \section{Desarrollo Profesional con ESP-IDF y FreeRTOS}
 
@@ -179,7 +181,7 @@
 
 \par En la arquitectura de comunicaciones de este proyecto, la representac\'on y el empaquetado de la informaci\'on fiscal se fundamentan en el formato \textbf{JSON (JavaScript Object Notation)}. Este es un est\'andar de intercambio de datos ligero, basado en una estructura de pares clave-valor, que permite una legibilidad superior tanto para humanos como para m\'aquinas \cite{Salazar_IoT_2014}. Su adopción en sistemas IIoT es cr\'itica debido a su independencia de lenguaje, lo que facilita la interoperabilidad entre el firmware desarrollado en \textbf{C (ESP-IDF)}, el broker MQTT y el backend en \textbf{Python (Django)}.\\
 
-\par A diferencia de otros lenguajes del mercado como XML, JSON ofrece una sobrecarga (\textit{overhead}) significativamente menor, lo que se traduce en paquetes m\'as pequeños y un menor consumo de energ\'ia y memoria en el microcontrolador \cite{Salazar_IoT_2014}. En el sistema de transmisi\'on, los paquetes JSON se encapsulan tanto en tramas MQTT como en sobres de WebSockets para su transporte hacia la nube.
+\par A diferencia de otros formatos de intercambio de datos basados en texto como XML, JSON (\textit{JavaScript Object Notation}) ofrece una sobrecarga (\textit{overhead}) de sintaxis significativamente menor, reduciendo el tamaño de la carga útil (\textit{payload}). Si bien los formatos de serialización binaria (como Protobuf o CBOR) ofrecen una mayor eficiencia en consumo de memoria y ancho de banda en microcontroladores, la adopción de JSON en este proyecto proporciona un balance ideal entre una menor verbosidad frente a XML y una integración nativa de alta interoperabilidad con el Dashboard web y el broker MQTT \cite{OASIS_MQTT_v5}. En el sistema de transmisión, las cargas útiles en formato JSON se encapsulan tanto en tramas MQTT como en paquetes WebSocket para su transporte directo hacia la nube.
 
 \section{Integración Web y Monitoreo en Tiempo Real}
 
@@ -195,7 +197,7 @@
 
 \par En la arquitectura final de este proyecto, se implement\'o la t\'ecnica de \textbf{t\'unel o encapsulamiento de MQTT sobre WebSockets}. Esta integraci\'on es fundamental debido a que los navegadores web actuales no permiten la apertura de conexione TCP crudas (\textit{raw sockets}) necesarias para el protocolo MQTT nativo \cite{OASIS_MQTT_v5, Fierro_WebSockets_2017}.\\
 
-\par Bajo este esquema, la conexi\'on WebSocket act\'ua como una tuber\'ia externa o \say{sobre} para los paquetes MQTT. El broker HiveMQ coloca cada paquete MQTT (como CONNECT o PUBLISH) dentro de una trama binaria de WebSocket para enviarla al Dashboard, donde la librer\'ia de cliente JavaScript (Paho) desaempaqueta la informaci\'on y la procesa como una trama de red est\'andar \cite{OASIS_MQTT_v5}. En el sistema de transmisi\'on, esta comunicaci\'on segura se orquesta a trav\'es del \textbf{puerto 8000}, lo que permite atravesar firewalls corporativos que habitualmente bloquean los puertos est\'andar de MQTT (1883/8883) pero permiten el tr\'afico web convencional. Esta arquitectura desacoplada garantiza la \textbf{resilencia cibern\'etica} del sistema, permitiendo un monitoreo directo entre el navegador y el broker sin intermediarios adicionales.
+\par Bajo este esquema, la conexi\'on WebSocket act\'ua como una tuber\'ia externa o \say{sobre} para los paquetes MQTT. El broker HiveMQ coloca cada paquete MQTT (como CONNECT o PUBLISH) dentro de una trama binaria de WebSocket para enviarla al Dashboard, donde la librer\'ia de cliente JavaScript (MQTT.js) desaempaqueta la informaci\'on y la procesa como una trama de red est\'andar \cite{OASIS_MQTT_v5}. En el sistema de transmisi\'on, esta comunicaci\'on segura se realiza a trav\'es del \textbf{puerto 8884}, lo que permite atravesar firewalls corporativos que habitualmente bloquean los puertos est\'andar de MQTT (1883/8883) pero permiten el tr\'afico web convencional. Esta arquitectura desacoplada garantiza la \textbf{resilencia cibern\'etica} del sistema, permitiendo un monitoreo directo entre el navegador y el broker sin intermediarios adicionales.
 
 \section{Arquitectura de Gesti\'on y Orquestaci\'on: Framework Django}
 
