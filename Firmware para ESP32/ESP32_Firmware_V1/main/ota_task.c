@@ -108,6 +108,9 @@ void actualizar_impresora_por_spi(const char *url_descarga, const char* serial) 
         esp_http_client_config_t config = {
             .url = url_descarga,
             .timeout_ms = 5000,
+            // Verificacion TLS del servidor de descarga (cadena de confianza).
+            // Sin esto, la descarga del firmware del periferico no autenticaba al servidor.
+            .crt_bundle_attach = esp_crt_bundle_attach,
         };
 
         esp_http_client_handle_t client = esp_http_client_init(&config);
@@ -203,9 +206,13 @@ static void tarea_ota_esp32(void *pvParameters) {
 
         esp_http_client_config_t http_config = {
             .url = ota_info->url,
+            // Verificacion de la cadena de confianza del servidor de descarga.
+            // Para despliegues con certificado propio, sustituir por pinning:
+            //   .cert_pem = (const char *)certificado_servidor_pem,
             .crt_bundle_attach = esp_crt_bundle_attach,
             .cert_pem = NULL,
-            .skip_cert_common_name_check = true,
+            // La verificacion del nombre del host queda ACTIVA (default = false),
+            // de modo que un certificado valido pero de otro dominio sea rechazado.
             .timeout_ms = 10000,
             .keep_alive_enable = true
         };
@@ -285,6 +292,20 @@ void procesar_comando_ota(const char* payload, int len) {
         ESP_LOGE(TAG_OTA, "Objetivo no válido para OTA: %s", objetivo->valuestring);
         cJSON_Delete(json);
         return;
+    }
+
+    // Validacion del esquema de descarga: se aceptan HTTP y HTTPS.
+    // HTTP se permite para descargas dentro de la LAN del laboratorio;
+    // cuando el esquema es HTTPS el cliente verifica el certificado
+    // del servidor contra la cadena de confianza (crt_bundle_attach).
+    if (strncmp(url->valuestring, "https://", 8) != 0 &&
+        strncmp(url->valuestring, "http://", 7) != 0) {
+        ESP_LOGE(TAG_OTA, "URL de descarga con esquema no valido; OTA rechazada.");
+        cJSON_Delete(json);
+        return;
+    }
+    if (strncmp(url->valuestring, "https://", 8) != 0) {
+        ESP_LOGW(TAG_OTA, "Descarga por HTTP sin cifrar (solo red local de confianza).");
     }
 
     ota_en_progreso = true;

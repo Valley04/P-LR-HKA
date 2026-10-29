@@ -1,0 +1,118 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12 Portable) (preloaded format=pdflatex 2026.10.2)  13 OCT 2026 15:51
+entering extended mode
+ restricted \write18 enabled.
+ %&-line parsing enabled.
+**./guion_de_defensa_de_pasantia.tex
+(guion_de_defensa_de_pasantia.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2025-12-24>
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/base\articl
+e.cls
+Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/base\size11
+.clo
+File: size11.clo 2025/01/22 v1.4n Standard LaTeX file (size option)
+)
+\c@part=\count275
+\c@section=\count276
+\c@subsection=\count277
+\c@subsubsection=\count278
+\c@paragraph=\count279
+\c@subparagraph=\count280
+\c@figure=\count281
+\c@table=\count282
+\abovecaptionskip=\skip49
+\belowcaptionskip=\skip50
+\bibindent=\dimen148
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/geometry\ge
+ometry.sty
+Package: geometry 2026/03/07 v6.0 Page Geometry
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/graphics\ke
+yval.sty
+Package: keyval 2022/05/29 v1.15 key=value parser (DPC)
+\KV@toks@=\toks17
+)
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/iftex\ifv
+tex.sty
+Package: ifvtex 2019/10/25 v1.7 ifvtex legacy package. Use iftex instead.
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/generic/iftex\ift
+ex.sty
+Package: iftex 2024/12/12 v1.0g TeX engine tests
+))
+\Gm@cnth=\count283
+\Gm@cntv=\count284
+\c@Gm@tempcnt=\count285
+\Gm@bindingoffset=\dimen149
+\Gm@wd@mp=\dimen150
+\Gm@odd@mp=\dimen151
+\Gm@even@mp=\dimen152
+\Gm@layoutwidth=\dimen153
+\Gm@layoutheight=\dimen154
+\Gm@layouthoffset=\dimen155
+\Gm@layoutvoffset=\dimen156
+\Gm@dimlist=\toks18
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/geometry\ge
+ometry.cfg))
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/fontspec\fo
+ntspec.sty
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/l3packages/
+xparse\xparse.sty
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/l3kernel\ex
+pl3.sty
+Package: expl3 2025-12-24 L3 programming layer (loader) 
+
+(C:\Users\lrojas\scoop\apps\miktex\current\texmfs\install\tex/latex/l3backend\l
+3backend-pdftex.def
+File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
+\l__color_backend_stack_int=\count286
+))
+Package: xparse 2025-10-09 L3 Experimental document command parser
+)
+Package: fontspec 2025/09/29 v2.9g Font selection for XeLaTeX and LuaLaTeX
+
+
+! Fatal Package fontspec Error: The fontspec package requires either XeTeX or
+(fontspec)                      LuaTeX.
+(fontspec)                      
+(fontspec)                      You must change your typesetting engine to,
+(fontspec)                      e.g., "xelatex" or "lualatex" instead of
+(fontspec)                      "latex" or "pdflatex".
+
+Type <return> to continue.
+ ...                                              
+                                                  
+l.101 \msg_fatal:nn {fontspec} {cannot-use-pdftex}
+                                                  
+
+LaTeX does not know anything more about this error, sorry.
+
+Try typing <return> to proceed.
+If that doesn't work, type X <return> to quit.
+
+This is a fatal error: LaTeX will abort.
+
+
+
+! Emergency stop.
+<read *> 
+         
+l.101 \msg_fatal:nn {fontspec} {cannot-use-pdftex}
+                                                  
+*** (cannot \read from terminal in nonstop modes)
+
+ 
+Here is how much of TeX's memory you used:
+ 1152 strings out of 467871
+ 21709 string characters out of 5412550
+ 433733 words of memory out of 5000000
+ 30091 multiletter control sequences out of 15000+600000
+ 628021 words of font info for 41 fonts, out of 8000000 for 9000
+ 1141 hyphenation exceptions out of 8191
+ 73i,0n,77p,311b,42s stack positions out of 10000i,1000n,20000p,200000b,200000s
+!  ==> Fatal error occurred, no output PDF file produced!

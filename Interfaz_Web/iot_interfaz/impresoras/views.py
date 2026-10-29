@@ -15,6 +15,21 @@ import paho.mqtt.client as mqtt
 import ssl
 import json
 from django.contrib import messages
+from django.conf import settings
+
+
+def _url_descarga_firmware(request, archivo):
+    """Construye la URL de descarga del firmware.
+
+    Usa OTA_BASE_URL si esta definida (p. ej. un dominio HTTPS en produccion).
+    En caso contrario, parte de la URL absoluta de la peticion tal cual: en el
+    laboratorio el ESP32 descarga por HTTP desde la misma IP del servidor.
+    """
+    base = getattr(settings, 'OTA_BASE_URL', '')
+    if base:
+        return base.rstrip('/') + archivo.url
+    return request.build_absolute_uri(archivo.url)
+
 
 class MiLogin(LoginView):
     template_name = "login.html"
@@ -84,7 +99,7 @@ def disparar_ota_mqtt(request, dispositivo_id):
                 else:
                     objetivo_hardware = "ismart"
 
-                url_descarga = request.build_absolute_uri(fw_destino.archivo_bin.url)
+                url_descarga = _url_descarga_firmware(request, fw_destino.archivo_bin)
 
                 payload = {
                     "comando": "INICIAR_OTA",
@@ -144,7 +159,7 @@ def api_ultimo_firmware(request):
     if not ultimo_fw:
         return JsonResponse({'error': 'No hay firmware disponible'}, status=404)
     
-    url_descarga = request.build_absolute_uri(ultimo_fw.archivo_bin.url)
+    url_descarga = _url_descarga_firmware(request, ultimo_fw.archivo_bin)
         
     return JsonResponse({
         'version': ultimo_fw.version,

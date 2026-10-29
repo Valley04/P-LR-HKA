@@ -119,6 +119,11 @@ LOGOUT_REDIRECT_URL = 'login'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# URL base publica para la descarga de firmware OTA. Si esta vacia, la vista
+# construye la URL a partir de la peticion (IP real del servidor, HTTP en LAN).
+# En produccion, apuntarla a un dominio HTTPS valido por variable de entorno.
+OTA_BASE_URL = os.environ.get('OTA_BASE_URL', '')
+
 MESSAGE_TAGS = {
     messages.DEBUG: 'secondary',
     messages.INFO: 'info',
